@@ -123,14 +123,20 @@ def get_roster(session: requests.Session) -> list[dict]:
 def get_hitting_stats(session: requests.Session, person_id: int) -> Optional[dict]:
     data = api_get(session, f"/people/{person_id}/stats",
                    stats="season", season=SEASON, group="hitting", sportId=1)
-    splits = data.get("stats", [{}])[0].get("splits", [])
+    stats = data.get("stats") or []
+    if not stats:
+        return None
+    splits = stats[0].get("splits", [])
     return splits[0].get("stat") if splits else None
 
 
 def get_pitching_stats(session: requests.Session, person_id: int) -> Optional[dict]:
     data = api_get(session, f"/people/{person_id}/stats",
                    stats="season", season=SEASON, group="pitching", sportId=1)
-    splits = data.get("stats", [{}])[0].get("splits", [])
+    stats = data.get("stats") or []
+    if not stats:
+        return None
+    splits = stats[0].get("splits", [])
     return splits[0].get("stat") if splits else None
 
 
