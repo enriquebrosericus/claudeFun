@@ -1,0 +1,325 @@
+{
+  "__inputs": [{"name": "DS_PROMETHEUS", "type": "datasource", "pluginId": "prometheus"}],
+  "title": "Mariners — Player Detail",
+  "uid": "mlb-sea-player",
+  "tags": ["mlb", "mariners", "baseball", "player"],
+  "refresh": "5m",
+  "time": {"from": "now-30d", "to": "now"},
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "templating": {
+    "list": [
+      {"name": "DS_PROMETHEUS", "type": "datasource", "query": "prometheus", "hide": 0},
+      {
+        "name": "batter",
+        "label": "Batter",
+        "type": "query",
+        "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+        "query": "label_values(mlb_player_batting_avg{team=\"SEA\"}, player)",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "hide": 0,
+        "sort": 1
+      },
+      {
+        "name": "pitcher",
+        "label": "Pitcher",
+        "type": "query",
+        "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+        "query": "label_values(mlb_pitcher_era{team=\"SEA\"}, player)",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "hide": 0,
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1, "type": "row", "title": "🏏 Batter — $batter",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+      "collapsed": false
+    },
+    {
+      "id": 2, "type": "stat", "title": "AVG",
+      "gridPos": {"h": 5, "w": 4, "x": 0, "y": 1},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none", "decimals": 3,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "yellow", "value": 0.25}, {"color": "green", "value": 0.28}, {"color": "super-light-green", "value": 0.300}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "area"},
+      "targets": [{"expr": "mlb_player_batting_avg{team=\"SEA\", player=\"$batter\"}", "legendFormat": "AVG", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}]
+    },
+    {
+      "id": 3, "type": "stat", "title": "OBP",
+      "gridPos": {"h": 5, "w": 4, "x": 4, "y": 1},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none", "decimals": 3,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "yellow", "value": 0.310}, {"color": "green", "value": 0.340}, {"color": "super-light-green", "value": 0.380}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "area"},
+      "targets": [{"expr": "mlb_player_obp{team=\"SEA\", player=\"$batter\"}", "legendFormat": "OBP", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}]
+    },
+    {
+      "id": 4, "type": "stat", "title": "SLG",
+      "gridPos": {"h": 5, "w": 4, "x": 8, "y": 1},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none", "decimals": 3,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "yellow", "value": 0.380}, {"color": "green", "value": 0.450}, {"color": "super-light-green", "value": 0.500}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "area"},
+      "targets": [{"expr": "mlb_player_slg{team=\"SEA\", player=\"$batter\"}", "legendFormat": "SLG", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}]
+    },
+    {
+      "id": 5, "type": "stat", "title": "OPS",
+      "gridPos": {"h": 5, "w": 4, "x": 12, "y": 1},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none", "decimals": 3,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "yellow", "value": 0.700}, {"color": "green", "value": 0.800}, {"color": "super-light-green", "value": 0.900}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "area"},
+      "targets": [{"expr": "mlb_player_ops{team=\"SEA\", player=\"$batter\"}", "legendFormat": "OPS", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}]
+    },
+    {
+      "id": 6, "type": "stat", "title": "HR",
+      "gridPos": {"h": 5, "w": 2, "x": 16, "y": 1},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {"defaults": {"unit": "none", "decimals": 0, "color": {"fixedColor": "blue", "mode": "fixed"}, "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]}}},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "none"},
+      "targets": [{"expr": "mlb_player_home_runs_total{team=\"SEA\", player=\"$batter\"}", "legendFormat": "HR", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}]
+    },
+    {
+      "id": 7, "type": "stat", "title": "RBI",
+      "gridPos": {"h": 5, "w": 2, "x": 18, "y": 1},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {"defaults": {"unit": "none", "decimals": 0, "color": {"fixedColor": "purple", "mode": "fixed"}, "thresholds": {"mode": "absolute", "steps": [{"color": "purple", "value": null}]}}},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "none"},
+      "targets": [{"expr": "mlb_player_rbi_total{team=\"SEA\", player=\"$batter\"}", "legendFormat": "RBI", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}]
+    },
+    {
+      "id": 8, "type": "stat", "title": "SB",
+      "gridPos": {"h": 5, "w": 2, "x": 20, "y": 1},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {"defaults": {"unit": "none", "decimals": 0, "color": {"fixedColor": "orange", "mode": "fixed"}, "thresholds": {"mode": "absolute", "steps": [{"color": "orange", "value": null}]}}},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "none"},
+      "targets": [{"expr": "mlb_player_stolen_bases_total{team=\"SEA\", player=\"$batter\"}", "legendFormat": "SB", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}]
+    },
+    {
+      "id": 9, "type": "stat", "title": "G",
+      "gridPos": {"h": 5, "w": 2, "x": 22, "y": 1},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {"defaults": {"unit": "none", "decimals": 0, "color": {"fixedColor": "text", "mode": "fixed"}, "thresholds": {"mode": "absolute", "steps": [{"color": "text", "value": null}]}}},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "none"},
+      "targets": [{"expr": "mlb_player_games_played_total{team=\"SEA\", player=\"$batter\"}", "legendFormat": "G", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}]
+    },
+    {
+      "id": 11, "type": "timeseries", "title": "AVG / OBP / SLG over Season",
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 6},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {"unit": "none", "decimals": 3, "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 8, "lineInterpolation": "stepAfter"}},
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "AVG"}, "properties": [{"id": "color", "value": {"fixedColor": "blue", "mode": "fixed"}}]},
+          {"matcher": {"id": "byName", "options": "OBP"}, "properties": [{"id": "color", "value": {"fixedColor": "green", "mode": "fixed"}}]},
+          {"matcher": {"id": "byName", "options": "SLG"}, "properties": [{"id": "color", "value": {"fixedColor": "orange", "mode": "fixed"}}]}
+        ]
+      },
+      "options": {"legend": {"displayMode": "table", "calcs": ["last"], "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi"}},
+      "targets": [
+        {"expr": "mlb_player_batting_avg{team=\"SEA\", player=\"$batter\"}", "legendFormat": "AVG", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}},
+        {"expr": "mlb_player_obp{team=\"SEA\", player=\"$batter\"}", "legendFormat": "OBP", "refId": "B", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}},
+        {"expr": "mlb_player_slg{team=\"SEA\", player=\"$batter\"}", "legendFormat": "SLG", "refId": "C", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}
+      ]
+    },
+    {
+      "id": 12, "type": "timeseries", "title": "HR & RBI over Season",
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 6},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {"unit": "none", "decimals": 0, "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 10, "lineInterpolation": "stepAfter"}}
+      },
+      "options": {"legend": {"displayMode": "table", "calcs": ["last"], "placement": "bottom", "showLegend": true}},
+      "targets": [
+        {"expr": "mlb_player_home_runs_total{team=\"SEA\", player=\"$batter\"}", "legendFormat": "HR", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}},
+        {"expr": "mlb_player_rbi_total{team=\"SEA\", player=\"$batter\"}", "legendFormat": "RBI", "refId": "B", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}},
+        {"expr": "mlb_player_runs_total{team=\"SEA\", player=\"$batter\"}", "legendFormat": "R", "refId": "C", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}
+      ]
+    },
+    {
+      "id": 13, "type": "timeseries", "title": "Projected HR Pace (162 games)",
+      "gridPos": {"h": 7, "w": 12, "x": 0, "y": 15},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none", "decimals": 1,
+          "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 15, "lineInterpolation": "stepAfter"},
+          "color": {"fixedColor": "red", "mode": "fixed"}
+        }
+      },
+      "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}},
+      "targets": [
+        {"expr": "mlb_player_home_runs_total{team=\"SEA\", player=\"$batter\"} / mlb_player_games_played_total{team=\"SEA\", player=\"$batter\"} * 162", "legendFormat": "Proj. HR/162", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}
+      ]
+    },
+    {
+      "id": 14, "type": "timeseries", "title": "ISO & BABIP",
+      "gridPos": {"h": 7, "w": 12, "x": 12, "y": 15},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {"unit": "none", "decimals": 3, "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 5, "lineInterpolation": "stepAfter"}}
+      },
+      "options": {"legend": {"displayMode": "table", "calcs": ["last"], "placement": "bottom", "showLegend": true}},
+      "targets": [
+        {"expr": "mlb_player_iso{team=\"SEA\", player=\"$batter\"}", "legendFormat": "ISO", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}},
+        {"expr": "mlb_player_babip{team=\"SEA\", player=\"$batter\"}", "legendFormat": "BABIP", "refId": "B", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}
+      ]
+    },
+    {
+      "id": 50, "type": "row", "title": "⚾ Pitcher — $pitcher",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 22},
+      "collapsed": false
+    },
+    {
+      "id": 51, "type": "stat", "title": "ERA",
+      "gridPos": {"h": 5, "w": 4, "x": 0, "y": 23},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none", "decimals": 2,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 3.50}, {"color": "red", "value": 5.00}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "area"},
+      "targets": [{"expr": "mlb_pitcher_era{team=\"SEA\", player=\"$pitcher\"}", "legendFormat": "ERA", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}]
+    },
+    {
+      "id": 52, "type": "stat", "title": "WHIP",
+      "gridPos": {"h": 5, "w": 4, "x": 4, "y": 23},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none", "decimals": 2,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1.20}, {"color": "red", "value": 1.50}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "area"},
+      "targets": [{"expr": "mlb_pitcher_whip{team=\"SEA\", player=\"$pitcher\"}", "legendFormat": "WHIP", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}]
+    },
+    {
+      "id": 53, "type": "stat", "title": "FIP",
+      "gridPos": {"h": 5, "w": 4, "x": 8, "y": 23},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none", "decimals": 2,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 3.50}, {"color": "red", "value": 5.00}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "area"},
+      "targets": [{"expr": "mlb_pitcher_fip{team=\"SEA\", player=\"$pitcher\"}", "legendFormat": "FIP", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}]
+    },
+    {
+      "id": 54, "type": "stat", "title": "K/9",
+      "gridPos": {"h": 5, "w": 4, "x": 12, "y": 23},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none", "decimals": 1,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "yellow", "value": 7.0}, {"color": "green", "value": 9.0}, {"color": "super-light-green", "value": 11.0}]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "area"},
+      "targets": [{"expr": "mlb_pitcher_k9{team=\"SEA\", player=\"$pitcher\"}", "legendFormat": "K/9", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}]
+    },
+    {
+      "id": 55, "type": "stat", "title": "W-L",
+      "gridPos": {"h": 5, "w": 4, "x": 16, "y": 23},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {"defaults": {"unit": "none", "decimals": 0, "color": {"fixedColor": "green", "mode": "fixed"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}}},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "none"},
+      "targets": [{"expr": "mlb_pitcher_wins_total{team=\"SEA\", player=\"$pitcher\"}", "legendFormat": "W", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}]
+    },
+    {
+      "id": 56, "type": "stat", "title": "SO",
+      "gridPos": {"h": 5, "w": 4, "x": 20, "y": 23},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {"defaults": {"unit": "none", "decimals": 0, "color": {"fixedColor": "blue", "mode": "fixed"}, "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]}}},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "none"},
+      "targets": [{"expr": "mlb_pitcher_strikeouts_total{team=\"SEA\", player=\"$pitcher\"}", "legendFormat": "SO", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}]
+    },
+    {
+      "id": 61, "type": "timeseries", "title": "ERA & FIP over Season",
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 28},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {"unit": "none", "decimals": 2, "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 8, "lineInterpolation": "stepAfter"}},
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "ERA"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]},
+          {"matcher": {"id": "byName", "options": "FIP"}, "properties": [
+            {"id": "color", "value": {"fixedColor": "orange", "mode": "fixed"}},
+            {"id": "custom.lineStyle", "value": {"dash": [6, 3], "fill": "dash"}}
+          ]},
+          {"matcher": {"id": "byName", "options": "WHIP"}, "properties": [{"id": "color", "value": {"fixedColor": "yellow", "mode": "fixed"}}]}
+        ]
+      },
+      "options": {"legend": {"displayMode": "table", "calcs": ["last"], "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi"}},
+      "targets": [
+        {"expr": "mlb_pitcher_era{team=\"SEA\", player=\"$pitcher\"}", "legendFormat": "ERA", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}},
+        {"expr": "mlb_pitcher_fip{team=\"SEA\", player=\"$pitcher\"}", "legendFormat": "FIP", "refId": "B", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}},
+        {"expr": "mlb_pitcher_whip{team=\"SEA\", player=\"$pitcher\"}", "legendFormat": "WHIP", "refId": "C", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}
+      ]
+    },
+    {
+      "id": 62, "type": "timeseries", "title": "K/9 & BB/9 over Season",
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 28},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {"unit": "none", "decimals": 1, "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 8, "lineInterpolation": "stepAfter"}},
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "K/9"}, "properties": [{"id": "color", "value": {"fixedColor": "green", "mode": "fixed"}}]},
+          {"matcher": {"id": "byName", "options": "BB/9"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]}
+        ]
+      },
+      "options": {"legend": {"displayMode": "table", "calcs": ["last"], "placement": "bottom", "showLegend": true}},
+      "targets": [
+        {"expr": "mlb_pitcher_k9{team=\"SEA\", player=\"$pitcher\"}", "legendFormat": "K/9", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}},
+        {"expr": "mlb_pitcher_bb9{team=\"SEA\", player=\"$pitcher\"}", "legendFormat": "BB/9", "refId": "B", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}
+      ]
+    },
+    {
+      "id": 63, "type": "timeseries", "title": "Strikeouts & Innings Pitched",
+      "gridPos": {"h": 7, "w": 24, "x": 0, "y": 37},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {"unit": "none", "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 10, "lineInterpolation": "stepAfter"}}
+      },
+      "options": {"legend": {"displayMode": "table", "calcs": ["last"], "placement": "bottom", "showLegend": true}},
+      "targets": [
+        {"expr": "mlb_pitcher_strikeouts_total{team=\"SEA\", player=\"$pitcher\"}", "legendFormat": "SO", "refId": "A", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}},
+        {"expr": "mlb_pitcher_innings_pitched{team=\"SEA\", player=\"$pitcher\"}", "legendFormat": "IP", "refId": "B", "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}}
+      ]
+    }
+  ]
+}

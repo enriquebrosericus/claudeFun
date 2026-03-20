@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 60s
+  evaluation_interval: 60s
+
+scrape_configs:
+  - job_name: "mlb_stats_tracker"
+    static_configs:
+      - targets: ["scraper:8001"]
+    scrape_interval: 60s
+    scrape_timeout: 30s

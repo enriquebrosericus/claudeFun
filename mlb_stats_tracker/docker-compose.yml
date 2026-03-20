@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+
+  # ── MLB Stats Scraper ──────────────────────────────────────────────────────
+  scraper:
+    build: .
+    container_name: mlb_stats_scraper
+    restart: unless-stopped
+    environment:
+      TEAM_ID: "136"           # Seattle Mariners
+      TEAM_ABBR: "SEA"
+      SEASON: "2025"
+      POLL_INTERVAL: "1800"    # 30 min baseline; auto-shortens during/after games
+      METRICS_PORT: "8001"
+    ports:
+      - "8001:8001"
+    networks:
+      - monitoring
+
+  # ── Prometheus ─────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: mlb_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - mlb_prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=365d"   # keep a full season
+      - "--web.enable-lifecycle"
+    ports:
+      - "9091:9090"            # 9091 to avoid conflict with amazon tracker
+    networks:
+      - monitoring
+    depends_on:
+      - scraper
+
+  # ── Grafana ────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: mlb_grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/team_overview.json
+    volumes:
+      - mlb_grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3001:3000"            # 3001 to avoid conflict with amazon tracker
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+
+networks:
+  monitoring:
+    driver: bridge
+
+volumes:
+  mlb_prometheus_data:
+  mlb_grafana_data:
