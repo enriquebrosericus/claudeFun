@@ -1,0 +1,19 @@
+# Agent SDK
+claude-agent-sdk
+
+# Web scraping
+requests
+httpx
+beautifulsoup4
+lxml
+playwright
+scrapy
+
+# Prometheus
+prometheus_client
+
+# Data modeling
+pydantic
+
+# Async
+anyio

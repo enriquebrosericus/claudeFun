@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: "Amazon Price Tracker"
+    orgId: 1
+    folder: "Price Trackers"
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

@@ -1,0 +1,67 @@
+version: "3.9"
+
+services:
+
+  # ── Scraper ────────────────────────────────────────────────────────────────
+  scraper:
+    build: .
+    container_name: amazon_price_scraper
+    restart: unless-stopped
+    environment:
+      ASIN: "B0GQH1D6Y4"
+      PRODUCT_NAME: "SMALLRIG Compartment Aluminum Case"
+      SCRAPE_INTERVAL: "300"   # scrape every 5 minutes
+      METRICS_PORT: "8000"
+    ports:
+      - "8000:8000"            # expose metrics for debugging
+    networks:
+      - monitoring
+
+  # ── Prometheus ─────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=90d"   # keep 90 days of history
+      - "--web.enable-lifecycle"
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+    depends_on:
+      - scraper
+
+  # ── Grafana ────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin     # change in production
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/amazon_price.json
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+
+networks:
+  monitoring:
+    driver: bridge
+
+volumes:
+  prometheus_data:
+  grafana_data:
