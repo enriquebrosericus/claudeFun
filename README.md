@@ -6,6 +6,42 @@ Monitors Amazon product prices and exposes them as Prometheus metrics, with a pr
 
 ---
 
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph Internet
+        AMZ["🛒 Amazon\namazon.com/dp/B0GQH1D6Y4"]
+    end
+
+    subgraph Docker Network: monitoring
+        subgraph Scraper Container
+            PY["🐍 scraper.py\nrequests + BeautifulSoup"]
+            PROM_CLIENT["prometheus_client\n:8000/metrics"]
+            PY -- "updates metrics\nevery 5 min" --> PROM_CLIENT
+        end
+
+        subgraph Prometheus Container
+            PROM["📈 Prometheus\n:9090"]
+        end
+
+        subgraph Grafana Container
+            GRAF["📊 Grafana\n:3000"]
+        end
+    end
+
+    subgraph Host Browser
+        USER["👤 You"]
+    end
+
+    AMZ -- "HTML page\n(price, stock, rating)" --> PY
+    PROM -- "scrapes /metrics\nevery 60s" --> PROM_CLIENT
+    GRAF -- "PromQL queries" --> PROM
+    USER -- "localhost:3000" --> GRAF
+    USER -. "localhost:9090" .-> PROM
+    USER -. "localhost:8000/metrics" .-> PROM_CLIENT
+```
+
 ## Stack
 
 | Service | Purpose |
