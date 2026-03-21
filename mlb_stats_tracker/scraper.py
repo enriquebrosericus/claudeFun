@@ -37,9 +37,18 @@ MLB_API       = "https://statsapi.mlb.com/api/v1"
 
 PITCHER_POSITIONS = {"P", "SP", "RP", "CP"}
 
+# The standings API only returns team id/name/link — abbreviations must be mapped.
+AL_WEST_TEAM_ABBR = {
+    108: "LAA",
+    117: "HOU",
+    133: "ATH",
+    136: "SEA",
+    140: "TEX",
+}
+
 # ── Prometheus Metrics ────────────────────────────────────────────────────────
-_P = ["team", "player", "player_id", "position"]   # player labels
-_T = ["team", "team_id", "division"]               # team labels
+_P = ["team", "player", "player_id", "position", "season"]   # player labels
+_T = ["team", "team_id", "division", "season"]                # team labels
 
 # Batting
 bat_avg    = Gauge("mlb_player_batting_avg",         "Batting average",              _P)
@@ -88,6 +97,12 @@ tm_streak  = Gauge("mlb_team_streak",                "Streak: +N=wins, -N=losses
 tm_home_w  = Gauge("mlb_team_home_wins_total",       "Home wins",                    _T)
 tm_away_w  = Gauge("mlb_team_away_wins_total",       "Away wins",                    _T)
 tm_l10     = Gauge("mlb_team_last10_wins",           "Wins in last 10 games",        _T)
+
+# Division race (all AL West teams)
+_D = ["team", "team_id", "division", "season"]
+div_gb     = Gauge("mlb_division_games_behind",      "Games behind division leader (0=1st)", _D)
+div_wins   = Gauge("mlb_division_wins",              "Division standing wins",               _D)
+div_losses = Gauge("mlb_division_losses",            "Division standing losses",             _D)
 
 # Scraper health
 scrape_errors = Counter("mlb_scrape_errors_total",   "Scrape errors", ["error_type"])
@@ -150,6 +165,32 @@ def get_standings(session: requests.Session) -> Optional[dict]:
                 div_name = division.get("division", {}).get("nameShort", "AL West")
                 return rec, div_name
     return None, None
+
+
+def update_division_standings(session: requests.Session) -> None:
+    """Scrape standings for ALL AL West teams and update division race metrics."""
+    data = api_get(session, "/standings",
+                   leagueId=103, season=SEASON, standingsTypes="regularSeason")
+    for division in data.get("records", []):
+        div_info = division.get("division", {})
+        # Division ID 200 = AL West
+        if div_info.get("id") != 200:
+            continue
+        div_name = div_info.get("nameShort", "AL West")
+        for rec in division.get("teamRecords", []):
+            team = rec.get("team", {})
+            team_id  = str(team.get("id", ""))
+            team_abbr = AL_WEST_TEAM_ABBR.get(team.get("id"), team.get("name", "UNK"))
+            wins   = rec.get("wins", 0)
+            losses = rec.get("losses", 0)
+            gb_raw = rec.get("gamesBack", "0")
+            gb = 0.0 if gb_raw in ("-", "", None) else safe_float(gb_raw)
+            lbl = {"team": team_abbr, "team_id": team_id,
+                   "division": div_name, "season": SEASON}
+            div_gb.labels(**lbl).set(gb)
+            div_wins.labels(**lbl).set(wins)
+            div_losses.labels(**lbl).set(losses)
+            log.debug("  AL West: %-4s  %s-%s  GB=%.1f", team_abbr, wins, losses, gb)
 
 
 def get_todays_game_state(session: requests.Session) -> Optional[str]:
@@ -227,6 +268,7 @@ def update_team(record: dict, div_name: str) -> None:
         "team": TEAM_ABBR,
         "team_id": str(TEAM_ID),
         "division": div_name,
+        "season": SEASON,
     }
 
     tm_wins.labels(**labels).set(record.get("wins", 0))
@@ -277,6 +319,14 @@ def scrape(session: requests.Session) -> None:
         scrape_errors.labels(error_type="standings").inc()
         log.warning("Standings fetch failed: %s", e)
 
+    # ── Division Race (all AL West teams) ─────────────────────────────────
+    try:
+        update_division_standings(session)
+        log.info("AL West standings updated")
+    except Exception as e:
+        scrape_errors.labels(error_type="division_standings").inc()
+        log.warning("Division standings fetch failed: %s", e)
+
     # ── Roster + Player Stats ──────────────────────────────────────────────
     try:
         roster = get_roster(session)
@@ -299,6 +349,7 @@ def scrape(session: requests.Session) -> None:
             "player":    name,
             "player_id": str(pid),
             "position":  pos_code,
+            "season":    SEASON,
         }
 
         try:
