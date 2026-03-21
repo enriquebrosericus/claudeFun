@@ -58,7 +58,7 @@
           "custom": {"fontSize": 48}
         }
       },
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "/.*/"}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
       "targets": [{"rawSql": "SELECT result FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
     },
     {
@@ -100,7 +100,7 @@
           "thresholds": {"mode": "absolute", "steps": [{"color": "text", "value": null}]}
         }
       },
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "none", "graphMode": "none", "textMode": "value"},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "/.*/"}, "colorMode": "none", "graphMode": "none", "textMode": "value"},
       "targets": [{"rawSql": "SELECT TO_CHAR(date,'FMMonth DD, YYYY') || E'\\n' || COALESCE(venue,'') FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
     },
     {
@@ -114,7 +114,7 @@
           "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
         }
       },
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "/.*/"}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
       "targets": [{"rawSql": "SELECT COALESCE(winning_pitcher, '\u2014') FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
     },
     {
@@ -128,7 +128,7 @@
           "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}]}
         }
       },
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "/.*/"}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
       "targets": [{"rawSql": "SELECT COALESCE(losing_pitcher, '\u2014') FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
     },
     {
@@ -142,7 +142,7 @@
           "thresholds": {"mode": "absolute", "steps": [{"color": "#4B9CD3", "value": null}]}
         }
       },
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "/.*/"}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
       "targets": [{"rawSql": "SELECT COALESCE(save_pitcher, '\u2014') FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
     },
     {

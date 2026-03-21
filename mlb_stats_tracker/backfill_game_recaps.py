@@ -79,7 +79,8 @@ def build_team_abbr_map() -> dict:
 # ── Schedule ──────────────────────────────────────────────────────────────────
 
 def fetch_schedule(season: int) -> list:
-    data = api_get("/schedule", teamId=TEAM_ID, season=season, sportId=1, gameType="R")
+    data = api_get("/schedule", teamId=TEAM_ID, season=season, sportId=1,
+                   gameType="R", hydrate="decisions")
     games = []
     for date_entry in data.get("dates", []):
         for g in date_entry.get("games", []):
