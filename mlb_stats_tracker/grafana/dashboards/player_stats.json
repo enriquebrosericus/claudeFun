@@ -664,7 +664,7 @@
       },
       "targets": [
         {
-          "expr": "mlb_player_batting_avg{team=\"SEA\", player=\"$batter\", season=\"$season\"}",
+          "expr": "last_over_time(mlb_player_batting_avg{team=\"SEA\", player=\"$batter\", season=\"$season\"}[2d])",
           "legendFormat": "AVG",
           "refId": "A",
           "datasource": {
@@ -673,7 +673,7 @@
           }
         },
         {
-          "expr": "mlb_player_obp{team=\"SEA\", player=\"$batter\", season=\"$season\"}",
+          "expr": "last_over_time(mlb_player_obp{team=\"SEA\", player=\"$batter\", season=\"$season\"}[2d])",
           "legendFormat": "OBP",
           "refId": "B",
           "datasource": {
@@ -682,7 +682,7 @@
           }
         },
         {
-          "expr": "mlb_player_slg{team=\"SEA\", player=\"$batter\", season=\"$season\"}",
+          "expr": "last_over_time(mlb_player_slg{team=\"SEA\", player=\"$batter\", season=\"$season\"}[2d])",
           "legendFormat": "SLG",
           "refId": "C",
           "datasource": {
@@ -730,7 +730,7 @@
       },
       "targets": [
         {
-          "expr": "mlb_player_home_runs_total{team=\"SEA\", player=\"$batter\", season=\"$season\"}",
+          "expr": "last_over_time(mlb_player_home_runs_total{team=\"SEA\", player=\"$batter\", season=\"$season\"}[2d])",
           "legendFormat": "HR",
           "refId": "A",
           "datasource": {
@@ -739,7 +739,7 @@
           }
         },
         {
-          "expr": "mlb_player_rbi_total{team=\"SEA\", player=\"$batter\", season=\"$season\"}",
+          "expr": "last_over_time(mlb_player_rbi_total{team=\"SEA\", player=\"$batter\", season=\"$season\"}[2d])",
           "legendFormat": "RBI",
           "refId": "B",
           "datasource": {
@@ -748,7 +748,7 @@
           }
         },
         {
-          "expr": "mlb_player_runs_total{team=\"SEA\", player=\"$batter\", season=\"$season\"}",
+          "expr": "last_over_time(mlb_player_runs_total{team=\"SEA\", player=\"$batter\", season=\"$season\"}[2d])",
           "legendFormat": "R",
           "refId": "C",
           "datasource": {
@@ -797,7 +797,7 @@
       },
       "targets": [
         {
-          "expr": "mlb_player_home_runs_total{team=\"SEA\", player=\"$batter\", season=\"$season\"} / mlb_player_games_played_total{team=\"SEA\", player=\"$batter\", season=\"$season\"} * 162",
+          "expr": "last_over_time(mlb_player_home_runs_total{team=\"SEA\", player=\"$batter\", season=\"$season\"} / mlb_player_games_played_total{team=\"SEA\", player=\"$batter\", season=\"$season\"} * 162[2d])",
           "legendFormat": "Proj. HR/162",
           "refId": "A",
           "datasource": {
@@ -845,7 +845,7 @@
       },
       "targets": [
         {
-          "expr": "mlb_player_iso{team=\"SEA\", player=\"$batter\", season=\"$season\"}",
+          "expr": "last_over_time(mlb_player_iso{team=\"SEA\", player=\"$batter\", season=\"$season\"}[2d])",
           "legendFormat": "ISO",
           "refId": "A",
           "datasource": {
@@ -854,7 +854,7 @@
           }
         },
         {
-          "expr": "mlb_player_babip{team=\"SEA\", player=\"$batter\", season=\"$season\"}",
+          "expr": "last_over_time(mlb_player_babip{team=\"SEA\", player=\"$batter\", season=\"$season\"}[2d])",
           "legendFormat": "BABIP",
           "refId": "B",
           "datasource": {
@@ -1330,7 +1330,7 @@
       },
       "targets": [
         {
-          "expr": "mlb_pitcher_era{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}",
+          "expr": "last_over_time(mlb_pitcher_era{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}[2d])",
           "legendFormat": "ERA",
           "refId": "A",
           "datasource": {
@@ -1339,7 +1339,7 @@
           }
         },
         {
-          "expr": "mlb_pitcher_fip{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}",
+          "expr": "last_over_time(mlb_pitcher_fip{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}[2d])",
           "legendFormat": "FIP",
           "refId": "B",
           "datasource": {
@@ -1348,7 +1348,7 @@
           }
         },
         {
-          "expr": "mlb_pitcher_whip{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}",
+          "expr": "last_over_time(mlb_pitcher_whip{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}[2d])",
           "legendFormat": "WHIP",
           "refId": "C",
           "datasource": {
@@ -1428,7 +1428,7 @@
       },
       "targets": [
         {
-          "expr": "mlb_pitcher_k9{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}",
+          "expr": "last_over_time(mlb_pitcher_k9{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}[2d])",
           "legendFormat": "K/9",
           "refId": "A",
           "datasource": {
@@ -1437,7 +1437,7 @@
           }
         },
         {
-          "expr": "mlb_pitcher_bb9{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}",
+          "expr": "last_over_time(mlb_pitcher_bb9{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}[2d])",
           "legendFormat": "BB/9",
           "refId": "B",
           "datasource": {
@@ -1484,7 +1484,7 @@
       },
       "targets": [
         {
-          "expr": "mlb_pitcher_strikeouts_total{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}",
+          "expr": "last_over_time(mlb_pitcher_strikeouts_total{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}[2d])",
           "legendFormat": "SO",
           "refId": "A",
           "datasource": {
@@ -1493,7 +1493,7 @@
           }
         },
         {
-          "expr": "mlb_pitcher_innings_pitched{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}",
+          "expr": "last_over_time(mlb_pitcher_innings_pitched{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}[2d])",
           "legendFormat": "IP",
           "refId": "B",
           "datasource": {
