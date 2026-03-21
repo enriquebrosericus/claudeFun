@@ -70,9 +70,16 @@ def api_get(session: requests.Session, path: str, **params) -> dict:
     return resp.json()
 
 
-def sf(val, default: float = 0.0) -> float:
+def sf(val, default: float = 0.0):
     try:
-        return float(val) if val not in (None, "", "-.--", "--", ".---") else default
+        return float(val) if val not in (None, "", "-.--", "--", ".---", "Inf", "inf") else default
+    except (ValueError, TypeError):
+        return default
+
+
+def si(val, default: int = 0) -> int:
+    try:
+        return int(val) if val not in (None, "") else default
     except (ValueError, TypeError):
         return default
 
@@ -291,6 +298,233 @@ def scrape_players(session: requests.Session, conn, today: datetime.date) -> Non
     log.info("Players: %d/%d updated", count, len(roster))
 
 
+# ── Game Recap ────────────────────────────────────────────────────────────────
+_team_abbr_map: dict = {}
+
+
+def get_team_abbr_map(session: requests.Session) -> dict:
+    global _team_abbr_map
+    if not _team_abbr_map:
+        data = api_get(session, "/teams", sportId=1)
+        _team_abbr_map = {t["id"]: t.get("abbreviation", "UNK") for t in data.get("teams", [])}
+    return _team_abbr_map
+
+
+def parse_batting_lines(box: dict, abbr_map: dict) -> list:
+    rows = []
+    for side in ("home", "away"):
+        team_data = box["teams"][side]
+        abbr      = abbr_map.get(team_data["team"]["id"], "UNK")
+        players   = team_data.get("players", {})
+        for pid in team_data.get("batters", []):
+            p     = players.get(f"ID{pid}", {})
+            st    = p.get("stats", {}).get("batting", {})
+            order = p.get("battingOrder")
+            if not st and order is None:
+                continue
+            rows.append({
+                "player_id": pid,
+                "player":    p.get("person", {}).get("fullName", "Unknown"),
+                "team":      abbr,
+                "batting_order": int(order) if order else None,
+                "ab": si(st.get("atBats")),   "r":  si(st.get("runs")),
+                "h":  si(st.get("hits")),      "doubles": si(st.get("doubles")),
+                "triples": si(st.get("triples")), "hr": si(st.get("homeRuns")),
+                "rbi": si(st.get("rbi")),      "bb": si(st.get("baseOnBalls")),
+                "so": si(st.get("strikeOuts")), "sb": si(st.get("stolenBases")),
+                "lob": si(st.get("leftOnBase")),
+            })
+    return rows
+
+
+def parse_pitching_lines(box: dict, abbr_map: dict, decisions: dict) -> list:
+    winner_id = decisions.get("winner", {}).get("id")
+    loser_id  = decisions.get("loser",  {}).get("id")
+    save_id   = decisions.get("save",   {}).get("id")
+    rows = []
+    for side in ("home", "away"):
+        team_data = box["teams"][side]
+        abbr      = abbr_map.get(team_data["team"]["id"], "UNK")
+        players   = team_data.get("players", {})
+        for order, pid in enumerate(team_data.get("pitchers", []), start=1):
+            p  = players.get(f"ID{pid}", {})
+            st = p.get("stats", {}).get("pitching", {})
+            note = ("W" if pid == winner_id else
+                    "L" if pid == loser_id  else
+                    "S" if pid == save_id   else None)
+            rows.append({
+                "player_id":  pid,
+                "player":     p.get("person", {}).get("fullName", "Unknown"),
+                "team":       abbr,
+                "pitch_order": order,
+                "ip":  st.get("inningsPitched", "0.0"),
+                "h":   si(st.get("hits")),         "r":  si(st.get("runs")),
+                "er":  si(st.get("earnedRuns")),   "bb": si(st.get("baseOnBalls")),
+                "so":  si(st.get("strikeOuts")),   "hr": si(st.get("homeRuns")),
+                "pitches": si(st.get("pitchesThrown")) if st.get("pitchesThrown") else None,
+                "strikes":  si(st.get("strikes"))  if st.get("strikes")  else None,
+                "era":  sf(st.get("era"), None),
+                "note": note,
+            })
+    return rows
+
+
+def parse_linescore(ls: dict, home_abbr: str, away_abbr: str) -> list:
+    rows = []
+    for inning_data in ls.get("innings", []):
+        num = inning_data.get("num")
+        for side, abbr in (("home", home_abbr), ("away", away_abbr)):
+            half = inning_data.get(side, {})
+            if not half or "runs" not in half:
+                continue
+            rows.append({
+                "inning": num, "team": abbr,
+                "runs":   si(half.get("runs")),
+                "hits":   si(half.get("hits")),
+                "errors": si(half.get("errors")),
+            })
+    return rows
+
+
+def upsert_game_recap(cur, gamepk: int, game_entry: dict, box: dict, ls: dict,
+                      abbr_map: dict, decisions: dict, game_number: int) -> None:
+    teams_sched = game_entry.get("teams", {})
+    home_id   = teams_sched.get("home", {}).get("team", {}).get("id")
+    away_id   = teams_sched.get("away", {}).get("team", {}).get("id")
+    home_abbr = abbr_map.get(home_id, "UNK")
+    away_abbr = abbr_map.get(away_id, "UNK")
+    sea_is_home = (home_id == TEAM_ID)
+    opponent  = abbr_map.get(away_id if sea_is_home else home_id, "UNK")
+
+    ls_totals  = ls.get("teams", {})
+    home_score = ls_totals.get("home", {}).get("runs")
+    away_score = ls_totals.get("away", {}).get("runs")
+    sea_score  = home_score if sea_is_home else away_score
+    opp_score  = away_score if sea_is_home else home_score
+    result = ("W" if sea_score > opp_score else "L") \
+             if (sea_score is not None and opp_score is not None) else None
+
+    game_date    = datetime.date.fromisoformat(game_entry.get("gameDate", "")[:10])
+    doubleheader = game_entry.get("doubleHeader", "N")
+    status       = game_entry.get("status", {}).get("abstractGameState", "Unknown")
+
+    cur.execute("""
+        INSERT INTO games
+            (gamepk, date, season, game_number, game_type, doubleheader,
+             home_team, away_team, home_score, away_score,
+             sea_score, opp_score, opponent, result, venue,
+             winning_pitcher, losing_pitcher, save_pitcher, status)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        ON CONFLICT (gamepk) DO UPDATE SET
+            home_score=EXCLUDED.home_score, away_score=EXCLUDED.away_score,
+            sea_score=EXCLUDED.sea_score, opp_score=EXCLUDED.opp_score,
+            result=EXCLUDED.result, winning_pitcher=EXCLUDED.winning_pitcher,
+            losing_pitcher=EXCLUDED.losing_pitcher, save_pitcher=EXCLUDED.save_pitcher,
+            status=EXCLUDED.status
+    """, (
+        gamepk, game_date, SEASON, game_number, GAME_TYPE, doubleheader,
+        home_abbr, away_abbr, home_score, away_score,
+        sea_score, opp_score, opponent, result,
+        game_entry.get("venue", {}).get("name"),
+        decisions.get("winner", {}).get("fullName"),
+        decisions.get("loser",  {}).get("fullName"),
+        decisions.get("save",   {}).get("fullName"),
+        status,
+    ))
+
+    batting_rows  = parse_batting_lines(box, abbr_map)
+    pitching_rows = parse_pitching_lines(box, abbr_map, decisions)
+    ls_rows       = parse_linescore(ls, home_abbr, away_abbr)
+
+    for r in batting_rows:
+        cur.execute("""
+            INSERT INTO game_batting_lines
+                (gamepk, player_id, player, team, batting_order,
+                 ab, r, h, doubles, triples, hr, rbi, bb, so, sb, lob)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            ON CONFLICT (gamepk, player_id) DO UPDATE SET
+                ab=EXCLUDED.ab, r=EXCLUDED.r, h=EXCLUDED.h,
+                doubles=EXCLUDED.doubles, triples=EXCLUDED.triples,
+                hr=EXCLUDED.hr, rbi=EXCLUDED.rbi, bb=EXCLUDED.bb,
+                so=EXCLUDED.so, sb=EXCLUDED.sb, lob=EXCLUDED.lob
+        """, (gamepk, r["player_id"], r["player"], r["team"], r["batting_order"],
+              r["ab"], r["r"], r["h"], r["doubles"], r["triples"],
+              r["hr"], r["rbi"], r["bb"], r["so"], r["sb"], r["lob"]))
+
+    for r in pitching_rows:
+        cur.execute("""
+            INSERT INTO game_pitching_lines
+                (gamepk, player_id, player, team, pitch_order,
+                 ip, h, r, er, bb, so, hr, pitches, strikes, era, note)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            ON CONFLICT (gamepk, player_id) DO UPDATE SET
+                ip=EXCLUDED.ip, h=EXCLUDED.h, r=EXCLUDED.r, er=EXCLUDED.er,
+                bb=EXCLUDED.bb, so=EXCLUDED.so, hr=EXCLUDED.hr,
+                pitches=EXCLUDED.pitches, strikes=EXCLUDED.strikes,
+                era=EXCLUDED.era, note=EXCLUDED.note
+        """, (gamepk, r["player_id"], r["player"], r["team"], r["pitch_order"],
+              r["ip"], r["h"], r["r"], r["er"], r["bb"], r["so"], r["hr"],
+              r["pitches"], r["strikes"], r["era"], r["note"]))
+
+    for r in ls_rows:
+        cur.execute("""
+            INSERT INTO game_linescore (gamepk, inning, team, runs, hits, errors)
+            VALUES (%s,%s,%s,%s,%s,%s)
+            ON CONFLICT (gamepk, inning, team) DO UPDATE SET
+                runs=EXCLUDED.runs, hits=EXCLUDED.hits, errors=EXCLUDED.errors
+        """, (gamepk, r["inning"], r["team"], r["runs"], r["hits"], r["errors"]))
+
+
+def scrape_game_recap(session: requests.Session, conn) -> None:
+    today = datetime.date.today().isoformat()
+    data  = api_get(session, "/schedule", teamId=TEAM_ID, date=today,
+                    sportId=1, hydrate="decisions")
+    dates = data.get("dates", [])
+    if not dates:
+        return
+
+    abbr_map = get_team_abbr_map(session)
+    cur = conn.cursor()
+
+    for game_entry in dates[0].get("games", []):
+        if game_entry.get("status", {}).get("abstractGameState") != "Final":
+            continue
+
+        gamepk = game_entry.get("gamePk")
+
+        # Skip if we already have a completed result for this game
+        cur.execute("SELECT result FROM games WHERE gamepk = %s", (gamepk,))
+        row = cur.fetchone()
+        if row and row[0] is not None:
+            log.debug("Game recap already stored for gamePk=%s", gamepk)
+            continue
+
+        # Determine next sequential game number for this season
+        cur.execute("SELECT COALESCE(MAX(game_number), 0) + 1 FROM games WHERE season = %s",
+                    (SEASON,))
+        game_number = cur.fetchone()[0]
+
+        try:
+            box_resp = session.get(f"{MLB_API}/game/{gamepk}/boxscore", timeout=20)
+            box_resp.raise_for_status()
+            box = box_resp.json()
+            time.sleep(0.3)
+
+            ls_resp = session.get(f"{MLB_API}/game/{gamepk}/linescore", timeout=20)
+            ls_resp.raise_for_status()
+            ls = ls_resp.json()
+
+            upsert_game_recap(cur, gamepk, game_entry, box, ls, abbr_map,
+                              game_entry.get("decisions", {}), game_number)
+            conn.commit()
+            log.info("Game recap stored: gamePk=%s G%03d", gamepk, game_number)
+        except Exception as e:
+            log.warning("Game recap failed gamePk=%s: %s", gamepk, e)
+            conn.rollback()
+
+    cur.close()
+
+
 # ── Game State ────────────────────────────────────────────────────────────────
 def get_todays_game_state(session: requests.Session) -> Optional[str]:
     today = datetime.date.today().isoformat()
@@ -331,6 +565,7 @@ def main() -> None:
             log.info("── Scrape cycle %s ──", today)
             scrape_standings(session, conn, today)
             scrape_players(session, conn, today)
+            scrape_game_recap(session, conn)
             log.info("Cycle complete")
         except Exception as e:
             log.exception("Scrape cycle error: %s", e)
