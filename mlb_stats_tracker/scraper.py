@@ -34,8 +34,6 @@ DB_PASS = os.getenv("DB_PASS", "mlbpass")
 GAME_TYPE         = os.getenv("GAME_TYPE", "R")
 PITCHER_POSITIONS = {"P", "SP", "RP", "CP"}
 
-AL_WEST_TEAM_ABBR = {108: "LAA", 117: "HOU", 133: "ATH", 136: "SEA", 140: "TEX"}
-
 
 # ── Database ──────────────────────────────────────────────────────────────────
 def get_db():
@@ -99,42 +97,35 @@ def thirds_to_ip(thirds: int) -> float:
 
 # ── Standings ─────────────────────────────────────────────────────────────────
 def scrape_standings(session: requests.Session, conn, today: datetime.date) -> None:
-    data = api_get(session, "/standings",
-                   leagueId=103, season=SEASON, standingsTypes="regularSeason")
     cur = conn.cursor()
 
-    for division in data.get("records", []):
-        div_info = division.get("division", {})
-        div_name = div_info.get("nameShort", "")
-        is_al_west = div_info.get("id") == 200
+    for league_id in (103, 104):  # AL, NL
+        data = api_get(session, "/standings", leagueId=league_id, season=SEASON,
+                       standingsTypes="regularSeason", hydrate="team(division)")
 
-        for rec in division.get("teamRecords", []):
-            team = rec.get("team", {})
-            team_id = team.get("id")
-            team_abbr = AL_WEST_TEAM_ABBR.get(team_id, team.get("name", "UNK"))
-            wins   = rec.get("wins", 0)
-            losses = rec.get("losses", 0)
-            gb_raw = rec.get("gamesBack", "0")
-            gb = 0.0 if gb_raw in ("-", "", None) else sf(gb_raw)
+        for division in data.get("records", []):
+            for rec in division.get("teamRecords", []):
+                team      = rec.get("team", {})
+                team_id   = team.get("id")
+                team_abbr = team.get("abbreviation", "UNK")
+                div_name  = team.get("division", {}).get("nameShort", "")
+                wins      = rec.get("wins", 0)
+                losses    = rec.get("losses", 0)
+                gb_raw    = rec.get("gamesBack", "0")
+                gb        = 0.0 if gb_raw in ("-", "", None) else sf(gb_raw)
 
-            # Division standings for all AL West teams
-            if is_al_west:
                 cur.execute("""
                     INSERT INTO division_standings
                         (date, season, team, team_id, game_type, division, wins, losses, games_behind)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
                     ON CONFLICT (date, team, season, game_type) DO UPDATE SET
-                        wins = EXCLUDED.wins,
-                        losses = EXCLUDED.losses,
-                        games_behind = EXCLUDED.games_behind
+                        wins=EXCLUDED.wins, losses=EXCLUDED.losses,
+                        games_behind=EXCLUDED.games_behind
                 """, (today, SEASON, team_abbr, team_id, GAME_TYPE, div_name, wins, losses, gb))
 
-            # Full team stats for the Mariners
-            if team_id == TEAM_ID:
-                win_pct = sf(rec.get("winningPercentage"))
-                rs = sf(rec.get("runsScored"))
-                ra = sf(rec.get("runsAllowed"))
-
+                win_pct    = sf(rec.get("winningPercentage"))
+                rs         = sf(rec.get("runsScored"))
+                ra         = sf(rec.get("runsAllowed"))
                 streak_str = rec.get("streak", {}).get("streakCode", "W0")
                 try:
                     streak = int(streak_str[1:]) * (1 if streak_str[0] == "W" else -1)
@@ -144,7 +135,7 @@ def scrape_standings(session: requests.Session, conn, today: datetime.date) -> N
                 l10 = home_w = away_w = 0
                 for split in rec.get("records", {}).get("splitRecords", []):
                     if split.get("type") == "lastTen":
-                        l10 = split.get("wins", 0)
+                        l10   = split.get("wins", 0)
                     elif split.get("type") == "home":
                         home_w = split.get("wins", 0)
                     elif split.get("type") == "away":
@@ -162,9 +153,11 @@ def scrape_standings(session: requests.Session, conn, today: datetime.date) -> N
                         runs_scored=EXCLUDED.runs_scored, runs_allowed=EXCLUDED.runs_allowed,
                         streak=EXCLUDED.streak, last10_wins=EXCLUDED.last10_wins,
                         home_wins=EXCLUDED.home_wins, away_wins=EXCLUDED.away_wins
-                """, (today, SEASON, TEAM_ABBR, TEAM_ID, GAME_TYPE, div_name, wins, losses, win_pct,
+                """, (today, SEASON, team_abbr, team_id, GAME_TYPE, div_name, wins, losses, win_pct,
                       gb, rs, ra, streak, l10, home_w, away_w))
-                log.info("Team: %s-%s  GB=%.1f  Streak=%+d", wins, losses, gb, streak)
+
+                if team_id == TEAM_ID:
+                    log.info("SEA: %s-%s  GB=%.1f  Streak=%+d", wins, losses, gb, streak)
 
     conn.commit()
     cur.close()

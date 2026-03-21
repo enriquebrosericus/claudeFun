@@ -6,9 +6,9 @@
       "pluginId": "postgres"
     }
   ],
-  "title": "Mariners \u2014 Team Overview",
+  "title": "MLB \u2014 Teams",
   "uid": "mlb-sea-team",
-  "tags": ["mlb", "mariners", "baseball"],
+  "tags": ["mlb", "baseball"],
   "refresh": "5m",
   "time": {"from": "now-1y", "to": "now"},
   "timezone": "browser",
@@ -44,16 +44,35 @@
           {"selected": true, "text": "Regular Season", "value": "R"},
           {"selected": false, "text": "Spring Training", "value": "S"}
         ]
+      },
+      {
+        "name": "team",
+        "label": "Team",
+        "type": "query",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+        "query": "SELECT DISTINCT team FROM division_standings WHERE season=${season} AND game_type='R' ORDER BY team",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "hide": 0,
+        "sort": 1,
+        "current": {"selected": true, "text": "SEA", "value": "SEA"}
       }
     ]
   },
   "panels": [
     {
-      "id": 1, "type": "row", "title": "Season Record",
+      "id": 1,
+      "type": "row",
+      "title": "Season Record",
+      "collapsed": false,
+      "panels": [],
       "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}
     },
     {
-      "id": 2, "type": "stat", "title": "Wins",
+      "id": 2,
+      "type": "stat",
+      "title": "Wins",
       "gridPos": {"h": 5, "w": 4, "x": 0, "y": 1},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -61,20 +80,28 @@
           "unit": "none",
           "color": {"fixedColor": "green", "mode": "fixed"},
           "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
-        }
+        },
+        "overrides": []
       },
       "options": {
         "reduceOptions": {"calcs": ["lastNotNull"]},
-        "colorMode": "background", "graphMode": "none", "textMode": "auto"
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto"
       },
-      "targets": [{
-        "rawSql": "SELECT wins FROM team_stats WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
-        "format": "table", "refId": "A",
-        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
-      }]
+      "targets": [
+        {
+          "rawSql": "SELECT wins FROM team_stats WHERE team = '${team}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
+          "format": "table",
+          "refId": "A",
+          "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+        }
+      ]
     },
     {
-      "id": 3, "type": "stat", "title": "Losses",
+      "id": 3,
+      "type": "stat",
+      "title": "Losses",
       "gridPos": {"h": 5, "w": 4, "x": 4, "y": 1},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -82,25 +109,34 @@
           "unit": "none",
           "color": {"fixedColor": "red", "mode": "fixed"},
           "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}]}
-        }
+        },
+        "overrides": []
       },
       "options": {
         "reduceOptions": {"calcs": ["lastNotNull"]},
-        "colorMode": "background", "graphMode": "none"
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto"
       },
-      "targets": [{
-        "rawSql": "SELECT losses FROM team_stats WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
-        "format": "table", "refId": "A",
-        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
-      }]
+      "targets": [
+        {
+          "rawSql": "SELECT losses FROM team_stats WHERE team = '${team}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
+          "format": "table",
+          "refId": "A",
+          "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+        }
+      ]
     },
     {
-      "id": 4, "type": "stat", "title": "Win %",
+      "id": 4,
+      "type": "stat",
+      "title": "Win %",
       "gridPos": {"h": 5, "w": 4, "x": 8, "y": 1},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit", "decimals": 3,
+          "unit": "percentunit",
+          "decimals": 3,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -110,25 +146,34 @@
             ]
           },
           "color": {"mode": "thresholds"}
-        }
+        },
+        "overrides": []
       },
       "options": {
         "reduceOptions": {"calcs": ["lastNotNull"]},
-        "colorMode": "background", "graphMode": "area"
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto"
       },
-      "targets": [{
-        "rawSql": "SELECT win_pct FROM team_stats WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
-        "format": "table", "refId": "A",
-        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
-      }]
+      "targets": [
+        {
+          "rawSql": "SELECT win_pct FROM team_stats WHERE team = '${team}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
+          "format": "table",
+          "refId": "A",
+          "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+        }
+      ]
     },
     {
-      "id": 5, "type": "stat", "title": "Games Behind",
+      "id": 5,
+      "type": "stat",
+      "title": "Games Behind",
       "gridPos": {"h": 5, "w": 4, "x": 12, "y": 1},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
-          "unit": "none", "decimals": 1,
+          "unit": "none",
+          "decimals": 1,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -138,20 +183,28 @@
             ]
           },
           "color": {"mode": "thresholds"}
-        }
+        },
+        "overrides": []
       },
       "options": {
         "reduceOptions": {"calcs": ["lastNotNull"]},
-        "colorMode": "background", "graphMode": "none"
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto"
       },
-      "targets": [{
-        "rawSql": "SELECT games_behind FROM team_stats WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
-        "format": "table", "refId": "A",
-        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
-      }]
+      "targets": [
+        {
+          "rawSql": "SELECT games_behind FROM team_stats WHERE team = '${team}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
+          "format": "table",
+          "refId": "A",
+          "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+        }
+      ]
     },
     {
-      "id": 6, "type": "stat", "title": "Streak",
+      "id": 6,
+      "type": "stat",
+      "title": "Streak",
       "gridPos": {"h": 5, "w": 4, "x": 16, "y": 1},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -167,20 +220,28 @@
           },
           "color": {"mode": "thresholds"},
           "mappings": []
-        }
+        },
+        "overrides": []
       },
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"]},
-        "colorMode": "background", "graphMode": "none"
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "/.*/"},
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto"
       },
-      "targets": [{
-        "rawSql": "SELECT streak FROM team_stats WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
-        "format": "table", "refId": "A",
-        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
-      }]
+      "targets": [
+        {
+          "rawSql": "SELECT streak FROM team_stats WHERE team = '${team}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
+          "format": "table",
+          "refId": "A",
+          "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+        }
+      ]
     },
     {
-      "id": 7, "type": "stat", "title": "Last 10",
+      "id": 7,
+      "type": "stat",
+      "title": "Last 10",
       "gridPos": {"h": 5, "w": 4, "x": 20, "y": 1},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -195,31 +256,45 @@
             ]
           },
           "color": {"mode": "thresholds"}
-        }
+        },
+        "overrides": []
       },
       "options": {
         "reduceOptions": {"calcs": ["lastNotNull"]},
-        "colorMode": "background", "graphMode": "none"
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto"
       },
-      "targets": [{
-        "rawSql": "SELECT last10_wins FROM team_stats WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
-        "format": "table", "refId": "A",
-        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
-      }]
+      "targets": [
+        {
+          "rawSql": "SELECT last10_wins FROM team_stats WHERE team = '${team}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
+          "format": "table",
+          "refId": "A",
+          "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+        }
+      ]
     },
     {
-      "id": 10, "type": "row", "title": "Season Trends",
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 6}
+      "id": 10,
+      "type": "row",
+      "title": "Season Trends",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 7}
     },
     {
-      "id": 11, "type": "timeseries", "title": "Wins & Losses Over Season",
-      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 7},
+      "id": 11,
+      "type": "timeseries",
+      "title": "Wins & Losses Over Season",
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 8},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "drawStyle": "line", "lineWidth": 2,
-            "fillOpacity": 10, "lineInterpolation": "stepAfter"
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "lineInterpolation": "stepAfter"
           },
           "unit": "none"
         },
@@ -238,100 +313,173 @@
         "legend": {"displayMode": "table", "calcs": ["last"], "placement": "bottom", "showLegend": true},
         "tooltip": {"mode": "multi"}
       },
-      "targets": [{
-        "rawSql": "SELECT date AS \"time\", wins, losses FROM team_stats WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' AND $__timeFilter(date) ORDER BY date",
-        "format": "time_series", "refId": "A",
-        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
-      }]
+      "targets": [
+        {
+          "rawSql": "SELECT date AS \"time\", wins, losses FROM team_stats WHERE team = '${team}' AND season = ${season} AND game_type = '${game_type}' AND $__timeFilter(date) ORDER BY date",
+          "format": "time_series",
+          "refId": "A",
+          "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+        }
+      ]
     },
     {
-      "id": 12, "type": "timeseries", "title": "Run Differential",
-      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 7},
+      "id": 12,
+      "type": "timeseries",
+      "title": "Run Differential",
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 8},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "drawStyle": "line", "lineWidth": 2,
-            "fillOpacity": 20, "lineInterpolation": "stepAfter"
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "lineInterpolation": "stepAfter"
           },
           "unit": "none",
           "thresholds": {
             "mode": "absolute",
-            "steps": [{"color": "red", "value": null}, {"color": "green", "value": 0}]
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "green", "value": 0}
+            ]
           },
           "color": {"mode": "thresholds"}
-        }
+        },
+        "overrides": []
       },
       "options": {
-        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}
+        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi"}
       },
-      "targets": [{
-        "rawSql": "SELECT date AS \"time\", (runs_scored - runs_allowed) AS \"Run Differential\" FROM team_stats WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' AND $__timeFilter(date) ORDER BY date",
-        "format": "time_series", "refId": "A",
-        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
-      }]
+      "targets": [
+        {
+          "rawSql": "SELECT date AS \"time\", (runs_scored - runs_allowed) AS \"Run Differential\" FROM team_stats WHERE team = '${team}' AND season = ${season} AND game_type = '${game_type}' AND $__timeFilter(date) ORDER BY date",
+          "format": "time_series",
+          "refId": "A",
+          "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+        }
+      ]
     },
     {
-      "id": 13, "type": "row", "title": "AL West Division Race",
+      "id": 13,
+      "type": "row",
+      "title": "Division Standing",
       "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 16}
+      "panels": [],
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 18}
     },
     {
-      "id": 14, "type": "timeseries", "title": "AL West \u2014 Standings Race",
+      "id": 14,
+      "type": "table",
+      "title": "Division \u2014 Current Standings",
+      "gridPos": {"h": 8, "w": 10, "x": 0, "y": 19},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
-      "gridPos": {"h": 10, "w": 24, "x": 0, "y": 17},
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "axisLabel": "Games Ahead (0 = 1st place)",
-            "drawStyle": "line", "lineInterpolation": "stepAfter",
-            "lineWidth": 2, "fillOpacity": 5, "spanNulls": true
-          },
-          "unit": "none", "decimals": 1
+          "unit": "none"
         },
         "overrides": [
           {
-            "matcher": {"id": "byName", "options": "SEA"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#00A3E0", "mode": "fixed"}}]
+            "matcher": {"id": "byName", "options": "Team"},
+            "properties": [
+              {"id": "custom.width", "value": 60},
+              {"id": "custom.align", "value": "left"}
+            ]
           },
           {
-            "matcher": {"id": "byName", "options": "HOU"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#EB6E1F", "mode": "fixed"}}]
+            "matcher": {"id": "byName", "options": "W"},
+            "properties": [{"id": "decimals", "value": 0}]
           },
           {
-            "matcher": {"id": "byName", "options": "TEX"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#4169E1", "mode": "fixed"}}]
+            "matcher": {"id": "byName", "options": "L"},
+            "properties": [{"id": "decimals", "value": 0}]
           },
           {
-            "matcher": {"id": "byName", "options": "LAA"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#DC143C", "mode": "fixed"}}]
+            "matcher": {"id": "byName", "options": "PCT"},
+            "properties": [{"id": "decimals", "value": 3}]
           },
           {
-            "matcher": {"id": "byName", "options": "ATH"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#2E8B57", "mode": "fixed"}}]
+            "matcher": {"id": "byName", "options": "GB"},
+            "properties": [
+              {"id": "decimals", "value": 1},
+              {"id": "custom.displayMode", "value": "color-background"},
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {"color": "green", "value": null},
+                    {"color": "yellow", "value": 3},
+                    {"color": "red", "value": 8}
+                  ]
+                }
+              }
+            ]
           }
         ]
       },
       "options": {
-        "legend": {
-          "calcs": ["last", "min"], "displayMode": "table",
-          "placement": "right", "showLegend": true
+        "footer": {"show": false},
+        "sortBy": [{"displayName": "GB", "desc": false}]
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT team AS \"Team\", wins AS \"W\", losses AS \"L\", CASE WHEN wins+losses > 0 THEN ROUND(wins::numeric/(wins+losses),3) ELSE 0 END AS \"PCT\", games_behind AS \"GB\" FROM division_standings WHERE season=${season} AND game_type='R' AND division = (SELECT division FROM division_standings WHERE team='${team}' AND season=${season} AND game_type='R' ORDER BY date DESC LIMIT 1) AND date = (SELECT MAX(date) FROM division_standings WHERE season=${season} AND game_type='R') ORDER BY games_behind",
+          "format": "table",
+          "refId": "A",
+          "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Division Race \u2014 Games Ahead",
+      "gridPos": {"h": 8, "w": 14, "x": 10, "y": 19},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": true,
+            "axisLabel": "Games Ahead of 1st Place (0 = tied for 1st)"
+          },
+          "unit": "none",
+          "decimals": 1,
+          "color": {"fixedColor": "#00A3E0", "mode": "fixed"}
         },
+        "overrides": []
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
         "tooltip": {"mode": "multi", "sort": "asc"}
       },
-      "targets": [{
-        "rawSql": "SELECT date AS \"time\", MAX(CASE WHEN team = 'SEA' THEN -games_behind END) AS \"SEA\", MAX(CASE WHEN team = 'HOU' THEN -games_behind END) AS \"HOU\", MAX(CASE WHEN team = 'TEX' THEN -games_behind END) AS \"TEX\", MAX(CASE WHEN team = 'LAA' THEN -games_behind END) AS \"LAA\", MAX(CASE WHEN team = 'ATH' THEN -games_behind END) AS \"ATH\" FROM division_standings WHERE season = ${season} AND game_type = '${game_type}' AND $__timeFilter(date) GROUP BY date ORDER BY date",
-        "format": "time_series", "refId": "A",
-        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
-      }]
+      "targets": [
+        {
+          "rawSql": "SELECT date AS \"time\", -games_behind AS \"Games Ahead\" FROM division_standings WHERE team = '${team}' AND season = ${season} AND game_type = '${game_type}' AND $__timeFilter(date) ORDER BY date",
+          "format": "time_series",
+          "refId": "A",
+          "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+        }
+      ]
     },
     {
-      "id": 20, "type": "row", "title": "Batting Leaderboard",
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 27}
+      "id": 20,
+      "type": "row",
+      "title": "Batting Leaderboard",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 28}
     },
     {
-      "id": 21, "type": "table", "title": "Batters \u2014 Season Stats",
-      "gridPos": {"h": 12, "w": 24, "x": 0, "y": 28},
+      "id": 21,
+      "type": "table",
+      "title": "Batters \u2014 Season Stats",
+      "gridPos": {"h": 12, "w": 24, "x": 0, "y": 29},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {"unit": "none", "decimals": 3},
@@ -366,19 +514,28 @@
         "sortBy": [{"displayName": "OPS", "desc": true}],
         "footer": {"show": false}
       },
-      "targets": [{
-        "rawSql": "SELECT player AS \"Player\", avg AS \"AVG\", obp AS \"OBP\", slg AS \"SLG\", ops AS \"OPS\", home_runs AS \"HR\", rbi AS \"RBI\", runs AS \"R\", hits AS \"H\", stolen_bases AS \"SB\", games_played AS \"G\" FROM player_batting WHERE team = 'SEA' AND season = ${season} AND date = (SELECT MAX(date) FROM player_batting WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}') AND at_bats > 0 ORDER BY ops DESC NULLS LAST",
-        "format": "table", "refId": "A",
-        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
-      }]
+      "targets": [
+        {
+          "rawSql": "SELECT player AS \"Player\", avg AS \"AVG\", obp AS \"OBP\", slg AS \"SLG\", ops AS \"OPS\", home_runs AS \"HR\", rbi AS \"RBI\", runs AS \"R\", hits AS \"H\", stolen_bases AS \"SB\", games_played AS \"G\" FROM player_batting WHERE team = '${team}' AND season = ${season} AND date = (SELECT MAX(date) FROM player_batting WHERE team = '${team}' AND season = ${season} AND game_type = '${game_type}') AND at_bats > 0 ORDER BY ops DESC NULLS LAST",
+          "format": "table",
+          "refId": "A",
+          "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+        }
+      ]
     },
     {
-      "id": 30, "type": "row", "title": "Pitching Leaderboard",
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 40}
+      "id": 30,
+      "type": "row",
+      "title": "Pitching Leaderboard",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 42}
     },
     {
-      "id": 31, "type": "table", "title": "Pitchers \u2014 Season Stats",
-      "gridPos": {"h": 10, "w": 24, "x": 0, "y": 41},
+      "id": 31,
+      "type": "table",
+      "title": "Pitchers \u2014 Season Stats",
+      "gridPos": {"h": 10, "w": 24, "x": 0, "y": 43},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {"unit": "none", "decimals": 2},
@@ -425,13 +582,17 @@
         ]
       },
       "options": {
-        "sortBy": [{"displayName": "ERA", "desc": false}]
+        "sortBy": [{"displayName": "ERA", "desc": false}],
+        "footer": {"show": false}
       },
-      "targets": [{
-        "rawSql": "SELECT player AS \"Player\", games AS \"G\", wins AS \"W\", losses AS \"L\", saves AS \"SV\", innings_pitched AS \"IP\", strikeouts AS \"SO\", era AS \"ERA\", whip AS \"WHIP\", k9 AS \"K/9\", fip AS \"FIP\" FROM player_pitching WHERE team = 'SEA' AND season = ${season} AND date = (SELECT MAX(date) FROM player_pitching WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}') AND innings_pitched > 0 ORDER BY era ASC NULLS LAST",
-        "format": "table", "refId": "A",
-        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
-      }]
+      "targets": [
+        {
+          "rawSql": "SELECT player AS \"Player\", games AS \"G\", wins AS \"W\", losses AS \"L\", saves AS \"SV\", innings_pitched AS \"IP\", strikeouts AS \"SO\", era AS \"ERA\", whip AS \"WHIP\", k9 AS \"K/9\", fip AS \"FIP\" FROM player_pitching WHERE team = '${team}' AND season = ${season} AND date = (SELECT MAX(date) FROM player_pitching WHERE team = '${team}' AND season = ${season} AND game_type = '${game_type}') AND innings_pitched > 0 ORDER BY era ASC NULLS LAST",
+          "format": "table",
+          "refId": "A",
+          "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+        }
+      ]
     }
   ]
 }
