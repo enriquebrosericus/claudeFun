@@ -1,5 +1,6 @@
 -- MLB Stats Tracker — PostgreSQL Schema
--- Tables use (date, team/player_id, season) as natural primary keys.
+-- Tables use (date, team/player_id, season, game_type) as natural primary keys.
+-- game_type: 'R' = regular season, 'S' = spring training
 -- Scraper UPSERTs today's row each cycle; backfill scripts populate history.
 
 CREATE TABLE IF NOT EXISTS team_stats (
@@ -7,6 +8,7 @@ CREATE TABLE IF NOT EXISTS team_stats (
     season       SMALLINT     NOT NULL,
     team         VARCHAR(10)  NOT NULL,
     team_id      INT          NOT NULL,
+    game_type    VARCHAR(2)   NOT NULL DEFAULT 'R',
     division     VARCHAR(50),
     wins         INT          NOT NULL DEFAULT 0,
     losses       INT          NOT NULL DEFAULT 0,
@@ -18,7 +20,7 @@ CREATE TABLE IF NOT EXISTS team_stats (
     last10_wins  INT,
     home_wins    INT,
     away_wins    INT,
-    PRIMARY KEY (date, team, season)
+    PRIMARY KEY (date, team, season, game_type)
 );
 
 CREATE TABLE IF NOT EXISTS division_standings (
@@ -26,11 +28,12 @@ CREATE TABLE IF NOT EXISTS division_standings (
     season       SMALLINT     NOT NULL,
     team         VARCHAR(10)  NOT NULL,
     team_id      INT          NOT NULL,
+    game_type    VARCHAR(2)   NOT NULL DEFAULT 'R',
     division     VARCHAR(50)  NOT NULL,
     wins         INT          NOT NULL DEFAULT 0,
     losses       INT          NOT NULL DEFAULT 0,
     games_behind NUMERIC(4,1) NOT NULL DEFAULT 0,
-    PRIMARY KEY (date, team, season)
+    PRIMARY KEY (date, team, season, game_type)
 );
 
 CREATE TABLE IF NOT EXISTS player_batting (
@@ -39,6 +42,7 @@ CREATE TABLE IF NOT EXISTS player_batting (
     player       VARCHAR(100)  NOT NULL,
     player_id    INT           NOT NULL,
     team         VARCHAR(10)   NOT NULL,
+    game_type    VARCHAR(2)    NOT NULL DEFAULT 'R',
     position     VARCHAR(10),
     games_played INT,
     at_bats      INT,
@@ -57,7 +61,7 @@ CREATE TABLE IF NOT EXISTS player_batting (
     ops          NUMERIC(5,3),
     babip        NUMERIC(5,3),
     iso          NUMERIC(5,3),
-    PRIMARY KEY (date, player_id, season)
+    PRIMARY KEY (date, player_id, season, game_type)
 );
 
 CREATE TABLE IF NOT EXISTS player_pitching (
@@ -66,6 +70,7 @@ CREATE TABLE IF NOT EXISTS player_pitching (
     player            VARCHAR(100)  NOT NULL,
     player_id         INT           NOT NULL,
     team              VARCHAR(10)   NOT NULL,
+    game_type         VARCHAR(2)    NOT NULL DEFAULT 'R',
     position          VARCHAR(10),
     games             INT,
     wins              INT,
@@ -84,7 +89,7 @@ CREATE TABLE IF NOT EXISTS player_pitching (
     bb9               NUMERIC(5,2),
     hr9               NUMERIC(5,2),
     fip               NUMERIC(5,2),
-    PRIMARY KEY (date, player_id, season)
+    PRIMARY KEY (date, player_id, season, game_type)
 );
 
 -- Indexes for common query patterns

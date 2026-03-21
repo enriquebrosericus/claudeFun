@@ -34,11 +34,23 @@
         ]
       },
       {
+        "name": "game_type",
+        "label": "Game Type",
+        "type": "custom",
+        "query": "Regular Season : R, Spring Training : S",
+        "hide": 0,
+        "current": {"selected": true, "text": "Regular Season", "value": "R"},
+        "options": [
+          {"selected": true, "text": "Regular Season", "value": "R"},
+          {"selected": false, "text": "Spring Training", "value": "S"}
+        ]
+      },
+      {
         "name": "batter",
         "label": "Batter",
         "type": "query",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
-        "query": "SELECT DISTINCT player FROM player_batting WHERE team = 'SEA' AND season = ${season} ORDER BY player",
+        "query": "SELECT DISTINCT player FROM player_batting WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' ORDER BY player",
         "refresh": 1,
         "includeAll": false,
         "multi": false,
@@ -51,7 +63,7 @@
         "label": "Pitcher",
         "type": "query",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
-        "query": "SELECT DISTINCT player FROM player_pitching WHERE team = 'SEA' AND season = ${season} ORDER BY player",
+        "query": "SELECT DISTINCT player FROM player_pitching WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' ORDER BY player",
         "refresh": 1,
         "includeAll": false,
         "multi": false,
@@ -87,7 +99,7 @@
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
       "targets": [{
-        "rawSql": "SELECT avg FROM player_batting WHERE player = '${batter}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT avg FROM player_batting WHERE player = '${batter}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -112,7 +124,7 @@
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
       "targets": [{
-        "rawSql": "SELECT obp FROM player_batting WHERE player = '${batter}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT obp FROM player_batting WHERE player = '${batter}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -137,7 +149,7 @@
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
       "targets": [{
-        "rawSql": "SELECT slg FROM player_batting WHERE player = '${batter}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT slg FROM player_batting WHERE player = '${batter}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -163,7 +175,7 @@
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
       "targets": [{
-        "rawSql": "SELECT ops FROM player_batting WHERE player = '${batter}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT ops FROM player_batting WHERE player = '${batter}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -181,7 +193,7 @@
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
       "targets": [{
-        "rawSql": "SELECT home_runs FROM player_batting WHERE player = '${batter}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT home_runs FROM player_batting WHERE player = '${batter}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -199,7 +211,7 @@
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
       "targets": [{
-        "rawSql": "SELECT rbi FROM player_batting WHERE player = '${batter}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT rbi FROM player_batting WHERE player = '${batter}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -217,7 +229,7 @@
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
       "targets": [{
-        "rawSql": "SELECT stolen_bases FROM player_batting WHERE player = '${batter}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT stolen_bases FROM player_batting WHERE player = '${batter}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -235,7 +247,7 @@
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
       "targets": [{
-        "rawSql": "SELECT games_played FROM player_batting WHERE player = '${batter}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT games_played FROM player_batting WHERE player = '${batter}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -268,7 +280,7 @@
         "tooltip": {"mode": "multi"}
       },
       "targets": [{
-        "rawSql": "SELECT date AS \"time\", home_runs, rbi, runs FROM player_batting WHERE player = '${batter}' AND season = ${season} AND $__timeFilter(date) ORDER BY date",
+        "rawSql": "SELECT date AS \"time\", home_runs, rbi, runs FROM player_batting WHERE player = '${batter}' AND season = ${season} AND game_type = '${game_type}' AND $__timeFilter(date) ORDER BY date",
         "format": "time_series", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -291,7 +303,7 @@
         "tooltip": {"mode": "multi"}
       },
       "targets": [{
-        "rawSql": "SELECT date AS \"time\", avg, obp, slg, ops FROM player_batting WHERE player = '${batter}' AND season = ${season} AND $__timeFilter(date) ORDER BY date",
+        "rawSql": "SELECT date AS \"time\", avg, obp, slg, ops FROM player_batting WHERE player = '${batter}' AND season = ${season} AND game_type = '${game_type}' AND $__timeFilter(date) ORDER BY date",
         "format": "time_series", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -321,7 +333,7 @@
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
       "targets": [{
-        "rawSql": "SELECT era FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT era FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -346,7 +358,7 @@
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
       "targets": [{
-        "rawSql": "SELECT whip FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT whip FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -371,7 +383,7 @@
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
       "targets": [{
-        "rawSql": "SELECT fip FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT fip FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -396,7 +408,7 @@
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
       "targets": [{
-        "rawSql": "SELECT k9 FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT k9 FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -414,7 +426,7 @@
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
       "targets": [{
-        "rawSql": "SELECT wins FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT wins FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -432,7 +444,7 @@
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
       "targets": [{
-        "rawSql": "SELECT strikeouts FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT strikeouts FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -455,7 +467,7 @@
         "tooltip": {"mode": "multi"}
       },
       "targets": [{
-        "rawSql": "SELECT date AS \"time\", era, whip, fip FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} AND $__timeFilter(date) ORDER BY date",
+        "rawSql": "SELECT date AS \"time\", era, whip, fip FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} AND game_type = '${game_type}' AND $__timeFilter(date) ORDER BY date",
         "format": "time_series", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -478,7 +490,7 @@
         "tooltip": {"mode": "multi"}
       },
       "targets": [{
-        "rawSql": "SELECT date AS \"time\", strikeouts, innings_pitched FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} AND $__timeFilter(date) ORDER BY date",
+        "rawSql": "SELECT date AS \"time\", strikeouts, innings_pitched FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} AND game_type = '${game_type}' AND $__timeFilter(date) ORDER BY date",
         "format": "time_series", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]

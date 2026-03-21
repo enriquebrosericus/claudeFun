@@ -82,13 +82,13 @@ def main():
 
                 cur.execute("""
                     INSERT INTO division_standings
-                        (date, season, team, team_id, division, wins, losses, games_behind)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (date, team, season) DO UPDATE SET
+                        (date, season, team, team_id, game_type, division, wins, losses, games_behind)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (date, team, season, game_type) DO UPDATE SET
                         wins = EXCLUDED.wins,
                         losses = EXCLUDED.losses,
                         games_behind = EXCLUDED.games_behind
-                """, (current, SEASON, team_abbr, team_id, "AL West", wins, losses, gb))
+                """, (current, SEASON, team_abbr, team_id, "R", "AL West", wins, losses, gb))
 
             conn.commit()
             days_inserted += 1

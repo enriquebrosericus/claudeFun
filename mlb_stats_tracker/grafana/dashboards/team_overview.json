@@ -32,6 +32,18 @@
           {"selected": true, "text": "2025", "value": "2025"},
           {"selected": false, "text": "2026", "value": "2026"}
         ]
+      },
+      {
+        "name": "game_type",
+        "label": "Game Type",
+        "type": "custom",
+        "query": "Regular Season : R, Spring Training : S",
+        "hide": 0,
+        "current": {"selected": true, "text": "Regular Season", "value": "R"},
+        "options": [
+          {"selected": true, "text": "Regular Season", "value": "R"},
+          {"selected": false, "text": "Spring Training", "value": "S"}
+        ]
       }
     ]
   },
@@ -56,7 +68,7 @@
         "colorMode": "background", "graphMode": "none", "textMode": "auto"
       },
       "targets": [{
-        "rawSql": "SELECT wins FROM team_stats WHERE team = 'SEA' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT wins FROM team_stats WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -77,7 +89,7 @@
         "colorMode": "background", "graphMode": "none"
       },
       "targets": [{
-        "rawSql": "SELECT losses FROM team_stats WHERE team = 'SEA' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT losses FROM team_stats WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -105,7 +117,7 @@
         "colorMode": "background", "graphMode": "area"
       },
       "targets": [{
-        "rawSql": "SELECT win_pct FROM team_stats WHERE team = 'SEA' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT win_pct FROM team_stats WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -133,7 +145,7 @@
         "colorMode": "background", "graphMode": "none"
       },
       "targets": [{
-        "rawSql": "SELECT games_behind FROM team_stats WHERE team = 'SEA' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT games_behind FROM team_stats WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -162,7 +174,7 @@
         "colorMode": "background", "graphMode": "none"
       },
       "targets": [{
-        "rawSql": "SELECT streak FROM team_stats WHERE team = 'SEA' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT streak FROM team_stats WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -190,7 +202,7 @@
         "colorMode": "background", "graphMode": "none"
       },
       "targets": [{
-        "rawSql": "SELECT last10_wins FROM team_stats WHERE team = 'SEA' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "rawSql": "SELECT last10_wins FROM team_stats WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' ORDER BY date DESC LIMIT 1",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -227,7 +239,7 @@
         "tooltip": {"mode": "multi"}
       },
       "targets": [{
-        "rawSql": "SELECT date AS \"time\", wins, losses FROM team_stats WHERE team = 'SEA' AND season = ${season} AND $__timeFilter(date) ORDER BY date",
+        "rawSql": "SELECT date AS \"time\", wins, losses FROM team_stats WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' AND $__timeFilter(date) ORDER BY date",
         "format": "time_series", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -254,7 +266,7 @@
         "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}
       },
       "targets": [{
-        "rawSql": "SELECT date AS \"time\", (runs_scored - runs_allowed) AS \"Run Differential\" FROM team_stats WHERE team = 'SEA' AND season = ${season} AND $__timeFilter(date) ORDER BY date",
+        "rawSql": "SELECT date AS \"time\", (runs_scored - runs_allowed) AS \"Run Differential\" FROM team_stats WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}' AND $__timeFilter(date) ORDER BY date",
         "format": "time_series", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -308,7 +320,7 @@
         "tooltip": {"mode": "multi", "sort": "asc"}
       },
       "targets": [{
-        "rawSql": "SELECT date AS \"time\", MAX(CASE WHEN team = 'SEA' THEN -games_behind END) AS \"SEA\", MAX(CASE WHEN team = 'HOU' THEN -games_behind END) AS \"HOU\", MAX(CASE WHEN team = 'TEX' THEN -games_behind END) AS \"TEX\", MAX(CASE WHEN team = 'LAA' THEN -games_behind END) AS \"LAA\", MAX(CASE WHEN team = 'ATH' THEN -games_behind END) AS \"ATH\" FROM division_standings WHERE season = ${season} AND $__timeFilter(date) GROUP BY date ORDER BY date",
+        "rawSql": "SELECT date AS \"time\", MAX(CASE WHEN team = 'SEA' THEN -games_behind END) AS \"SEA\", MAX(CASE WHEN team = 'HOU' THEN -games_behind END) AS \"HOU\", MAX(CASE WHEN team = 'TEX' THEN -games_behind END) AS \"TEX\", MAX(CASE WHEN team = 'LAA' THEN -games_behind END) AS \"LAA\", MAX(CASE WHEN team = 'ATH' THEN -games_behind END) AS \"ATH\" FROM division_standings WHERE season = ${season} AND game_type = '${game_type}' AND $__timeFilter(date) GROUP BY date ORDER BY date",
         "format": "time_series", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -355,7 +367,7 @@
         "footer": {"show": false}
       },
       "targets": [{
-        "rawSql": "SELECT player AS \"Player\", avg AS \"AVG\", obp AS \"OBP\", slg AS \"SLG\", ops AS \"OPS\", home_runs AS \"HR\", rbi AS \"RBI\", runs AS \"R\", hits AS \"H\", stolen_bases AS \"SB\", games_played AS \"G\" FROM player_batting WHERE team = 'SEA' AND season = ${season} AND date = (SELECT MAX(date) FROM player_batting WHERE team = 'SEA' AND season = ${season}) AND at_bats > 0 ORDER BY ops DESC NULLS LAST",
+        "rawSql": "SELECT player AS \"Player\", avg AS \"AVG\", obp AS \"OBP\", slg AS \"SLG\", ops AS \"OPS\", home_runs AS \"HR\", rbi AS \"RBI\", runs AS \"R\", hits AS \"H\", stolen_bases AS \"SB\", games_played AS \"G\" FROM player_batting WHERE team = 'SEA' AND season = ${season} AND date = (SELECT MAX(date) FROM player_batting WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}') AND at_bats > 0 ORDER BY ops DESC NULLS LAST",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]
@@ -416,7 +428,7 @@
         "sortBy": [{"displayName": "ERA", "desc": false}]
       },
       "targets": [{
-        "rawSql": "SELECT player AS \"Player\", games AS \"G\", wins AS \"W\", losses AS \"L\", saves AS \"SV\", innings_pitched AS \"IP\", strikeouts AS \"SO\", era AS \"ERA\", whip AS \"WHIP\", k9 AS \"K/9\", fip AS \"FIP\" FROM player_pitching WHERE team = 'SEA' AND season = ${season} AND date = (SELECT MAX(date) FROM player_pitching WHERE team = 'SEA' AND season = ${season}) AND innings_pitched > 0 ORDER BY era ASC NULLS LAST",
+        "rawSql": "SELECT player AS \"Player\", games AS \"G\", wins AS \"W\", losses AS \"L\", saves AS \"SV\", innings_pitched AS \"IP\", strikeouts AS \"SO\", era AS \"ERA\", whip AS \"WHIP\", k9 AS \"K/9\", fip AS \"FIP\" FROM player_pitching WHERE team = 'SEA' AND season = ${season} AND date = (SELECT MAX(date) FROM player_pitching WHERE team = 'SEA' AND season = ${season} AND game_type = '${game_type}') AND innings_pitched > 0 ORDER BY era ASC NULLS LAST",
         "format": "table", "refId": "A",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
       }]

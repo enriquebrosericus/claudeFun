@@ -103,12 +103,12 @@ def backfill_batter(cur, person_id: int, name: str, pos: str) -> int:
 
         cur.execute("""
             INSERT INTO player_batting
-                (date, season, player, player_id, team, position,
+                (date, season, player, player_id, team, game_type, position,
                  games_played, at_bats, hits, home_runs, rbi, runs,
                  walks, strikeouts, stolen_bases, doubles, triples,
                  avg, obp, slg, ops, babip, iso)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-            ON CONFLICT (date, player_id, season) DO UPDATE SET
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            ON CONFLICT (date, player_id, season, game_type) DO UPDATE SET
                 games_played=EXCLUDED.games_played, at_bats=EXCLUDED.at_bats,
                 hits=EXCLUDED.hits, home_runs=EXCLUDED.home_runs, rbi=EXCLUDED.rbi,
                 runs=EXCLUDED.runs, walks=EXCLUDED.walks, strikeouts=EXCLUDED.strikeouts,
@@ -116,7 +116,7 @@ def backfill_batter(cur, person_id: int, name: str, pos: str) -> int:
                 triples=EXCLUDED.triples, avg=EXCLUDED.avg, obp=EXCLUDED.obp,
                 slg=EXCLUDED.slg, ops=EXCLUDED.ops, babip=EXCLUDED.babip,
                 iso=EXCLUDED.iso
-        """, (date, SEASON, name, person_id, TEAM_ABBR, pos,
+        """, (date, SEASON, name, person_id, TEAM_ABBR, "R", pos,
               cum_g, cum_ab, cum_h, cum_hr, cum_rbi, cum_r,
               cum_bb, cum_k, cum_sb, cum_2b, cum_3b,
               avg, obp, slg, ops, babip, round(slg - avg, 3)))
@@ -167,12 +167,12 @@ def backfill_pitcher(cur, person_id: int, name: str, pos: str) -> int:
 
         cur.execute("""
             INSERT INTO player_pitching
-                (date, season, player, player_id, team, position,
+                (date, season, player, player_id, team, game_type, position,
                  games, wins, losses, saves, holds, quality_starts,
                  innings_pitched, strikeouts, walks, home_runs_allowed, earned_runs,
                  era, whip, k9, bb9, hr9, fip)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-            ON CONFLICT (date, player_id, season) DO UPDATE SET
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            ON CONFLICT (date, player_id, season, game_type) DO UPDATE SET
                 games=EXCLUDED.games, wins=EXCLUDED.wins, losses=EXCLUDED.losses,
                 saves=EXCLUDED.saves, holds=EXCLUDED.holds,
                 quality_starts=EXCLUDED.quality_starts,
@@ -180,7 +180,7 @@ def backfill_pitcher(cur, person_id: int, name: str, pos: str) -> int:
                 walks=EXCLUDED.walks, home_runs_allowed=EXCLUDED.home_runs_allowed,
                 earned_runs=EXCLUDED.earned_runs, era=EXCLUDED.era, whip=EXCLUDED.whip,
                 k9=EXCLUDED.k9, bb9=EXCLUDED.bb9, hr9=EXCLUDED.hr9, fip=EXCLUDED.fip
-        """, (date, SEASON, name, person_id, TEAM_ABBR, pos,
+        """, (date, SEASON, name, person_id, TEAM_ABBR, "R", pos,
               cum_g, cum_w, cum_l, cum_sv, cum_hld, cum_qs,
               cum_ip, cum_so, cum_bb, cum_hr, cum_er,
               era, whip, k9, bb9, hr9, fip))

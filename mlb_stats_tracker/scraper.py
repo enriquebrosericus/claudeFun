@@ -31,6 +31,7 @@ DB_NAME = os.getenv("DB_NAME", "mlb_stats")
 DB_USER = os.getenv("DB_USER", "mlb")
 DB_PASS = os.getenv("DB_PASS", "mlbpass")
 
+GAME_TYPE         = os.getenv("GAME_TYPE", "R")
 PITCHER_POSITIONS = {"P", "SP", "RP", "CP"}
 
 AL_WEST_TEAM_ABBR = {108: "LAA", 117: "HOU", 133: "ATH", 136: "SEA", 140: "TEX"}
@@ -113,13 +114,13 @@ def scrape_standings(session: requests.Session, conn, today: datetime.date) -> N
             if is_al_west:
                 cur.execute("""
                     INSERT INTO division_standings
-                        (date, season, team, team_id, division, wins, losses, games_behind)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (date, team, season) DO UPDATE SET
+                        (date, season, team, team_id, game_type, division, wins, losses, games_behind)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (date, team, season, game_type) DO UPDATE SET
                         wins = EXCLUDED.wins,
                         losses = EXCLUDED.losses,
                         games_behind = EXCLUDED.games_behind
-                """, (today, SEASON, team_abbr, team_id, div_name, wins, losses, gb))
+                """, (today, SEASON, team_abbr, team_id, GAME_TYPE, div_name, wins, losses, gb))
 
             # Full team stats for the Mariners
             if team_id == TEAM_ID:
@@ -144,17 +145,17 @@ def scrape_standings(session: requests.Session, conn, today: datetime.date) -> N
 
                 cur.execute("""
                     INSERT INTO team_stats
-                        (date, season, team, team_id, division, wins, losses, win_pct,
+                        (date, season, team, team_id, game_type, division, wins, losses, win_pct,
                          games_behind, runs_scored, runs_allowed, streak,
                          last10_wins, home_wins, away_wins)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                    ON CONFLICT (date, team, season) DO UPDATE SET
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    ON CONFLICT (date, team, season, game_type) DO UPDATE SET
                         wins=EXCLUDED.wins, losses=EXCLUDED.losses,
                         win_pct=EXCLUDED.win_pct, games_behind=EXCLUDED.games_behind,
                         runs_scored=EXCLUDED.runs_scored, runs_allowed=EXCLUDED.runs_allowed,
                         streak=EXCLUDED.streak, last10_wins=EXCLUDED.last10_wins,
                         home_wins=EXCLUDED.home_wins, away_wins=EXCLUDED.away_wins
-                """, (today, SEASON, TEAM_ABBR, TEAM_ID, div_name, wins, losses, win_pct,
+                """, (today, SEASON, TEAM_ABBR, TEAM_ID, GAME_TYPE, div_name, wins, losses, win_pct,
                       gb, rs, ra, streak, l10, home_w, away_w))
                 log.info("Team: %s-%s  GB=%.1f  Streak=%+d", wins, losses, gb, streak)
 
@@ -194,12 +195,12 @@ def upsert_batter(cur, today, player_id, name, pos, stat) -> None:
     slg = sf(stat.get("slg"))
     cur.execute("""
         INSERT INTO player_batting
-            (date, season, player, player_id, team, position,
+            (date, season, player, player_id, team, game_type, position,
              games_played, at_bats, hits, home_runs, rbi, runs,
              walks, strikeouts, stolen_bases, doubles, triples,
              avg, obp, slg, ops, babip, iso)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        ON CONFLICT (date, player_id, season) DO UPDATE SET
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        ON CONFLICT (date, player_id, season, game_type) DO UPDATE SET
             games_played=EXCLUDED.games_played, at_bats=EXCLUDED.at_bats,
             hits=EXCLUDED.hits, home_runs=EXCLUDED.home_runs,
             rbi=EXCLUDED.rbi, runs=EXCLUDED.runs,
@@ -209,7 +210,7 @@ def upsert_batter(cur, today, player_id, name, pos, stat) -> None:
             slg=EXCLUDED.slg, ops=EXCLUDED.ops, babip=EXCLUDED.babip,
             iso=EXCLUDED.iso
     """, (
-        today, SEASON, name, player_id, TEAM_ABBR, pos,
+        today, SEASON, name, player_id, TEAM_ABBR, GAME_TYPE, pos,
         int(sf(stat.get("gamesPlayed"))), int(sf(stat.get("atBats"))),
         int(sf(stat.get("hits"))), int(sf(stat.get("homeRuns"))),
         int(sf(stat.get("rbi"))), int(sf(stat.get("runs"))),
@@ -229,12 +230,12 @@ def upsert_pitcher(cur, today, player_id, name, pos, stat) -> None:
     fip    = round(((13 * hr + 3 * bb - 2 * so) / ip) + 3.10, 2) if ip > 0 else None
     cur.execute("""
         INSERT INTO player_pitching
-            (date, season, player, player_id, team, position,
+            (date, season, player, player_id, team, game_type, position,
              games, wins, losses, saves, holds, quality_starts,
              innings_pitched, strikeouts, walks, home_runs_allowed, earned_runs,
              era, whip, k9, bb9, hr9, fip)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        ON CONFLICT (date, player_id, season) DO UPDATE SET
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        ON CONFLICT (date, player_id, season, game_type) DO UPDATE SET
             games=EXCLUDED.games, wins=EXCLUDED.wins, losses=EXCLUDED.losses,
             saves=EXCLUDED.saves, holds=EXCLUDED.holds,
             quality_starts=EXCLUDED.quality_starts,
@@ -244,7 +245,7 @@ def upsert_pitcher(cur, today, player_id, name, pos, stat) -> None:
             whip=EXCLUDED.whip, k9=EXCLUDED.k9, bb9=EXCLUDED.bb9,
             hr9=EXCLUDED.hr9, fip=EXCLUDED.fip
     """, (
-        today, SEASON, name, player_id, TEAM_ABBR, pos,
+        today, SEASON, name, player_id, TEAM_ABBR, GAME_TYPE, pos,
         int(sf(stat.get("gamesPitched"))), int(sf(stat.get("wins"))),
         int(sf(stat.get("losses"))), int(sf(stat.get("saves"))),
         int(sf(stat.get("holds"))), int(sf(stat.get("qualityStarts"))),
