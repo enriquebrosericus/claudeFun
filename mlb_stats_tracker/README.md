@@ -1,6 +1,6 @@
-# Seattle Mariners Stats Tracker
+# MLB Stats Tracker
 
-Tracks Seattle Mariners player and team statistics using the official MLB Stats API, stores them as Prometheus metrics, and visualizes them in Grafana dashboards — automatically updated after every game.
+Tracks MLB player and team statistics using the official MLB Stats API, stores them in PostgreSQL, and visualizes them across four Grafana dashboards — automatically updated after every game.
 
 ---
 
@@ -10,41 +10,42 @@ Tracks Seattle Mariners player and team statistics using the official MLB Stats 
 flowchart LR
     subgraph Internet
         MLB["⚾ MLB Stats API\nstatsapi.mlb.com\n(free, no auth)"]
+        AI["🤖 Claude API\n(game summaries)"]
     end
 
     subgraph Docker Network: monitoring
         subgraph Scraper Container
             PY["🐍 scraper.py"]
-            SCHED["Smart Scheduler\n30min baseline\n5min post-game\n10min live"]
-            PROM_CLIENT["prometheus_client\n:8001/metrics"]
+            SCHED["Smart Scheduler\n30min off-day\n10min live\n5min post-game"]
             PY --> SCHED
-            PY -- "updates metrics" --> PROM_CLIENT
         end
 
-        subgraph Prometheus Container
-            PROM["📈 Prometheus\n:9091\n365-day retention"]
+        subgraph Postgres Container
+            PG["🐘 PostgreSQL 16\n:5433\nmlb_stats DB"]
         end
 
         subgraph Grafana Container
-            GRAF["📊 Grafana\n:3001"]
-            D1["Team Overview\ndashboard"]
-            D2["Player Detail\ndashboard"]
-            GRAF --> D1
-            GRAF --> D2
+            GRAF["📊 Grafana 10\n:3001"]
+            D1["MLB — Teams"]
+            D2["MLB — Player Stats"]
+            D3["Mariners — Game Recap"]
+            D4["MLB — Division Race"]
+            GRAF --> D1 & D2 & D3 & D4
         end
     end
 
-    subgraph Host Browser
+    subgraph Host
         USER["👤 You"]
+        BF["Backfill Scripts\n(run once)"]
     end
 
-    MLB -- "roster + player stats\nteam standings" --> PY
-    SCHED -- "polls game status\n(Preview/Live/Final)" --> MLB
-    PROM -- "scrapes /metrics\nevery 60s" --> PROM_CLIENT
-    GRAF -- "PromQL queries" --> PROM
+    MLB -- "standings · rosters\nplayer stats · box scores" --> PY
+    PY -- "UPSERT" --> PG
+    BF -- "historical data\n(full season)" --> PG
+    AI -- "game recap summaries" --> PG
+    GRAF -- "SQL queries" --> PG
     USER -- "localhost:3001" --> GRAF
-    USER -. "localhost:9091" .-> PROM
-    USER -. "localhost:8001/metrics" .-> PROM_CLIENT
+    USER -. "localhost:5433" .-> PG
 ```
 
 ---
@@ -55,36 +56,29 @@ flowchart LR
 sequenceDiagram
     participant S as Scraper
     participant MLB as MLB Stats API
-    participant P as Prometheus
+    participant PG as PostgreSQL
     participant G as Grafana
 
-    loop Every 30 min (adaptive)
+    loop Every 5–30 min (adaptive)
         S->>MLB: GET /schedule?teamId=136&date=today
-        MLB-->>S: Game status (Preview/Live/Final)
+        MLB-->>S: Game status (Preview / Live / Final)
 
-        alt Game is Final
-            Note over S: shorten next sleep to 5 min
-        else Game is Live
-            Note over S: shorten next sleep to 10 min
+        S->>MLB: GET /standings?leagueId=103,104&hydrate=team(division)
+        MLB-->>S: All 30 teams — W/L/GB/division
+        S->>PG: UPSERT division_standings + team_stats
+
+        S->>MLB: GET /teams/136/roster + /people/{id}/stats
+        MLB-->>S: Season batting + pitching stats
+        S->>PG: UPSERT player_batting + player_pitching
+
+        alt Game is Final (and not yet recorded)
+            S->>MLB: GET /schedule?gamePk=X&hydrate=decisions
+            MLB-->>S: Box score + W/L/S decisions
+            S->>PG: UPSERT games + batting/pitching lines + linescore
         end
 
-        S->>MLB: GET /teams/136/roster?rosterType=active
-        MLB-->>S: Active roster (25 players)
-
-        loop For each player
-            S->>MLB: GET /people/{id}/stats?group=hitting|pitching
-            MLB-->>S: Season stats
-            S->>S: Update Prometheus Gauges
-        end
-
-        S->>MLB: GET /standings?leagueId=103
-        MLB-->>S: AL standings (W/L/GB/streak)
-        S->>S: Update team metrics
-
-        P->>S: GET /metrics
-        S-->>P: Prometheus text format
-        G->>P: PromQL queries
-        P-->>G: Time-series data
+        G->>PG: SQL queries
+        PG-->>G: Result sets → dashboards
     end
 ```
 
@@ -94,11 +88,11 @@ sequenceDiagram
 
 | Service | Purpose |
 |---|---|
-| Python scraper | Pulls from MLB Stats API, updates metrics each cycle |
+| Python scraper | Polls MLB Stats API, upserts to Postgres each cycle |
 | [MLB Stats API](https://statsapi.mlb.com) | Official free API — no key required |
-| [prometheus_client](https://github.com/prometheus/client_python) | Exposes metrics at `:8001/metrics` |
-| [Prometheus](https://prometheus.io) | Scrapes and stores 365 days of history |
-| [Grafana](https://grafana.com) | Two dashboards: team overview + player drill-down |
+| [PostgreSQL 16](https://www.postgresql.org) | Stores all historical stats |
+| [Grafana 10](https://grafana.com) | Four dashboards using PostgreSQL datasource |
+| [Claude API](https://anthropic.com) | Generates AI game recap summaries (optional) |
 
 ---
 
@@ -112,125 +106,96 @@ docker compose up -d
 | URL | What |
 |---|---|
 | http://localhost:3001 | Grafana (admin / admin) |
-| http://localhost:9091 | Prometheus UI |
-| http://localhost:8001/metrics | Raw Prometheus metrics |
+| http://localhost:5433 | PostgreSQL (mlb / mlbpass) |
 
-Both Grafana dashboards load automatically on first boot.
+All four Grafana dashboards load automatically on first boot.
+
+### Backfill historical data (run once after first boot)
+
+```bash
+# Full season standings for all 30 teams
+docker exec -it mlb_stats_scraper python backfill_standings.py
+
+# Full season batting + pitching stats for SEA roster
+docker exec -it mlb_stats_scraper python backfill_player_stats.py
+
+# Box scores for all 162 Mariners regular season games
+docker exec -it mlb_stats_scraper python backfill_game_recaps.py
+
+# Optionally add spring training game recaps
+docker exec -it mlb_stats_scraper python backfill_spring_training.py
+```
+
+### Generate AI game summaries (requires Anthropic API key)
+
+```bash
+ANTHROPIC_API_KEY=sk-... docker exec -it mlb_stats_scraper python backfill_game_recaps.py
+```
 
 ---
 
-## Metrics
-
-### Batting (per player)
+## Database Schema
 
 ```
-mlb_player_batting_avg          Batting average (AVG)
-mlb_player_obp                  On-base percentage
-mlb_player_slg                  Slugging percentage
-mlb_player_ops                  OPS (OBP + SLG)
-mlb_player_iso                  Isolated power (SLG - AVG)
-mlb_player_babip                BABIP
-mlb_player_home_runs_total      Home runs
-mlb_player_rbi_total            Runs batted in
-mlb_player_hits_total           Hits
-mlb_player_at_bats_total        At bats
-mlb_player_runs_total           Runs scored
-mlb_player_walks_total          Walks (BB)
-mlb_player_strikeouts_total     Strikeouts
-mlb_player_stolen_bases_total   Stolen bases
-mlb_player_doubles_total        Doubles
-mlb_player_triples_total        Triples
-mlb_player_games_played_total   Games played
+team_stats          date · season · team · wins · losses · win_pct · GB · streak · …
+division_standings  date · season · team · division · wins · losses · GB
+player_batting      date · season · player_id · AVG · OBP · SLG · OPS · HR · RBI · …
+player_pitching     date · season · player_id · ERA · WHIP · FIP · K/9 · W · L · SV · …
+games               gamepk · date · home/away · score · result · W/L/S pitchers
+game_batting_lines  gamepk · player_id · AB · H · HR · RBI · BB · SO · …
+game_pitching_lines gamepk · player_id · IP · H · R · ER · BB · SO · ERA · note (W/L/S)
+game_linescore      gamepk · inning · team · runs · hits · errors
+game_summaries      gamepk · ai_summary (Claude-generated recap text)
 ```
 
-### Pitching (per player)
-
-```
-mlb_pitcher_era                 Earned run average
-mlb_pitcher_whip                WHIP (walks + hits per inning)
-mlb_pitcher_fip                 FIP (fielding independent pitching)*
-mlb_pitcher_wins_total          Wins
-mlb_pitcher_losses_total        Losses
-mlb_pitcher_saves_total         Saves
-mlb_pitcher_holds_total         Holds
-mlb_pitcher_strikeouts_total    Strikeouts
-mlb_pitcher_walks_total         Walks allowed
-mlb_pitcher_innings_pitched     Innings pitched
-mlb_pitcher_k9                  Strikeouts per 9 innings
-mlb_pitcher_bb9                 Walks per 9 innings
-mlb_pitcher_hr9                 Home runs per 9 innings
-mlb_pitcher_games_total         Games pitched
-mlb_pitcher_quality_starts_total Quality starts
-```
-
-> *FIP is calculated client-side: `((13×HR + 3×BB − 2×SO) / IP) + 3.10`
-
-### Team
-
-```
-mlb_team_wins_total             Season wins
-mlb_team_losses_total           Season losses
-mlb_team_win_pct                Win percentage
-mlb_team_games_behind           Games behind division leader (0 = first place)
-mlb_team_runs_scored_total      Runs scored (season)
-mlb_team_runs_allowed_total     Runs allowed (season)
-mlb_team_streak                 Current streak (+N = win streak, −N = loss streak)
-mlb_team_home_wins_total        Home wins
-mlb_team_away_wins_total        Away wins
-mlb_team_last10_wins            Wins in last 10 games
-```
-
-All player metrics are labeled with `team`, `player`, `player_id`, and `position`.
-All team metrics are labeled with `team`, `team_id`, and `division`.
+All tables use `ON CONFLICT … DO UPDATE` — safe to re-run backfills or scrape repeatedly.
 
 ---
 
 ## Grafana Dashboards
 
-### Team Overview (`localhost:3001`)
+### MLB — Teams (`/d/mlb-sea-team`)
 
-```mermaid
-graph TD
-    A[Team Overview Dashboard]
-    A --> B[Season Record Row]
-    B --> B1[Wins]
-    B --> B2[Losses]
-    B --> B3[Win %]
-    B --> B4[Games Behind]
-    B --> B5[Streak]
-    B --> B6[Last 10]
+Team dropdown covers all 30 MLB teams.
 
-    A --> C[Season Trends Row]
-    C --> C1[Wins & Losses over time]
-    C --> C2[Run Differential chart]
-
-    A --> D[Batting Leaderboard]
-    D --> D1[Table: AVG / OBP / SLG / OPS / HR / RBI / R / H / SB\nsorted by OPS · OPS color-coded green→red]
-
-    A --> E[Pitching Leaderboard]
-    E --> E1[Table: ERA / WHIP / FIP / W / L / SV / SO / IP / K9\nsorted by ERA · ERA+WHIP color-coded]
+```
+Season Record      Wins · Losses · Win% · GB · Streak · Last 10
+Season Trends      Wins & losses over time · Run differential
+Batting Leaders    AVG / OBP / SLG / OPS / HR / RBI (color-coded)
+Pitching Leaders   ERA / WHIP / FIP / W / L / SV / K9
+Division Context   Selected team's games-behind progression
 ```
 
-### Player Detail (`localhost:3001/d/mlb-sea-player`)
+### MLB — Player Stats (`/d/mlb-sea-player`)
 
-```mermaid
-graph TD
-    A[Player Detail Dashboard]
-    A --> V1[$batter dropdown — all position players]
-    A --> V2[$pitcher dropdown — all pitchers]
+Per-player drill-down with `$batter` and `$pitcher` dropdowns.
 
-    A --> B[Batter Section]
-    B --> B1[Stat pills: AVG · OBP · SLG · OPS · HR · RBI · SB · G]
-    B --> B2[AVG / OBP / SLG over season]
-    B --> B3[HR & RBI & R over season]
-    B --> B4[Projected HR pace / 162 games]
-    B --> B5[ISO & BABIP trends]
+```
+Batter   AVG · OBP · SLG · OPS · ISO · BABIP over season
+         HR & RBI & Runs accumulation · projected HR pace
+Pitcher  ERA · WHIP · FIP over season · K/9 vs BB/9 trends
+```
 
-    A --> C[Pitcher Section]
-    C --> C1[Stat pills: ERA · WHIP · FIP · K/9 · W · SO]
-    C --> C2[ERA / FIP / WHIP over season]
-    C --> C3[K/9 vs BB/9 over season]
-    C --> C4[Strikeouts & IP accumulation]
+### Mariners — Game Recap (`/d/mlb-sea-recap`)
+
+Select any game from the season by date (e.g. `Mar 28  vs ATH  (W 4-2)`).
+
+```
+Game Header    Result · Date/Venue · Winning · Losing · Save pitcher
+Line Score     Inning-by-inning runs/hits/errors
+Box Score      Full batting lines (AB/H/HR/RBI/BB/SO/SB)
+               Full pitching lines (IP/H/R/ER/BB/K/ERA)
+AI Summary     Claude-generated 3-paragraph game recap
+```
+
+### MLB — Division Race (`/d/mlb-division-race`)
+
+All six divisions side-by-side.
+
+```
+Each division:
+  Standings table   W / L / PCT / GB (current snapshot)
+  Race chart        Games-behind progression for all 5 teams over the season
 ```
 
 ---
@@ -241,10 +206,10 @@ The scraper adapts its sleep interval based on today's game status:
 
 | Game State | Next Poll |
 |---|---|
-| No game today | 30 min (default) |
+| No game today | 30 min |
 | `Preview` (upcoming) | 30 min |
 | `Live` (in progress) | 10 min |
-| `Final` (just ended) | 5 min — catches box score finalization |
+| `Final` (just ended) | 5 min |
 
 ---
 
@@ -255,22 +220,46 @@ Set via environment variables in `docker-compose.yml`:
 | Variable | Default | Description |
 |---|---|---|
 | `TEAM_ID` | `136` | MLB team ID (136 = Mariners) |
-| `TEAM_ABBR` | `SEA` | Short label used in all metric labels |
-| `SEASON` | current year | Season to pull stats for |
-| `POLL_INTERVAL` | `1800` | Baseline seconds between scrapes |
-| `METRICS_PORT` | `8001` | Port for `/metrics` endpoint |
+| `TEAM_ABBR` | `SEA` | Team abbreviation used in game recap queries |
+| `SEASON` | `2025` | Season to track |
+| `DB_HOST` | `postgres` | PostgreSQL host |
+| `DB_NAME` | `mlb_stats` | Database name |
+| `DB_USER` | `mlb` | Database user |
+| `DB_PASS` | `mlbpass` | Database password |
+| `ANTHROPIC_API_KEY` | _(unset)_ | Required only for AI game summaries |
 
 ### Track a different team
 
 1. Find the team ID at `https://statsapi.mlb.com/api/v1/teams?sportId=1`
 2. Update `docker-compose.yml`:
-```yaml
-environment:
-  TEAM_ID: "117"        # Houston Astros, for example
-  TEAM_ABBR: "HOU"
-```
-3. Update the hardcoded `team="SEA"` PromQL filters in the Grafana dashboard JSON
+   ```yaml
+   environment:
+     TEAM_ID: "117"
+     TEAM_ABBR: "HOU"
+   ```
+3. Update `team='SEA'` filters in `game_recap.json` dashboard panels
 4. `docker compose up -d --build`
+
+---
+
+## Tests
+
+```bash
+cd mlb_stats_tracker
+pip install pytest
+pytest tests/ -v
+```
+
+133 unit tests covering:
+
+| File | What's tested |
+|---|---|
+| `test_conversions.py` | `sf()` / `si()` safe casts, `ip_to_thirds()` / `thirds_to_ip()` |
+| `test_parse_boxscore.py` | `parse_batting_lines`, `parse_pitching_lines`, `parse_linescore` |
+| `test_format_text.py` | `format_linescore_text`, `format_batting_text`, `format_pitching_text` |
+| `test_game_label.py` | Grafana dropdown label expression — NULL-safety, formatting, full-season coverage |
+
+All tests are pure unit tests (no DB, no network). GitHub Actions runs them on every push to `mlb_stats_tracker/`.
 
 ---
 
@@ -278,16 +267,29 @@ environment:
 
 ```
 mlb_stats_tracker/
-├── scraper.py                              # MLB API poller + Prometheus instrumentation
+├── scraper.py                    # MLB API poller + PostgreSQL upserts
+├── backfill_standings.py         # Historical standings for all 30 teams
+├── backfill_player_stats.py      # Historical batting/pitching stats
+├── backfill_game_recaps.py       # Historical box scores + AI summaries
+├── backfill_spring_training.py   # Spring training game recaps
+├── schema.sql                    # Database schema (9 tables)
 ├── Dockerfile
 ├── docker-compose.yml
-├── prometheus.yml                          # Prometheus scrape config (365-day retention)
+├── pytest.ini
+├── tests/
+│   ├── conftest.py               # Shared fixtures (realistic MLB API response data)
+│   ├── test_conversions.py
+│   ├── test_parse_boxscore.py
+│   ├── test_format_text.py
+│   └── test_game_label.py
 └── grafana/
     ├── dashboards/
-    │   ├── team_overview.json              # Season record, standings, roster tables
-    │   └── player_stats.json              # Per-player drill-down with dropdowns
+    │   ├── team_overview.json    # MLB — Teams (all 30 teams, dropdown)
+    │   ├── player_stats.json     # Player drill-down with batter/pitcher dropdowns
+    │   ├── game_recap.json       # Per-game box score + AI summary
+    │   └── division_race.json    # All 6 divisions standings + race charts
     └── provisioning/
-        ├── datasources/prometheus.yaml
+        ├── datasources/postgres.yaml
         └── dashboards/dashboard.yaml
 ```
 
@@ -295,8 +297,8 @@ mlb_stats_tracker/
 
 ## Notes
 
-> **Ports:** Uses `3001` (Grafana), `9091` (Prometheus), `8001` (metrics) to avoid conflicting with the Amazon price tracker if both are running simultaneously.
+> **Ports:** Uses `3001` (Grafana) and `5433` (PostgreSQL) to avoid conflicts if the Amazon price tracker is also running simultaneously.
 
-> **Data source:** The [MLB Stats API](https://statsapi.mlb.com/api/v1) is the official Statcast/MLB data feed. It is free, requires no API key, and updates within ~30 minutes of game completion.
+> **Data source:** The [MLB Stats API](https://statsapi.mlb.com/api/v1) is the official MLB data feed. It is free, requires no API key, and updates within ~30 minutes of game completion.
 
-> **Season history:** Prometheus retention is set to 365 days so you capture the full season and can compare trends across months.
+> **Idempotent writes:** All scraper and backfill writes use `INSERT … ON CONFLICT DO UPDATE`, so re-running any script is safe and will not duplicate data.
