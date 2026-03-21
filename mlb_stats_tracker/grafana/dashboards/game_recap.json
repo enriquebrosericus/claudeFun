@@ -1,0 +1,294 @@
+{
+  "__inputs": [{"name": "DS_POSTGRES", "type": "datasource", "pluginId": "postgres"}],
+  "title": "Mariners \u2014 Game Recap",
+  "uid": "mlb-sea-recap",
+  "tags": ["mlb", "mariners", "baseball", "recap"],
+  "refresh": false,
+  "time": {"from": "now-1y", "to": "now"},
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "templating": {
+    "list": [
+      {"name": "DS_POSTGRES", "type": "datasource", "query": "postgres", "hide": 2},
+      {
+        "name": "season",
+        "label": "Season",
+        "type": "custom",
+        "query": "2025,2026",
+        "hide": 0,
+        "current": {"selected": true, "text": "2025", "value": "2025"},
+        "options": [
+          {"selected": true, "text": "2025", "value": "2025"},
+          {"selected": false, "text": "2026", "value": "2026"}
+        ]
+      },
+      {
+        "name": "game",
+        "label": "Game",
+        "type": "query",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+        "query": "SELECT gamepk::text, 'G' || LPAD(game_number::text,3,'0') || CASE WHEN doubleheader='Y' THEN 'a' WHEN doubleheader='S' THEN 'b' ELSE '' END || ': ' || TO_CHAR(date,'Mon DD') || CASE WHEN home_team='SEA' THEN ' vs ' || away_team ELSE ' @ ' || home_team END || ' (' || result || ' ' || sea_score::text || '-' || opp_score::text || ')' FROM games WHERE season=${season} AND status='Final' ORDER BY date, gamepk",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "sort": 0,
+        "hide": 0,
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1, "type": "row", "title": "Game Header",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}
+    },
+    {
+      "id": 2, "type": "stat", "title": "Result",
+      "gridPos": {"h": 5, "w": 3, "x": 0, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "string",
+          "mappings": [
+            {"type": "value", "options": {"W": {"text": "W", "color": "green", "index": 0}}},
+            {"type": "value", "options": {"L": {"text": "L", "color": "red",   "index": 1}}}
+          ],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "color": {"mode": "thresholds"},
+          "custom": {"fontSize": 48}
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
+      "targets": [{"rawSql": "SELECT result FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
+    },
+    {
+      "id": 3, "type": "stat", "title": "SEA",
+      "gridPos": {"h": 5, "w": 3, "x": 3, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {"fixedColor": "#00A3E0", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "#00A3E0", "value": null}]}
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
+      "targets": [{"rawSql": "SELECT sea_score FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
+    },
+    {
+      "id": 4, "type": "stat", "title": "OPP",
+      "gridPos": {"h": 5, "w": 3, "x": 6, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {"fixedColor": "gray", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "gray", "value": null}]}
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
+      "targets": [{"rawSql": "SELECT opp_score FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
+    },
+    {
+      "id": 5, "type": "stat", "title": "Date / Venue",
+      "gridPos": {"h": 5, "w": 6, "x": 9, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "string",
+          "color": {"fixedColor": "text", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "text", "value": null}]}
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "none", "graphMode": "none", "textMode": "value"},
+      "targets": [{"rawSql": "SELECT TO_CHAR(date,'FMMonth DD, YYYY') || E'\\n' || COALESCE(venue,'') FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
+    },
+    {
+      "id": 6, "type": "stat", "title": "Win",
+      "gridPos": {"h": 2, "w": 4, "x": 15, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "string",
+          "color": {"fixedColor": "green", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
+      "targets": [{"rawSql": "SELECT COALESCE(winning_pitcher, '\u2014') FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
+    },
+    {
+      "id": 7, "type": "stat", "title": "Loss",
+      "gridPos": {"h": 2, "w": 4, "x": 15, "y": 3},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "string",
+          "color": {"fixedColor": "red", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}]}
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
+      "targets": [{"rawSql": "SELECT COALESCE(losing_pitcher, '\u2014') FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
+    },
+    {
+      "id": 8, "type": "stat", "title": "Save",
+      "gridPos": {"h": 5, "w": 5, "x": 19, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "string",
+          "color": {"fixedColor": "#4B9CD3", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "#4B9CD3", "value": null}]}
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
+      "targets": [{"rawSql": "SELECT COALESCE(save_pitcher, '\u2014') FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
+    },
+    {
+      "id": 10, "type": "row", "title": "Line Score",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 6}
+    },
+    {
+      "id": 11, "type": "table", "title": "Line Score",
+      "gridPos": {"h": 4, "w": 24, "x": 0, "y": 7},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+      "fieldConfig": {
+        "defaults": {"unit": "none", "decimals": 0, "custom": {"align": "center", "width": 40}},
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "Team"}, "properties": [{"id": "custom.width", "value": 60}, {"id": "custom.align", "value": "left"}]},
+          {"matcher": {"id": "byName", "options": "R"}, "properties": [{"id": "custom.width", "value": 50}, {"id": "displayName", "value": "R"}, {"id": "color", "value": {"fixedColor": "yellow", "mode": "fixed"}}, {"id": "custom.displayMode", "value": "color-text"}]},
+          {"matcher": {"id": "byName", "options": "H"}, "properties": [{"id": "custom.width", "value": 50}]},
+          {"matcher": {"id": "byName", "options": "E"}, "properties": [{"id": "custom.width", "value": 50}]}
+        ]
+      },
+      "options": {"footer": {"show": false}, "cellHeight": "md"},
+      "targets": [{"rawSql": "SELECT team AS \"Team\", COALESCE(MAX(CASE WHEN inning=1 THEN runs::text END),'-') AS \"1\", COALESCE(MAX(CASE WHEN inning=2 THEN runs::text END),'-') AS \"2\", COALESCE(MAX(CASE WHEN inning=3 THEN runs::text END),'-') AS \"3\", COALESCE(MAX(CASE WHEN inning=4 THEN runs::text END),'-') AS \"4\", COALESCE(MAX(CASE WHEN inning=5 THEN runs::text END),'-') AS \"5\", COALESCE(MAX(CASE WHEN inning=6 THEN runs::text END),'-') AS \"6\", COALESCE(MAX(CASE WHEN inning=7 THEN runs::text END),'-') AS \"7\", COALESCE(MAX(CASE WHEN inning=8 THEN runs::text END),'-') AS \"8\", COALESCE(MAX(CASE WHEN inning=9 THEN runs::text END),'X') AS \"9\", COALESCE(SUM(CASE WHEN inning>9 THEN runs END)::text,'') AS \"EX\", SUM(runs)::text AS \"R\", SUM(hits)::text AS \"H\", SUM(errors)::text AS \"E\" FROM game_linescore WHERE gamepk=${game} GROUP BY team ORDER BY CASE WHEN team=(SELECT away_team FROM games WHERE gamepk=${game}) THEN 0 ELSE 1 END", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
+    },
+    {
+      "id": 20, "type": "row", "title": "Box Score",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 11}
+    },
+    {
+      "id": 21, "type": "table", "title": "Mariners Batting",
+      "gridPos": {"h": 10, "w": 14, "x": 0, "y": 12},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+      "fieldConfig": {
+        "defaults": {"unit": "none", "decimals": 0, "custom": {"align": "center", "width": 45}},
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "Player"}, "properties": [{"id": "custom.width", "value": 160}, {"id": "custom.align", "value": "left"}]},
+          {"matcher": {"id": "byName", "options": "AB"}, "properties": [{"id": "custom.width", "value": 45}]},
+          {
+            "matcher": {"id": "byName", "options": "HR"},
+            "properties": [
+              {"id": "custom.displayMode", "value": "color-text"},
+              {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "text", "value": null}, {"color": "orange", "value": 1}]}}
+            ]
+          },
+          {
+            "matcher": {"id": "byName", "options": "RBI"},
+            "properties": [
+              {"id": "custom.displayMode", "value": "color-text"},
+              {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "text", "value": null}, {"color": "green", "value": 2}]}}
+            ]
+          }
+        ]
+      },
+      "options": {"sortBy": [{"displayName": "batting_order", "desc": false}], "footer": {"show": false}},
+      "targets": [{"rawSql": "SELECT player AS \"Player\", ab AS \"AB\", r AS \"R\", h AS \"H\", doubles AS \"2B\", triples AS \"3B\", hr AS \"HR\", rbi AS \"RBI\", bb AS \"BB\", so AS \"SO\", sb AS \"SB\", lob AS \"LOB\", batting_order FROM game_batting_lines WHERE gamepk=${game} AND team='SEA' ORDER BY batting_order NULLS LAST", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}],
+      "transformations": [{"id": "organize", "options": {"excludeByName": {"batting_order": true}}}]
+    },
+    {
+      "id": 22, "type": "table", "title": "Mariners Pitching",
+      "gridPos": {"h": 10, "w": 10, "x": 14, "y": 12},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+      "fieldConfig": {
+        "defaults": {"unit": "none", "decimals": 0, "custom": {"align": "center", "width": 50}},
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "Pitcher"}, "properties": [{"id": "custom.width", "value": 150}, {"id": "custom.align", "value": "left"}]},
+          {"matcher": {"id": "byName", "options": "IP"}, "properties": [{"id": "decimals", "value": 1}, {"id": "custom.width", "value": 50}]},
+          {"matcher": {"id": "byName", "options": "ERA"}, "properties": [{"id": "decimals", "value": 2}, {"id": "custom.width", "value": 55}]},
+          {
+            "matcher": {"id": "byName", "options": "Dec"},
+            "properties": [
+              {"id": "custom.width", "value": 45},
+              {"id": "custom.displayMode", "value": "color-background"},
+              {"id": "mappings", "value": [
+                {"type": "value", "options": {"W": {"text": "W", "color": "green", "index": 0}}},
+                {"type": "value", "options": {"L": {"text": "L", "color": "red",   "index": 1}}},
+                {"type": "value", "options": {"S": {"text": "S", "color": "blue",  "index": 2}}}
+              ]}
+            ]
+          }
+        ]
+      },
+      "options": {"footer": {"show": false}},
+      "targets": [{"rawSql": "SELECT player AS \"Pitcher\", ip AS \"IP\", h AS \"H\", r AS \"R\", er AS \"ER\", bb AS \"BB\", so AS \"SO\", hr AS \"HR\", COALESCE(pitches::text,'-') AS \"P\", era AS \"ERA\", COALESCE(note,'') AS \"Dec\" FROM game_pitching_lines WHERE gamepk=${game} AND team='SEA' ORDER BY pitch_order", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
+    },
+    {
+      "id": 30, "type": "row", "title": "Opponent Box Score",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 22},
+      "collapsed": true,
+      "panels": [
+        {
+          "id": 31, "type": "table", "title": "Opponent Batting",
+          "gridPos": {"h": 10, "w": 14, "x": 0, "y": 23},
+          "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+          "fieldConfig": {
+            "defaults": {"unit": "none", "decimals": 0, "custom": {"align": "center", "width": 45}},
+            "overrides": [
+              {"matcher": {"id": "byName", "options": "Player"}, "properties": [{"id": "custom.width", "value": 160}, {"id": "custom.align", "value": "left"}]}
+            ]
+          },
+          "options": {"footer": {"show": false}},
+          "targets": [{"rawSql": "SELECT player AS \"Player\", ab AS \"AB\", r AS \"R\", h AS \"H\", doubles AS \"2B\", triples AS \"3B\", hr AS \"HR\", rbi AS \"RBI\", bb AS \"BB\", so AS \"SO\", sb AS \"SB\", lob AS \"LOB\", batting_order FROM game_batting_lines WHERE gamepk=${game} AND team!='SEA' ORDER BY batting_order NULLS LAST", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}],
+          "transformations": [{"id": "organize", "options": {"excludeByName": {"batting_order": true}}}]
+        },
+        {
+          "id": 32, "type": "table", "title": "Opponent Pitching",
+          "gridPos": {"h": 10, "w": 10, "x": 14, "y": 23},
+          "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+          "fieldConfig": {
+            "defaults": {"unit": "none", "decimals": 0, "custom": {"align": "center", "width": 50}},
+            "overrides": [
+              {"matcher": {"id": "byName", "options": "Pitcher"}, "properties": [{"id": "custom.width", "value": 150}, {"id": "custom.align", "value": "left"}]},
+              {"matcher": {"id": "byName", "options": "IP"}, "properties": [{"id": "decimals", "value": 1}]},
+              {"matcher": {"id": "byName", "options": "ERA"}, "properties": [{"id": "decimals", "value": 2}]},
+              {
+                "matcher": {"id": "byName", "options": "Dec"},
+                "properties": [
+                  {"id": "custom.displayMode", "value": "color-background"},
+                  {"id": "mappings", "value": [
+                    {"type": "value", "options": {"W": {"text": "W", "color": "green", "index": 0}}},
+                    {"type": "value", "options": {"L": {"text": "L", "color": "red",   "index": 1}}},
+                    {"type": "value", "options": {"S": {"text": "S", "color": "blue",  "index": 2}}}
+                  ]}
+                ]
+              }
+            ]
+          },
+          "options": {"footer": {"show": false}},
+          "targets": [{"rawSql": "SELECT player AS \"Pitcher\", ip AS \"IP\", h AS \"H\", r AS \"R\", er AS \"ER\", bb AS \"BB\", so AS \"SO\", hr AS \"HR\", COALESCE(pitches::text,'-') AS \"P\", era AS \"ERA\", COALESCE(note,'') AS \"Dec\" FROM game_pitching_lines WHERE gamepk=${game} AND team!='SEA' ORDER BY pitch_order", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
+        }
+      ]
+    },
+    {
+      "id": 40, "type": "row", "title": "Game Summary",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 23}
+    },
+    {
+      "id": 41, "type": "table", "title": "AI Game Recap",
+      "gridPos": {"h": 10, "w": 24, "x": 0, "y": 24},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "string",
+          "custom": {"align": "left", "wrap": true, "inspect": false},
+          "noValue": "No summary available. Run: ANTHROPIC_API_KEY=sk-... python3 backfill_game_recaps.py"
+        }
+      },
+      "options": {"footer": {"show": false}, "cellHeight": "auto"},
+      "targets": [{"rawSql": "SELECT summary_text AS \"Game Recap\" FROM game_summaries WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
+    }
+  ]
+}

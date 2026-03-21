@@ -4,6 +4,6 @@ WORKDIR /app
 
 RUN pip install --no-cache-dir requests psycopg2-binary
 
-COPY scraper.py backfill_standings.py backfill_player_stats.py backfill_spring_training.py ./
+COPY scraper.py backfill_standings.py backfill_player_stats.py backfill_spring_training.py backfill_game_recaps.py ./
 
 CMD ["python", "scraper.py"]
