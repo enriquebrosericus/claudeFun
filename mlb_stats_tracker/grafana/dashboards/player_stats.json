@@ -32,27 +32,24 @@
       {
         "name": "season",
         "label": "Season",
-        "type": "query",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "query": "label_values(mlb_team_wins_total{team=\"SEA\"}, season)",
-        "refresh": 2,
-        "sort": 3,
-        "includeAll": false,
-        "multi": false,
+        "type": "custom",
+        "query": "2025,2026",
         "hide": 0,
         "current": {
+          "selected": true,
           "text": "2025",
-          "value": "2025",
-          "selected": true
+          "value": "2025"
         },
         "options": [
           {
             "selected": true,
             "text": "2025",
             "value": "2025"
+          },
+          {
+            "selected": false,
+            "text": "2026",
+            "value": "2026"
           }
         ]
       },
