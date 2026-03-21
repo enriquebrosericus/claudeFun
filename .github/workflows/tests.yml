@@ -1,0 +1,26 @@
+name: Tests
+
+on:
+  push:
+    paths:
+      - "mlb_stats_tracker/**"
+  pull_request:
+    paths:
+      - "mlb_stats_tracker/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests psycopg2-binary pytest
+
+      - name: Run tests
+        run: pytest mlb_stats_tracker/tests/ -v
