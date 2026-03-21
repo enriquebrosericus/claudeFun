@@ -27,7 +27,7 @@
         "label": "Game",
         "type": "query",
         "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
-        "query": "SELECT gamepk::text, TO_CHAR(date,'Mon DD') || '  ·  G' || game_number::text || CASE WHEN doubleheader='Y' THEN 'a' WHEN doubleheader='S' THEN 'b' ELSE '' END || CASE WHEN home_team='SEA' THEN '  vs ' || away_team ELSE '  @ ' || home_team END || '  (' || result || ' ' || sea_score::text || '-' || opp_score::text || ')' FROM games WHERE season=${season} AND status='Final' ORDER BY date, gamepk",
+        "query": "SELECT gamepk::text, TO_CHAR(date,'Mon DD') || CASE WHEN doubleheader IN ('Y','S') THEN ' (DH)' ELSE '' END || CASE WHEN home_team='SEA' THEN '  vs ' || away_team ELSE '  @ ' || home_team END || '  (' || result || ' ' || sea_score::text || '-' || opp_score::text || ')' FROM games WHERE season=${season} AND status='Final' ORDER BY date, gamepk",
         "refresh": 2,
         "includeAll": false,
         "multi": false,
