@@ -1,32 +1,25 @@
 {
   "__inputs": [
     {
-      "name": "DS_PROMETHEUS",
+      "name": "DS_POSTGRES",
       "type": "datasource",
-      "pluginId": "prometheus"
+      "pluginId": "postgres"
     }
   ],
   "title": "Mariners \u2014 Team Overview",
   "uid": "mlb-sea-team",
-  "tags": [
-    "mlb",
-    "mariners",
-    "baseball"
-  ],
+  "tags": ["mlb", "mariners", "baseball"],
   "refresh": "5m",
-  "time": {
-    "from": "now-1y",
-    "to": "now"
-  },
+  "time": {"from": "now-1y", "to": "now"},
   "timezone": "browser",
   "schemaVersion": 38,
   "templating": {
     "list": [
       {
-        "name": "DS_PROMETHEUS",
+        "name": "DS_POSTGRES",
         "type": "datasource",
-        "query": "prometheus",
-        "hide": 0
+        "query": "postgres",
+        "hide": 2
       },
       {
         "name": "season",
@@ -34,852 +27,322 @@
         "type": "custom",
         "query": "2025,2026",
         "hide": 0,
-        "current": {
-          "selected": true,
-          "text": "2025",
-          "value": "2025"
-        },
+        "current": {"selected": true, "text": "2025", "value": "2025"},
         "options": [
-          {
-            "selected": true,
-            "text": "2025",
-            "value": "2025"
-          },
-          {
-            "selected": false,
-            "text": "2026",
-            "value": "2026"
-          }
+          {"selected": true, "text": "2025", "value": "2025"},
+          {"selected": false, "text": "2026", "value": "2026"}
         ]
       }
     ]
   },
   "panels": [
     {
-      "id": 1,
-      "type": "row",
-      "title": "Season Record",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      }
+      "id": 1, "type": "row", "title": "Season Record",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}
     },
     {
-      "id": 2,
-      "type": "stat",
-      "title": "Wins",
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 0,
-        "y": 1
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 2, "type": "stat", "title": "Wins",
+      "gridPos": {"h": 5, "w": 4, "x": 0, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "color": {
-            "fixedColor": "green",
-            "mode": "fixed"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
+          "color": {"fixedColor": "green", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
         }
       },
       "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "background",
-        "graphMode": "none",
-        "textMode": "auto"
+        "reduceOptions": {"calcs": ["lastNotNull"]},
+        "colorMode": "background", "graphMode": "none", "textMode": "auto"
       },
-      "targets": [
-        {
-          "expr": "mlb_team_wins_total{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "W",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "targets": [{
+        "rawSql": "SELECT wins FROM team_stats WHERE team = 'SEA' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 3,
-      "type": "stat",
-      "title": "Losses",
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 4,
-        "y": 1
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 3, "type": "stat", "title": "Losses",
+      "gridPos": {"h": 5, "w": 4, "x": 4, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "color": {
-            "fixedColor": "red",
-            "mode": "fixed"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              }
-            ]
-          }
+          "color": {"fixedColor": "red", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}]}
         }
       },
       "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "background",
-        "graphMode": "none"
+        "reduceOptions": {"calcs": ["lastNotNull"]},
+        "colorMode": "background", "graphMode": "none"
       },
-      "targets": [
-        {
-          "expr": "mlb_team_losses_total{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "L",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "targets": [{
+        "rawSql": "SELECT losses FROM team_stats WHERE team = 'SEA' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 4,
-      "type": "stat",
-      "title": "Win %",
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 8,
-        "y": 1
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 4, "type": "stat", "title": "Win %",
+      "gridPos": {"h": 5, "w": 4, "x": 8, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit",
-          "decimals": 3,
+          "unit": "percentunit", "decimals": 3,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.45
-              },
-              {
-                "color": "green",
-                "value": 0.55
-              }
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 0.45},
+              {"color": "green", "value": 0.55}
             ]
           },
-          "color": {
-            "mode": "thresholds"
-          }
+          "color": {"mode": "thresholds"}
         }
       },
       "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "background",
-        "graphMode": "area"
+        "reduceOptions": {"calcs": ["lastNotNull"]},
+        "colorMode": "background", "graphMode": "area"
       },
-      "targets": [
-        {
-          "expr": "mlb_team_win_pct{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "Win%",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "targets": [{
+        "rawSql": "SELECT win_pct FROM team_stats WHERE team = 'SEA' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 5,
-      "type": "stat",
-      "title": "Games Behind",
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 12,
-        "y": 1
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 5, "type": "stat", "title": "Games Behind",
+      "gridPos": {"h": 5, "w": 4, "x": 12, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
-          "decimals": 1,
+          "unit": "none", "decimals": 1,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 3
-              },
-              {
-                "color": "red",
-                "value": 8
-              }
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 3},
+              {"color": "red", "value": 8}
             ]
           },
-          "color": {
-            "mode": "thresholds"
-          }
+          "color": {"mode": "thresholds"}
         }
       },
       "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "background",
-        "graphMode": "none"
+        "reduceOptions": {"calcs": ["lastNotNull"]},
+        "colorMode": "background", "graphMode": "none"
       },
-      "targets": [
-        {
-          "expr": "mlb_team_games_behind{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "GB",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "targets": [{
+        "rawSql": "SELECT games_behind FROM team_stats WHERE team = 'SEA' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 6,
-      "type": "stat",
-      "title": "Streak",
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 16,
-        "y": 1
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 6, "type": "stat", "title": "Streak",
+      "gridPos": {"h": 5, "w": 4, "x": 16, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
           "unit": "none",
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 0},
+              {"color": "green", "value": 1}
             ]
           },
-          "color": {
-            "mode": "thresholds"
-          },
+          "color": {"mode": "thresholds"},
           "mappings": []
         }
       },
       "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "background",
-        "graphMode": "none"
+        "reduceOptions": {"calcs": ["lastNotNull"]},
+        "colorMode": "background", "graphMode": "none"
       },
-      "targets": [
-        {
-          "expr": "mlb_team_streak{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "Streak",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "targets": [{
+        "rawSql": "SELECT streak FROM team_stats WHERE team = 'SEA' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 7,
-      "type": "stat",
-      "title": "Last 10",
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 20,
-        "y": 1
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 7, "type": "stat", "title": "Last 10",
+      "gridPos": {"h": 5, "w": 4, "x": 20, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
           "unit": "none",
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 5
-              },
-              {
-                "color": "green",
-                "value": 7
-              }
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 5},
+              {"color": "green", "value": 7}
             ]
           },
-          "color": {
-            "mode": "thresholds"
-          }
+          "color": {"mode": "thresholds"}
         }
       },
       "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "background",
-        "graphMode": "none"
+        "reduceOptions": {"calcs": ["lastNotNull"]},
+        "colorMode": "background", "graphMode": "none"
       },
-      "targets": [
-        {
-          "expr": "mlb_team_last10_wins{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "L10 Wins",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "targets": [{
+        "rawSql": "SELECT last10_wins FROM team_stats WHERE team = 'SEA' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 10,
-      "type": "row",
-      "title": "Season Trends",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 6
-      }
+      "id": 10, "type": "row", "title": "Season Trends",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 6}
     },
     {
-      "id": 11,
-      "type": "timeseries",
-      "title": "Wins & Losses Over Season",
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 7
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 11, "type": "timeseries", "title": "Wins & Losses Over Season",
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 7},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "lineInterpolation": "stepAfter"
+            "drawStyle": "line", "lineWidth": 2,
+            "fillOpacity": 10, "lineInterpolation": "stepAfter"
           },
           "unit": "none"
         },
         "overrides": [
           {
-            "matcher": {
-              "id": "byName",
-              "options": "Wins"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
-                }
-              }
-            ]
+            "matcher": {"id": "byName", "options": "wins"},
+            "properties": [{"id": "color", "value": {"fixedColor": "green", "mode": "fixed"}}]
           },
           {
-            "matcher": {
-              "id": "byName",
-              "options": "Losses"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
+            "matcher": {"id": "byName", "options": "losses"},
+            "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]
           }
         ]
       },
       "options": {
-        "legend": {
-          "displayMode": "table",
-          "calcs": [
-            "last"
-          ],
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi"
-        }
+        "legend": {"displayMode": "table", "calcs": ["last"], "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi"}
       },
-      "targets": [
-        {
-          "expr": "mlb_team_wins_total{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "Wins",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_team_losses_total{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "Losses",
-          "refId": "B",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "targets": [{
+        "rawSql": "SELECT date AS \"time\", wins, losses FROM team_stats WHERE team = 'SEA' AND season = ${season} AND $__timeFilter(date) ORDER BY date",
+        "format": "time_series", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 12,
-      "type": "timeseries",
-      "title": "Run Differential",
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 7
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 12, "type": "timeseries", "title": "Run Differential",
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 7},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 20,
-            "lineInterpolation": "stepAfter"
+            "drawStyle": "line", "lineWidth": 2,
+            "fillOpacity": 20, "lineInterpolation": "stepAfter"
           },
           "unit": "none",
           "thresholds": {
             "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
+            "steps": [{"color": "red", "value": null}, {"color": "green", "value": 0}]
           },
-          "color": {
-            "mode": "thresholds"
-          }
+          "color": {"mode": "thresholds"}
         }
       },
       "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        }
+        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}
       },
-      "targets": [
-        {
-          "expr": "mlb_team_runs_scored_total{team=\"SEA\", season=\"$season\"} - mlb_team_runs_allowed_total{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "Run Differential",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "targets": [{
+        "rawSql": "SELECT date AS \"time\", (runs_scored - runs_allowed) AS \"Run Differential\" FROM team_stats WHERE team = 'SEA' AND season = ${season} AND $__timeFilter(date) ORDER BY date",
+        "format": "time_series", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 13,
-      "type": "row",
-      "title": "AL West Division Race",
+      "id": 13, "type": "row", "title": "AL West Division Race",
       "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 16
-      }
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 16}
     },
     {
-      "id": 14,
-      "type": "timeseries",
-      "title": "AL West \u2014 Standings Race (2025)",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 24,
-        "x": 0,
-        "y": 17
-      },
+      "id": 14, "type": "timeseries", "title": "AL West \u2014 Standings Race",
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+      "gridPos": {"h": 10, "w": 24, "x": 0, "y": 17},
       "fieldConfig": {
         "defaults": {
           "custom": {
             "axisLabel": "Games Ahead (0 = 1st place)",
-            "drawStyle": "line",
-            "lineInterpolation": "stepAfter",
-            "lineWidth": 2,
-            "fillOpacity": 5,
-            "spanNulls": true
+            "drawStyle": "line", "lineInterpolation": "stepAfter",
+            "lineWidth": 2, "fillOpacity": 5, "spanNulls": true
           },
-          "unit": "none",
-          "decimals": 1
+          "unit": "none", "decimals": 1
         },
         "overrides": [
           {
-            "matcher": {
-              "id": "byName",
-              "options": "SEA"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "#00A3E0",
-                  "mode": "fixed"
-                }
-              }
-            ]
+            "matcher": {"id": "byName", "options": "SEA"},
+            "properties": [{"id": "color", "value": {"fixedColor": "#00A3E0", "mode": "fixed"}}]
           },
           {
-            "matcher": {
-              "id": "byName",
-              "options": "HOU"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "#EB6E1F",
-                  "mode": "fixed"
-                }
-              }
-            ]
+            "matcher": {"id": "byName", "options": "HOU"},
+            "properties": [{"id": "color", "value": {"fixedColor": "#EB6E1F", "mode": "fixed"}}]
           },
           {
-            "matcher": {
-              "id": "byName",
-              "options": "TEX"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "#4169E1",
-                  "mode": "fixed"
-                }
-              }
-            ]
+            "matcher": {"id": "byName", "options": "TEX"},
+            "properties": [{"id": "color", "value": {"fixedColor": "#4169E1", "mode": "fixed"}}]
           },
           {
-            "matcher": {
-              "id": "byName",
-              "options": "LAA"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "#DC143C",
-                  "mode": "fixed"
-                }
-              }
-            ]
+            "matcher": {"id": "byName", "options": "LAA"},
+            "properties": [{"id": "color", "value": {"fixedColor": "#DC143C", "mode": "fixed"}}]
           },
           {
-            "matcher": {
-              "id": "byName",
-              "options": "ATH"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "#2E8B57",
-                  "mode": "fixed"
-                }
-              }
-            ]
+            "matcher": {"id": "byName", "options": "ATH"},
+            "properties": [{"id": "color", "value": {"fixedColor": "#2E8B57", "mode": "fixed"}}]
           }
         ]
       },
       "options": {
         "legend": {
-          "calcs": [
-            "last",
-            "min"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
+          "calcs": ["last", "min"], "displayMode": "table",
+          "placement": "right", "showLegend": true
         },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "asc"
-        }
+        "tooltip": {"mode": "multi", "sort": "asc"}
       },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "-last_over_time(mlb_division_games_behind{division=\"AL West\", season=\"$season\"}[25h])",
-          "legendFormat": "{{team}}",
-          "refId": "A"
-        }
-      ]
+      "targets": [{
+        "rawSql": "SELECT date AS \"time\", MAX(CASE WHEN team = 'SEA' THEN -games_behind END) AS \"SEA\", MAX(CASE WHEN team = 'HOU' THEN -games_behind END) AS \"HOU\", MAX(CASE WHEN team = 'TEX' THEN -games_behind END) AS \"TEX\", MAX(CASE WHEN team = 'LAA' THEN -games_behind END) AS \"LAA\", MAX(CASE WHEN team = 'ATH' THEN -games_behind END) AS \"ATH\" FROM division_standings WHERE season = ${season} AND $__timeFilter(date) GROUP BY date ORDER BY date",
+        "format": "time_series", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 20,
-      "type": "row",
-      "title": "Batting Leaderboard",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 27
-      }
+      "id": 20, "type": "row", "title": "Batting Leaderboard",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 27}
     },
     {
-      "id": 21,
-      "type": "table",
-      "title": "Batters \u2014 Season Stats",
-      "gridPos": {
-        "h": 12,
-        "w": 24,
-        "x": 0,
-        "y": 28
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 21, "type": "table", "title": "Batters \u2014 Season Stats",
+      "gridPos": {"h": 12, "w": 24, "x": 0, "y": 28},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
-        "defaults": {
-          "unit": "none",
-          "decimals": 3
-        },
+        "defaults": {"unit": "none", "decimals": 3},
         "overrides": [
+          {"matcher": {"id": "byName", "options": "HR"}, "properties": [{"id": "decimals", "value": 0}]},
+          {"matcher": {"id": "byName", "options": "RBI"}, "properties": [{"id": "decimals", "value": 0}]},
+          {"matcher": {"id": "byName", "options": "R"}, "properties": [{"id": "decimals", "value": 0}]},
+          {"matcher": {"id": "byName", "options": "H"}, "properties": [{"id": "decimals", "value": 0}]},
+          {"matcher": {"id": "byName", "options": "SB"}, "properties": [{"id": "decimals", "value": 0}]},
+          {"matcher": {"id": "byName", "options": "G"}, "properties": [{"id": "decimals", "value": 0}]},
           {
-            "matcher": {
-              "id": "byName",
-              "options": "HR"
-            },
+            "matcher": {"id": "byName", "options": "OPS"},
             "properties": [
-              {
-                "id": "unit",
-                "value": "none"
-              },
-              {
-                "id": "decimals",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "RBI"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "none"
-              },
-              {
-                "id": "decimals",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "R"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "none"
-              },
-              {
-                "id": "decimals",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "H"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "none"
-              },
-              {
-                "id": "decimals",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "SB"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "none"
-              },
-              {
-                "id": "decimals",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "G"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "none"
-              },
-              {
-                "id": "decimals",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "OPS"
-            },
-            "properties": [
-              {
-                "id": "custom.displayMode",
-                "value": "color-background"
-              },
+              {"id": "custom.displayMode", "value": "color-background"},
               {
                 "id": "thresholds",
                 "value": {
                   "mode": "absolute",
                   "steps": [
-                    {
-                      "color": "red",
-                      "value": null
-                    },
-                    {
-                      "color": "yellow",
-                      "value": 0.7
-                    },
-                    {
-                      "color": "green",
-                      "value": 0.8
-                    },
-                    {
-                      "color": "super-light-green",
-                      "value": 0.9
-                    }
+                    {"color": "red", "value": null},
+                    {"color": "yellow", "value": 0.7},
+                    {"color": "green", "value": 0.8},
+                    {"color": "super-light-green", "value": 0.9}
                   ]
                 }
               }
@@ -888,271 +351,60 @@
         ]
       },
       "options": {
-        "sortBy": [
-          {
-            "displayName": "OPS",
-            "desc": true
-          }
-        ],
-        "footer": {
-          "show": false
-        }
+        "sortBy": [{"displayName": "OPS", "desc": true}],
+        "footer": {"show": false}
       },
-      "transformations": [
-        {
-          "id": "joinByLabels",
-          "options": {
-            "value": "player"
-          }
-        },
-        {
-          "id": "renameByMapping",
-          "options": {
-            "mappings": []
-          }
-        }
-      ],
-      "targets": [
-        {
-          "expr": "mlb_player_batting_avg{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "AVG",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_player_obp{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "OBP",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_player_slg{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "SLG",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_player_ops{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "OPS",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_player_home_runs_total{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "HR",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_player_rbi_total{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "RBI",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_player_runs_total{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "R",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_player_hits_total{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "H",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_player_stolen_bases_total{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "SB",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_player_games_played_total{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "G",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "targets": [{
+        "rawSql": "SELECT player AS \"Player\", avg AS \"AVG\", obp AS \"OBP\", slg AS \"SLG\", ops AS \"OPS\", home_runs AS \"HR\", rbi AS \"RBI\", runs AS \"R\", hits AS \"H\", stolen_bases AS \"SB\", games_played AS \"G\" FROM player_batting WHERE team = 'SEA' AND season = ${season} AND date = (SELECT MAX(date) FROM player_batting WHERE team = 'SEA' AND season = ${season}) AND at_bats > 0 ORDER BY ops DESC NULLS LAST",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 30,
-      "type": "row",
-      "title": "Pitching Leaderboard",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 40
-      }
+      "id": 30, "type": "row", "title": "Pitching Leaderboard",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 40}
     },
     {
-      "id": 31,
-      "type": "table",
-      "title": "Pitchers \u2014 Season Stats",
-      "gridPos": {
-        "h": 10,
-        "w": 24,
-        "x": 0,
-        "y": 41
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 31, "type": "table", "title": "Pitchers \u2014 Season Stats",
+      "gridPos": {"h": 10, "w": 24, "x": 0, "y": 41},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
-        "defaults": {
-          "unit": "none",
-          "decimals": 2
-        },
+        "defaults": {"unit": "none", "decimals": 2},
         "overrides": [
+          {"matcher": {"id": "byName", "options": "W"}, "properties": [{"id": "decimals", "value": 0}]},
+          {"matcher": {"id": "byName", "options": "L"}, "properties": [{"id": "decimals", "value": 0}]},
+          {"matcher": {"id": "byName", "options": "SV"}, "properties": [{"id": "decimals", "value": 0}]},
+          {"matcher": {"id": "byName", "options": "SO"}, "properties": [{"id": "decimals", "value": 0}]},
+          {"matcher": {"id": "byName", "options": "G"}, "properties": [{"id": "decimals", "value": 0}]},
           {
-            "matcher": {
-              "id": "byName",
-              "options": "W"
-            },
+            "matcher": {"id": "byName", "options": "ERA"},
             "properties": [
-              {
-                "id": "decimals",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "L"
-            },
-            "properties": [
-              {
-                "id": "decimals",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "SV"
-            },
-            "properties": [
-              {
-                "id": "decimals",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "SO"
-            },
-            "properties": [
-              {
-                "id": "decimals",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "ERA"
-            },
-            "properties": [
-              {
-                "id": "custom.displayMode",
-                "value": "color-background"
-              },
+              {"id": "custom.displayMode", "value": "color-background"},
               {
                 "id": "thresholds",
                 "value": {
                   "mode": "absolute",
                   "steps": [
-                    {
-                      "color": "green",
-                      "value": null
-                    },
-                    {
-                      "color": "yellow",
-                      "value": 3.5
-                    },
-                    {
-                      "color": "red",
-                      "value": 5.0
-                    }
+                    {"color": "green", "value": null},
+                    {"color": "yellow", "value": 3.5},
+                    {"color": "red", "value": 5.0}
                   ]
                 }
               }
             ]
           },
           {
-            "matcher": {
-              "id": "byName",
-              "options": "WHIP"
-            },
+            "matcher": {"id": "byName", "options": "WHIP"},
             "properties": [
-              {
-                "id": "custom.displayMode",
-                "value": "color-background"
-              },
+              {"id": "custom.displayMode", "value": "color-background"},
               {
                 "id": "thresholds",
                 "value": {
                   "mode": "absolute",
                   "steps": [
-                    {
-                      "color": "green",
-                      "value": null
-                    },
-                    {
-                      "color": "yellow",
-                      "value": 1.2
-                    },
-                    {
-                      "color": "red",
-                      "value": 1.5
-                    }
+                    {"color": "green", "value": null},
+                    {"color": "yellow", "value": 1.2},
+                    {"color": "red", "value": 1.5}
                   ]
                 }
               }
@@ -1161,105 +413,13 @@
         ]
       },
       "options": {
-        "sortBy": [
-          {
-            "displayName": "ERA",
-            "desc": false
-          }
-        ]
+        "sortBy": [{"displayName": "ERA", "desc": false}]
       },
-      "targets": [
-        {
-          "expr": "mlb_pitcher_era{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "ERA",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_pitcher_whip{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "WHIP",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_pitcher_wins_total{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "W",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_pitcher_losses_total{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "L",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_pitcher_saves_total{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "SV",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_pitcher_strikeouts_total{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "SO",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_pitcher_innings_pitched{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "IP",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_pitcher_k9{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "K9",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "mlb_pitcher_fip{team=\"SEA\", season=\"$season\"}",
-          "legendFormat": "{{player}}",
-          "refId": "FIP",
-          "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "targets": [{
+        "rawSql": "SELECT player AS \"Player\", games AS \"G\", wins AS \"W\", losses AS \"L\", saves AS \"SV\", innings_pitched AS \"IP\", strikeouts AS \"SO\", era AS \"ERA\", whip AS \"WHIP\", k9 AS \"K/9\", fip AS \"FIP\" FROM player_pitching WHERE team = 'SEA' AND season = ${season} AND date = (SELECT MAX(date) FROM player_pitching WHERE team = 'SEA' AND season = ${season}) AND innings_pitched > 0 ORDER BY era ASC NULLS LAST",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     }
   ]
 }

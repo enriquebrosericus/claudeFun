@@ -1,135 +1,107 @@
 #!/usr/bin/env python3
 """
-Backfill AL West division standings for a full season.
+Backfill AL West division standings for a full season into PostgreSQL.
 
-Fetches daily standings from the MLB Stats API and outputs OpenMetrics format
-suitable for ingestion into Prometheus via promtool:
-
-  python3 backfill_standings.py > /tmp/standings_2025.om
-  docker cp /tmp/standings_2025.om mlb_prometheus:/tmp/
-  docker exec mlb_prometheus promtool tsdb create-blocks-from openmetrics \
-      /tmp/standings_2025.om /prometheus
-  docker restart mlb_prometheus
-
-Usage:
+Usage (from inside scraper container or locally with port 5433 forwarded):
   python3 backfill_standings.py [SEASON]   # default: 2025
+
+Run after 'docker compose up -d' so postgres is ready.
 """
 
 import datetime
+import os
 import sys
 import time
 
+import psycopg2
 import requests
 
-SEASON = sys.argv[1] if len(sys.argv) > 1 else "2025"
+SEASON = int(sys.argv[1]) if len(sys.argv) > 1 else 2025
 BASE   = "https://statsapi.mlb.com/api/v1"
 AL_WEST_DIVISION_ID = 200
 
-# The standings API only returns team id/name/link — no abbreviation.
-# Map team IDs to abbreviations manually.
-TEAM_ABBR = {
-    108: "LAA",   # Los Angeles Angels
-    117: "HOU",   # Houston Astros
-    133: "ATH",   # Athletics (Oakland/Sacramento)
-    136: "SEA",   # Seattle Mariners
-    140: "TEX",   # Texas Rangers
-}
+TEAM_ABBR = {108: "LAA", 117: "HOU", 133: "ATH", 136: "SEA", 140: "TEX"}
 
-# 2025 regular season window (fetch will skip pre-season dates with no data)
-SEASON_START = datetime.date(int(SEASON), 3, 20)
-SEASON_END   = datetime.date(int(SEASON), 9, 30)
+SEASON_START = datetime.date(SEASON, 3, 20)
+SEASON_END   = datetime.date(SEASON, 9, 30)
 
 session = requests.Session()
-session.headers.update({
-    "User-Agent": "MLBStatsBackfill/1.0 (personal project)",
-    "Accept": "application/json",
-})
+session.headers.update({"User-Agent": "MLBBackfill/2.0", "Accept": "application/json"})
 
 
-def fetch_standings(date_str: str) -> list[dict]:
-    """Return list of team records for AL West on a given date."""
+def get_db():
+    return psycopg2.connect(
+        host=os.getenv("DB_HOST", "localhost"),
+        port=int(os.getenv("DB_PORT", "5433")),
+        dbname=os.getenv("DB_NAME", "mlb_stats"),
+        user=os.getenv("DB_USER", "mlb"),
+        password=os.getenv("DB_PASS", "mlbpass"),
+    )
+
+
+def fetch_al_west(date_str: str) -> list[dict]:
     try:
-        resp = session.get(
-            f"{BASE}/standings",
-            params={
-                "leagueId": 103,
-                "season": SEASON,
-                "standingsTypes": "regularSeason",
-                "date": date_str,
-                "sportId": 1,
-            },
-            timeout=15,
-        )
+        resp = session.get(f"{BASE}/standings", params={
+            "leagueId": 103, "season": SEASON,
+            "standingsTypes": "regularSeason",
+            "date": date_str, "sportId": 1,
+        }, timeout=15)
         resp.raise_for_status()
-        data = resp.json()
+        for div in resp.json().get("records", []):
+            if div.get("division", {}).get("id") == AL_WEST_DIVISION_ID:
+                return div.get("teamRecords", [])
     except Exception as e:
-        print(f"# ERROR {date_str}: {e}", file=sys.stderr)
-        return []
-
-    for division in data.get("records", []):
-        if division.get("division", {}).get("id") == AL_WEST_DIVISION_ID:
-            return division.get("teamRecords", [])
+        print(f"  {date_str}: error — {e}", file=sys.stderr)
     return []
 
 
-def main() -> None:
-    # OpenMetrics header
-    lines = [
-        "# HELP mlb_division_games_behind Games behind division leader (0 = first place)",
-        "# TYPE mlb_division_games_behind gauge",
-        "# HELP mlb_division_wins Team wins",
-        "# TYPE mlb_division_wins gauge",
-        "# HELP mlb_division_losses Team losses",
-        "# TYPE mlb_division_losses gauge",
-    ]
+def main():
+    conn = get_db()
+    cur  = conn.cursor()
+    print(f"Backfilling AL West standings for {SEASON}...", file=sys.stderr)
 
     current = SEASON_START
-    days_with_data = 0
+    days_inserted = 0
 
     while current <= SEASON_END:
         date_str = current.strftime("%Y-%m-%d")
-        # Use noon UTC on that date as the sample timestamp
-        ts = int(datetime.datetime(
-            current.year, current.month, current.day, 20, 0, 0
-        ).timestamp())
-
-        records = fetch_standings(date_str)
+        records  = fetch_al_west(date_str)
 
         if records:
-            days_with_data += 1
             for rec in records:
-                team      = rec.get("team", {})
-                team_id   = str(team.get("id", ""))
-                team_abbr = TEAM_ABBR.get(team.get("id"), team.get("name", "UNK"))
-                wins      = rec.get("wins", 0)
-                losses    = rec.get("losses", 0)
-                gb_raw    = rec.get("gamesBack", "0")
+                team     = rec.get("team", {})
+                team_id  = team.get("id")
+                team_abbr = TEAM_ABBR.get(team_id, team.get("name", "UNK"))
+                wins     = rec.get("wins", 0)
+                losses   = rec.get("losses", 0)
+                gb_raw   = rec.get("gamesBack", "0")
                 try:
                     gb = 0.0 if gb_raw in ("-", "", None) else float(gb_raw)
                 except ValueError:
                     gb = 0.0
 
-                lbl = (
-                    f'{{team="{team_abbr}",team_id="{team_id}",'
-                    f'division="AL West",season="{SEASON}"}}'
-                )
-                lines.append(f"mlb_division_games_behind{lbl} {gb} {ts}")
-                lines.append(f"mlb_division_wins{lbl} {wins} {ts}")
-                lines.append(f"mlb_division_losses{lbl} {losses} {ts}")
+                cur.execute("""
+                    INSERT INTO division_standings
+                        (date, season, team, team_id, division, wins, losses, games_behind)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (date, team, season) DO UPDATE SET
+                        wins = EXCLUDED.wins,
+                        losses = EXCLUDED.losses,
+                        games_behind = EXCLUDED.games_behind
+                """, (current, SEASON, team_abbr, team_id, "AL West", wins, losses, gb))
 
-            print(f"{date_str}: {len(records)} teams", file=sys.stderr)
+            conn.commit()
+            days_inserted += 1
+            print(f"  {date_str}: {len(records)} teams inserted", file=sys.stderr)
         else:
-            print(f"{date_str}: no data (pre-season / off-day)", file=sys.stderr)
+            print(f"  {date_str}: no data", file=sys.stderr)
 
         current += datetime.timedelta(days=1)
-        time.sleep(0.15)   # ~150ms between requests — polite to the API
+        time.sleep(0.15)
 
-    lines.append("# EOF")
-    print("\n".join(lines))
-    print(
-        f"\nDone: {days_with_data} days with data written to stdout.",
-        file=sys.stderr,
-    )
+    cur.close()
+    conn.close()
+    print(f"\nDone: {days_inserted} days inserted into division_standings.", file=sys.stderr)
 
 
 if __name__ == "__main__":

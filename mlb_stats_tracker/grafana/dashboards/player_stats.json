@@ -1,33 +1,25 @@
 {
   "__inputs": [
     {
-      "name": "DS_PROMETHEUS",
+      "name": "DS_POSTGRES",
       "type": "datasource",
-      "pluginId": "prometheus"
+      "pluginId": "postgres"
     }
   ],
   "title": "Mariners \u2014 Player Detail",
   "uid": "mlb-sea-player",
-  "tags": [
-    "mlb",
-    "mariners",
-    "baseball",
-    "player"
-  ],
+  "tags": ["mlb", "mariners", "baseball", "player"],
   "refresh": "5m",
-  "time": {
-    "from": "now-30d",
-    "to": "now"
-  },
+  "time": {"from": "now-1y", "to": "now"},
   "timezone": "browser",
   "schemaVersion": 38,
   "templating": {
     "list": [
       {
-        "name": "DS_PROMETHEUS",
+        "name": "DS_POSTGRES",
         "type": "datasource",
-        "query": "prometheus",
-        "hide": 0
+        "query": "postgres",
+        "hide": 2
       },
       {
         "name": "season",
@@ -35,34 +27,19 @@
         "type": "custom",
         "query": "2025,2026",
         "hide": 0,
-        "current": {
-          "selected": true,
-          "text": "2025",
-          "value": "2025"
-        },
+        "current": {"selected": true, "text": "2025", "value": "2025"},
         "options": [
-          {
-            "selected": true,
-            "text": "2025",
-            "value": "2025"
-          },
-          {
-            "selected": false,
-            "text": "2026",
-            "value": "2026"
-          }
+          {"selected": true, "text": "2025", "value": "2025"},
+          {"selected": false, "text": "2026", "value": "2026"}
         ]
       },
       {
         "name": "batter",
         "label": "Batter",
         "type": "query",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "query": "label_values(mlb_player_batting_avg{team=\"SEA\", season=\"$season\"}, player)",
-        "refresh": 2,
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+        "query": "SELECT DISTINCT player FROM player_batting WHERE team = 'SEA' AND season = ${season} ORDER BY player",
+        "refresh": 1,
         "includeAll": false,
         "multi": false,
         "hide": 0,
@@ -73,12 +50,9 @@
         "name": "pitcher",
         "label": "Pitcher",
         "type": "query",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "query": "label_values(mlb_pitcher_era{team=\"SEA\", season=\"$season\"}, player)",
-        "refresh": 2,
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
+        "query": "SELECT DISTINCT player FROM player_pitching WHERE team = 'SEA' AND season = ${season} ORDER BY player",
+        "refresh": 1,
         "includeAll": false,
         "multi": false,
         "hide": 0,
@@ -89,1419 +63,425 @@
   },
   "panels": [
     {
-      "id": 1,
-      "type": "row",
-      "title": "\ud83c\udfcf Batter \u2014 $batter",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "collapsed": false
+      "id": 1, "type": "row",
+      "title": "\ud83c\udfcf Batter \u2014 ${batter}",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}
     },
     {
-      "id": 2,
-      "type": "stat",
-      "title": "AVG",
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 0,
-        "y": 1
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 2, "type": "stat", "title": "AVG",
+      "gridPos": {"h": 4, "w": 3, "x": 0, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
-          "decimals": 3,
+          "unit": "none", "decimals": 3,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.25
-              },
-              {
-                "color": "green",
-                "value": 0.28
-              },
-              {
-                "color": "super-light-green",
-                "value": 0.3
-              }
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 0.250},
+              {"color": "green", "value": 0.300}
             ]
           },
-          "color": {
-            "mode": "thresholds"
-          }
+          "color": {"mode": "thresholds"}
         }
       },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "background",
-        "graphMode": "area"
-      },
-      "targets": [
-        {
-          "expr": "mlb_player_batting_avg{team=\"SEA\", player=\"$batter\", season=\"$season\"}",
-          "legendFormat": "AVG",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
+      "targets": [{
+        "rawSql": "SELECT avg FROM player_batting WHERE player = '${batter}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 3,
-      "type": "stat",
-      "title": "OBP",
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 4,
-        "y": 1
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 3, "type": "stat", "title": "OBP",
+      "gridPos": {"h": 4, "w": 3, "x": 3, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
-          "decimals": 3,
+          "unit": "none", "decimals": 3,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.31
-              },
-              {
-                "color": "green",
-                "value": 0.34
-              },
-              {
-                "color": "super-light-green",
-                "value": 0.38
-              }
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 0.320},
+              {"color": "green", "value": 0.370}
             ]
           },
-          "color": {
-            "mode": "thresholds"
-          }
+          "color": {"mode": "thresholds"}
         }
       },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "background",
-        "graphMode": "area"
-      },
-      "targets": [
-        {
-          "expr": "mlb_player_obp{team=\"SEA\", player=\"$batter\", season=\"$season\"}",
-          "legendFormat": "OBP",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
+      "targets": [{
+        "rawSql": "SELECT obp FROM player_batting WHERE player = '${batter}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 4,
-      "type": "stat",
-      "title": "SLG",
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 8,
-        "y": 1
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 4, "type": "stat", "title": "SLG",
+      "gridPos": {"h": 4, "w": 3, "x": 6, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
-          "decimals": 3,
+          "unit": "none", "decimals": 3,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.38
-              },
-              {
-                "color": "green",
-                "value": 0.45
-              },
-              {
-                "color": "super-light-green",
-                "value": 0.5
-              }
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 0.400},
+              {"color": "green", "value": 0.500}
             ]
           },
-          "color": {
-            "mode": "thresholds"
-          }
+          "color": {"mode": "thresholds"}
         }
       },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "background",
-        "graphMode": "area"
-      },
-      "targets": [
-        {
-          "expr": "mlb_player_slg{team=\"SEA\", player=\"$batter\", season=\"$season\"}",
-          "legendFormat": "SLG",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
+      "targets": [{
+        "rawSql": "SELECT slg FROM player_batting WHERE player = '${batter}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 5,
-      "type": "stat",
-      "title": "OPS",
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 12,
-        "y": 1
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 5, "type": "stat", "title": "OPS",
+      "gridPos": {"h": 4, "w": 3, "x": 9, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
-          "decimals": 3,
+          "unit": "none", "decimals": 3,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.7
-              },
-              {
-                "color": "green",
-                "value": 0.8
-              },
-              {
-                "color": "super-light-green",
-                "value": 0.9
-              }
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 0.700},
+              {"color": "green", "value": 0.800},
+              {"color": "super-light-green", "value": 0.900}
             ]
           },
-          "color": {
-            "mode": "thresholds"
-          }
+          "color": {"mode": "thresholds"}
         }
       },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "background",
-        "graphMode": "area"
-      },
-      "targets": [
-        {
-          "expr": "mlb_player_ops{team=\"SEA\", player=\"$batter\", season=\"$season\"}",
-          "legendFormat": "OPS",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
+      "targets": [{
+        "rawSql": "SELECT ops FROM player_batting WHERE player = '${batter}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 6,
-      "type": "stat",
-      "title": "HR",
-      "gridPos": {
-        "h": 5,
-        "w": 2,
-        "x": 16,
-        "y": 1
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 6, "type": "stat", "title": "HR",
+      "gridPos": {"h": 4, "w": 3, "x": 12, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "decimals": 0,
-          "color": {
-            "fixedColor": "blue",
-            "mode": "fixed"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "blue",
-                "value": null
-              }
-            ]
-          }
+          "color": {"fixedColor": "orange", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "orange", "value": null}]}
         }
       },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "value",
-        "graphMode": "none"
-      },
-      "targets": [
-        {
-          "expr": "mlb_player_home_runs_total{team=\"SEA\", player=\"$batter\", season=\"$season\"}",
-          "legendFormat": "HR",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
+      "targets": [{
+        "rawSql": "SELECT home_runs FROM player_batting WHERE player = '${batter}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 7,
-      "type": "stat",
-      "title": "RBI",
-      "gridPos": {
-        "h": 5,
-        "w": 2,
-        "x": 18,
-        "y": 1
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 7, "type": "stat", "title": "RBI",
+      "gridPos": {"h": 4, "w": 3, "x": 15, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "decimals": 0,
-          "color": {
-            "fixedColor": "purple",
-            "mode": "fixed"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "purple",
-                "value": null
-              }
-            ]
-          }
+          "color": {"fixedColor": "blue", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]}
         }
       },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "value",
-        "graphMode": "none"
-      },
-      "targets": [
-        {
-          "expr": "mlb_player_rbi_total{team=\"SEA\", player=\"$batter\", season=\"$season\"}",
-          "legendFormat": "RBI",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
+      "targets": [{
+        "rawSql": "SELECT rbi FROM player_batting WHERE player = '${batter}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 8,
-      "type": "stat",
-      "title": "SB",
-      "gridPos": {
-        "h": 5,
-        "w": 2,
-        "x": 20,
-        "y": 1
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 8, "type": "stat", "title": "SB",
+      "gridPos": {"h": 4, "w": 3, "x": 18, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "decimals": 0,
-          "color": {
-            "fixedColor": "orange",
-            "mode": "fixed"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "orange",
-                "value": null
-              }
-            ]
-          }
+          "color": {"fixedColor": "purple", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "purple", "value": null}]}
         }
       },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "value",
-        "graphMode": "none"
-      },
-      "targets": [
-        {
-          "expr": "mlb_player_stolen_bases_total{team=\"SEA\", player=\"$batter\", season=\"$season\"}",
-          "legendFormat": "SB",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
+      "targets": [{
+        "rawSql": "SELECT stolen_bases FROM player_batting WHERE player = '${batter}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 9,
-      "type": "stat",
-      "title": "G",
-      "gridPos": {
-        "h": 5,
-        "w": 2,
-        "x": 22,
-        "y": 1
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 9, "type": "stat", "title": "Games",
+      "gridPos": {"h": 4, "w": 3, "x": 21, "y": 1},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "decimals": 0,
-          "color": {
-            "fixedColor": "text",
-            "mode": "fixed"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "text",
-                "value": null
-              }
-            ]
-          }
+          "color": {"fixedColor": "gray", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "gray", "value": null}]}
         }
       },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "value",
-        "graphMode": "none"
-      },
-      "targets": [
-        {
-          "expr": "mlb_player_games_played_total{team=\"SEA\", player=\"$batter\", season=\"$season\"}",
-          "legendFormat": "G",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
+      "targets": [{
+        "rawSql": "SELECT games_played FROM player_batting WHERE player = '${batter}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 11,
-      "type": "timeseries",
-      "title": "AVG / OBP / SLG over Season",
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 6
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 10, "type": "timeseries", "title": "HR & RBI Progression",
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 5},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
-          "decimals": 3,
           "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 8,
-            "lineInterpolation": "stepAfter"
-          }
+            "drawStyle": "line", "lineWidth": 2,
+            "fillOpacity": 10, "lineInterpolation": "stepAfter"
+          },
+          "unit": "none"
         },
         "overrides": [
           {
-            "matcher": {
-              "id": "byName",
-              "options": "AVG"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
+            "matcher": {"id": "byName", "options": "home_runs"},
+            "properties": [{"id": "color", "value": {"fixedColor": "orange", "mode": "fixed"}}]
           },
           {
-            "matcher": {
-              "id": "byName",
-              "options": "OBP"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "SLG"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "orange",
-                  "mode": "fixed"
-                }
-              }
-            ]
+            "matcher": {"id": "byName", "options": "rbi"},
+            "properties": [{"id": "color", "value": {"fixedColor": "blue", "mode": "fixed"}}]
           }
         ]
       },
       "options": {
-        "legend": {
-          "displayMode": "table",
-          "calcs": [
-            "last"
-          ],
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi"
-        }
+        "legend": {"displayMode": "table", "calcs": ["last"], "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi"}
       },
-      "targets": [
-        {
-          "expr": "last_over_time(mlb_player_batting_avg{team=\"SEA\", player=\"$batter\", season=\"$season\"}[2d])",
-          "legendFormat": "AVG",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "last_over_time(mlb_player_obp{team=\"SEA\", player=\"$batter\", season=\"$season\"}[2d])",
-          "legendFormat": "OBP",
-          "refId": "B",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "last_over_time(mlb_player_slg{team=\"SEA\", player=\"$batter\", season=\"$season\"}[2d])",
-          "legendFormat": "SLG",
-          "refId": "C",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "targets": [{
+        "rawSql": "SELECT date AS \"time\", home_runs, rbi, runs FROM player_batting WHERE player = '${batter}' AND season = ${season} AND $__timeFilter(date) ORDER BY date",
+        "format": "time_series", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 12,
-      "type": "timeseries",
-      "title": "HR & RBI over Season",
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 6
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 11, "type": "timeseries", "title": "AVG / OBP / SLG / OPS Progression",
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 5},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
-          "decimals": 0,
           "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "lineInterpolation": "stepAfter"
-          }
-        }
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "calcs": [
-            "last"
-          ],
-          "placement": "bottom",
-          "showLegend": true
-        }
-      },
-      "targets": [
-        {
-          "expr": "last_over_time(mlb_player_home_runs_total{team=\"SEA\", player=\"$batter\", season=\"$season\"}[2d])",
-          "legendFormat": "HR",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "last_over_time(mlb_player_rbi_total{team=\"SEA\", player=\"$batter\", season=\"$season\"}[2d])",
-          "legendFormat": "RBI",
-          "refId": "B",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "last_over_time(mlb_player_runs_total{team=\"SEA\", player=\"$batter\", season=\"$season\"}[2d])",
-          "legendFormat": "R",
-          "refId": "C",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
-    },
-    {
-      "id": 13,
-      "type": "timeseries",
-      "title": "Projected HR Pace (162 games)",
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 0,
-        "y": 15
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "none",
-          "decimals": 1,
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 15,
-            "lineInterpolation": "stepAfter"
+            "drawStyle": "line", "lineWidth": 2,
+            "fillOpacity": 5, "lineInterpolation": "linear"
           },
-          "color": {
-            "fixedColor": "red",
-            "mode": "fixed"
-          }
+          "unit": "none", "decimals": 3
         }
       },
       "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        }
+        "legend": {"displayMode": "table", "calcs": ["last"], "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi"}
       },
-      "targets": [
-        {
-          "expr": "last_over_time(mlb_player_home_runs_total{team=\"SEA\", player=\"$batter\", season=\"$season\"} / mlb_player_games_played_total{team=\"SEA\", player=\"$batter\", season=\"$season\"} * 162[2d])",
-          "legendFormat": "Proj. HR/162",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "targets": [{
+        "rawSql": "SELECT date AS \"time\", avg, obp, slg, ops FROM player_batting WHERE player = '${batter}' AND season = ${season} AND $__timeFilter(date) ORDER BY date",
+        "format": "time_series", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 14,
-      "type": "timeseries",
-      "title": "ISO & BABIP",
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 15
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 20, "type": "row",
+      "title": "\u26be Pitcher \u2014 ${pitcher}",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 15}
+    },
+    {
+      "id": 21, "type": "stat", "title": "ERA",
+      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 16},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
-          "decimals": 3,
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 5,
-            "lineInterpolation": "stepAfter"
-          }
-        }
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "calcs": [
-            "last"
-          ],
-          "placement": "bottom",
-          "showLegend": true
-        }
-      },
-      "targets": [
-        {
-          "expr": "last_over_time(mlb_player_iso{team=\"SEA\", player=\"$batter\", season=\"$season\"}[2d])",
-          "legendFormat": "ISO",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "last_over_time(mlb_player_babip{team=\"SEA\", player=\"$batter\", season=\"$season\"}[2d])",
-          "legendFormat": "BABIP",
-          "refId": "B",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
-    },
-    {
-      "id": 50,
-      "type": "row",
-      "title": "\u26be Pitcher \u2014 $pitcher",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 22
-      },
-      "collapsed": false
-    },
-    {
-      "id": 51,
-      "type": "stat",
-      "title": "ERA",
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 0,
-        "y": 23
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "none",
-          "decimals": 2,
+          "unit": "none", "decimals": 2,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 3.5
-              },
-              {
-                "color": "red",
-                "value": 5.0
-              }
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 3.5},
+              {"color": "red", "value": 5.0}
             ]
           },
-          "color": {
-            "mode": "thresholds"
-          }
+          "color": {"mode": "thresholds"}
         }
       },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "background",
-        "graphMode": "area"
-      },
-      "targets": [
-        {
-          "expr": "mlb_pitcher_era{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}",
-          "legendFormat": "ERA",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
+      "targets": [{
+        "rawSql": "SELECT era FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 52,
-      "type": "stat",
-      "title": "WHIP",
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 4,
-        "y": 23
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 22, "type": "stat", "title": "WHIP",
+      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 16},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
-          "decimals": 2,
+          "unit": "none", "decimals": 3,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 1.2
-              },
-              {
-                "color": "red",
-                "value": 1.5
-              }
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 1.2},
+              {"color": "red", "value": 1.5}
             ]
           },
-          "color": {
-            "mode": "thresholds"
-          }
+          "color": {"mode": "thresholds"}
         }
       },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "background",
-        "graphMode": "area"
-      },
-      "targets": [
-        {
-          "expr": "mlb_pitcher_whip{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}",
-          "legendFormat": "WHIP",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
+      "targets": [{
+        "rawSql": "SELECT whip FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 53,
-      "type": "stat",
-      "title": "FIP",
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 8,
-        "y": 23
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 23, "type": "stat", "title": "FIP",
+      "gridPos": {"h": 4, "w": 4, "x": 8, "y": 16},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
-          "decimals": 2,
+          "unit": "none", "decimals": 2,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 3.5
-              },
-              {
-                "color": "red",
-                "value": 5.0
-              }
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 3.5},
+              {"color": "red", "value": 5.0}
             ]
           },
-          "color": {
-            "mode": "thresholds"
-          }
+          "color": {"mode": "thresholds"}
         }
       },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "background",
-        "graphMode": "area"
-      },
-      "targets": [
-        {
-          "expr": "mlb_pitcher_fip{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}",
-          "legendFormat": "FIP",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
+      "targets": [{
+        "rawSql": "SELECT fip FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 54,
-      "type": "stat",
-      "title": "K/9",
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 12,
-        "y": 23
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 24, "type": "stat", "title": "K/9",
+      "gridPos": {"h": 4, "w": 4, "x": 12, "y": 16},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
-          "decimals": 1,
+          "unit": "none", "decimals": 2,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 7.0
-              },
-              {
-                "color": "green",
-                "value": 9.0
-              },
-              {
-                "color": "super-light-green",
-                "value": 11.0
-              }
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 7.0},
+              {"color": "green", "value": 9.0}
             ]
           },
-          "color": {
-            "mode": "thresholds"
-          }
+          "color": {"mode": "thresholds"}
         }
       },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "background",
-        "graphMode": "area"
-      },
-      "targets": [
-        {
-          "expr": "mlb_pitcher_k9{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}",
-          "legendFormat": "K/9",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
+      "targets": [{
+        "rawSql": "SELECT k9 FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 55,
-      "type": "stat",
-      "title": "W-L",
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 16,
-        "y": 23
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 25, "type": "stat", "title": "W-L",
+      "gridPos": {"h": 4, "w": 4, "x": 16, "y": 16},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "decimals": 0,
-          "color": {
-            "fixedColor": "green",
-            "mode": "fixed"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
+          "color": {"fixedColor": "green", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
         }
       },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "value",
-        "graphMode": "none"
-      },
-      "targets": [
-        {
-          "expr": "mlb_pitcher_wins_total{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}",
-          "legendFormat": "W",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
+      "targets": [{
+        "rawSql": "SELECT wins FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 56,
-      "type": "stat",
-      "title": "SO",
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 20,
-        "y": 23
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 26, "type": "stat", "title": "SO",
+      "gridPos": {"h": 4, "w": 4, "x": 20, "y": 16},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "decimals": 0,
-          "color": {
-            "fixedColor": "blue",
-            "mode": "fixed"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "blue",
-                "value": null
-              }
-            ]
-          }
+          "color": {"fixedColor": "blue", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]}
         }
       },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "value",
-        "graphMode": "none"
-      },
-      "targets": [
-        {
-          "expr": "mlb_pitcher_strikeouts_total{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}",
-          "legendFormat": "SO",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
+      "targets": [{
+        "rawSql": "SELECT strikeouts FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} ORDER BY date DESC LIMIT 1",
+        "format": "table", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 61,
-      "type": "timeseries",
-      "title": "ERA & FIP over Season",
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 28
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 30, "type": "timeseries", "title": "ERA & WHIP Progression",
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 20},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
-          "decimals": 2,
           "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 8,
-            "lineInterpolation": "stepAfter"
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "ERA"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
+            "drawStyle": "line", "lineWidth": 2,
+            "fillOpacity": 10, "lineInterpolation": "linear"
           },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "FIP"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "orange",
-                  "mode": "fixed"
-                }
-              },
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "dash": [
-                    6,
-                    3
-                  ],
-                  "fill": "dash"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "WHIP"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "yellow",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
+          "unit": "none", "decimals": 2
+        }
       },
       "options": {
-        "legend": {
-          "displayMode": "table",
-          "calcs": [
-            "last"
-          ],
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi"
-        }
+        "legend": {"displayMode": "table", "calcs": ["last"], "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi"}
       },
-      "targets": [
-        {
-          "expr": "last_over_time(mlb_pitcher_era{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}[2d])",
-          "legendFormat": "ERA",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "last_over_time(mlb_pitcher_fip{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}[2d])",
-          "legendFormat": "FIP",
-          "refId": "B",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "last_over_time(mlb_pitcher_whip{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}[2d])",
-          "legendFormat": "WHIP",
-          "refId": "C",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "targets": [{
+        "rawSql": "SELECT date AS \"time\", era, whip, fip FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} AND $__timeFilter(date) ORDER BY date",
+        "format": "time_series", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     },
     {
-      "id": 62,
-      "type": "timeseries",
-      "title": "K/9 & BB/9 over Season",
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 28
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 31, "type": "timeseries", "title": "Strikeouts & IP Progression",
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 20},
+      "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
-          "decimals": 1,
           "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 8,
-            "lineInterpolation": "stepAfter"
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "K/9"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
-                }
-              }
-            ]
+            "drawStyle": "line", "lineWidth": 2,
+            "fillOpacity": 10, "lineInterpolation": "stepAfter"
           },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "BB/9"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "calcs": [
-            "last"
-          ],
-          "placement": "bottom",
-          "showLegend": true
-        }
-      },
-      "targets": [
-        {
-          "expr": "last_over_time(mlb_pitcher_k9{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}[2d])",
-          "legendFormat": "K/9",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "last_over_time(mlb_pitcher_bb9{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}[2d])",
-          "legendFormat": "BB/9",
-          "refId": "B",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
-    },
-    {
-      "id": 63,
-      "type": "timeseries",
-      "title": "Strikeouts & Innings Pitched",
-      "gridPos": {
-        "h": 7,
-        "w": 24,
-        "x": 0,
-        "y": 37
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "none",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "lineInterpolation": "stepAfter"
-          }
+          "unit": "none"
         }
       },
       "options": {
-        "legend": {
-          "displayMode": "table",
-          "calcs": [
-            "last"
-          ],
-          "placement": "bottom",
-          "showLegend": true
-        }
+        "legend": {"displayMode": "table", "calcs": ["last"], "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi"}
       },
-      "targets": [
-        {
-          "expr": "last_over_time(mlb_pitcher_strikeouts_total{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}[2d])",
-          "legendFormat": "SO",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        },
-        {
-          "expr": "last_over_time(mlb_pitcher_innings_pitched{team=\"SEA\", player=\"$pitcher\", season=\"$season\"}[2d])",
-          "legendFormat": "IP",
-          "refId": "B",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
-        }
-      ]
+      "targets": [{
+        "rawSql": "SELECT date AS \"time\", strikeouts, innings_pitched FROM player_pitching WHERE player = '${pitcher}' AND season = ${season} AND $__timeFilter(date) ORDER BY date",
+        "format": "time_series", "refId": "A",
+        "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}
+      }]
     }
   ]
 }

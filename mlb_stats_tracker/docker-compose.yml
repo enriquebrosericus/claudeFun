@@ -2,6 +2,28 @@ version: "3.9"
 
 services:
 
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: mlb_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mlb_stats
+      POSTGRES_USER: mlb
+      POSTGRES_PASSWORD: mlbpass
+    volumes:
+      - mlb_postgres_data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    ports:
+      - "5433:5432"      # offset to avoid conflicts with other postgres instances
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mlb -d mlb_stats"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # ── MLB Stats Scraper ──────────────────────────────────────────────────────
   scraper:
     build: .
@@ -12,32 +34,16 @@ services:
       TEAM_ABBR: "SEA"
       SEASON: "2025"
       POLL_INTERVAL: "1800"    # 30 min baseline; auto-shortens during/after games
-      METRICS_PORT: "8001"
-    ports:
-      - "8001:8001"
-    networks:
-      - monitoring
-
-  # ── Prometheus ─────────────────────────────────────────────────────────────
-  prometheus:
-    image: prom/prometheus:v2.52.0
-    container_name: mlb_prometheus
-    restart: unless-stopped
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - mlb_prometheus_data:/prometheus
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
-      - "--storage.tsdb.retention.time=365d"   # keep a full season
-      - "--web.enable-lifecycle"
-      - "--web.enable-admin-api"
-    ports:
-      - "9091:9090"            # 9091 to avoid conflict with amazon tracker
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: mlb_stats
+      DB_USER: mlb
+      DB_PASS: mlbpass
     networks:
       - monitoring
     depends_on:
-      - scraper
+      postgres:
+        condition: service_healthy
 
   # ── Grafana ────────────────────────────────────────────────────────────────
   grafana:
@@ -59,12 +65,12 @@ services:
     networks:
       - monitoring
     depends_on:
-      - prometheus
+      - postgres
 
 networks:
   monitoring:
     driver: bridge
 
 volumes:
-  mlb_prometheus_data:
+  mlb_postgres_data:
   mlb_grafana_data:

@@ -2,8 +2,8 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir requests prometheus_client
+RUN pip install --no-cache-dir requests psycopg2-binary
 
-COPY scraper.py .
+COPY scraper.py backfill_standings.py backfill_player_stats.py ./
 
 CMD ["python", "scraper.py"]
