@@ -593,7 +593,7 @@
     {
       "id": 14,
       "type": "timeseries",
-      "title": "AL West \u2014 Games Behind Leader (2025)",
+      "title": "AL West \u2014 Standings Race (2025)",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -607,7 +607,7 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "axisLabel": "Games Behind (0 = 1st place)",
+            "axisLabel": "Games Ahead (0 = 1st place)",
             "drawStyle": "line",
             "lineInterpolation": "stepAfter",
             "lineWidth": 2,
@@ -716,7 +716,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "last_over_time(mlb_division_games_behind{division=\"AL West\", season=\"$season\"}[25h])",
+          "expr": "-last_over_time(mlb_division_games_behind{division=\"AL West\", season=\"$season\"}[25h])",
           "legendFormat": "{{team}}",
           "refId": "A"
         }
