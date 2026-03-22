@@ -45,6 +45,30 @@ services:
       postgres:
         condition: service_healthy
 
+  # ── Nginx (SSL termination + reverse proxy) ────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: mlb_nginx
+    restart: unless-stopped
+    command: >
+      /bin/sh -c "
+        mkdir -p /etc/nginx/ssl &&
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048
+          -keyout /etc/nginx/ssl/key.pem
+          -out /etc/nginx/ssl/cert.pem
+          -subj '/CN=whackbat.techbrose.com' &&
+        nginx -g 'daemon off;'
+      "
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - monitoring
+    depends_on:
+      - grafana
+
   # ── Grafana ────────────────────────────────────────────────────────────────
   grafana:
     image: grafana/grafana:10.4.2
@@ -63,8 +87,6 @@ services:
       - mlb_grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
-    ports:
-      - "3001:3000"            # 3001 to avoid conflict with amazon tracker
     networks:
       - monitoring
     depends_on:
