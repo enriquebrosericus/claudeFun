@@ -47,7 +47,7 @@ services:
 
   # ── Nginx (SSL termination + reverse proxy) ────────────────────────────────
   nginx:
-    image: nginx:alpine
+    image: nginx:latest
     container_name: mlb_nginx
     restart: unless-stopped
     command: >
