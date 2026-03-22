@@ -50,15 +50,7 @@ services:
     image: nginx:latest
     container_name: mlb_nginx
     restart: unless-stopped
-    command: >
-      /bin/sh -c "
-        mkdir -p /etc/nginx/ssl &&
-        openssl req -x509 -nodes -days 365 -newkey rsa:2048
-          -keyout /etc/nginx/ssl/key.pem
-          -out /etc/nginx/ssl/cert.pem
-          -subj '/CN=whackbat.techbrose.com' &&
-        nginx -g 'daemon off;'
-      "
+    command: ["/bin/sh", "-c", "mkdir -p /etc/nginx/ssl && openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/key.pem -out /etc/nginx/ssl/cert.pem -subj '/CN=whackbat.techbrose.com' && nginx -g 'daemon off;'"]
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
