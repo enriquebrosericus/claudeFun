@@ -11,7 +11,7 @@ datasources:
     isDefault: true
     editable: false
     secureJsonData:
-      password: mlbpass
+      password: ${POSTGRES_PASSWORD}
     jsonData:
       sslmode: disable
       postgresVersion: 1600
