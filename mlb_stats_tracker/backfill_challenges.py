@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import re
 import sys
 import time
 
@@ -34,18 +33,9 @@ DB = dict(
 session = requests.Session()
 session.headers["User-Agent"] = "mlb-stats-tracker/1.0"
 
-# Patterns that indicate a ball/strike ABS challenge event.
-# The event description typically reads:
-#   "Ball 2 overturned to Strike 2 on ABS Challenge."
-#   "Strike 3 upheld as Strike 3 on ABS Challenge."
-_CHALLENGE_RE = re.compile(
-    r"(Ball|Strike)\s+\d+\s+(overturned to|upheld as)\s+(Ball|Strike)",
-    re.IGNORECASE,
-)
-_CHALLENGE_EVENTS = {
-    "abs_challenge_batter", "abs challenge", "batter challenge",
-    "manager challenge", "challenge", "review",
-}
+# Ball/strike call codes in the pitch details
+_BALL_CODES   = {"B", "I", "P", "V"}   # ball, intentional, pitchout, automatic ball
+_STRIKE_CODES = {"C", "S", "T", "Q"}   # called, swinging, foul tip, automatic strike
 
 
 def api_get(path: str, **params) -> dict:
@@ -63,55 +53,46 @@ def fetch_play_by_play(gamepk: int) -> list:
         return []
 
 
-def parse_challenges(plays: list, game: dict) -> list[dict]:
-    """Extract ABS challenge events from play-by-play data."""
+def _normalize_call(code: str) -> str:
+    """Convert pitch call code to 'Ball' or 'Strike'."""
+    if code in _BALL_CODES:
+        return "Ball"
+    if code in _STRIKE_CODES:
+        return "Strike"
+    return code  # unknown — store as-is
+
+
+def parse_challenges(plays: list, game: dict, team_id_map: dict) -> list[dict]:
+    """Extract ABS challenge events from pitch-level reviewDetails."""
     challenges = []
-    home_team = game["home_team"]
-    away_team = game["away_team"]
 
     for play in plays:
         about = play.get("about", {})
         inning = about.get("inning", 0)
         half = "top" if about.get("halfInning") == "top" else "bottom"
         at_bat_index = about.get("atBatIndex", 0)
-        matchup = play.get("matchup", {})
-        batter_team_id = matchup.get("batter", {}).get("id")
 
         for event in play.get("playEvents", []):
-            if event.get("type") != "action":
+            rd = event.get("reviewDetails")
+            if not rd or rd.get("inProgress"):
                 continue
 
             details = event.get("details", {})
-            event_type = (details.get("eventType") or "").lower()
-            event_name = (details.get("event") or "").lower()
-            description = details.get("description") or ""
+            call_code = details.get("call", {}).get("code", "")
+            call_after = _normalize_call(call_code)
 
-            # Check if this looks like a ball/strike challenge
-            is_challenge = (
-                any(kw in event_type for kw in _CHALLENGE_EVENTS)
-                or any(kw in event_name for kw in _CHALLENGE_EVENTS)
-            )
-            if not is_challenge:
-                continue
+            is_overturned = rd.get("isOverturned", False)
+            # If overturned, the original call was the opposite of the final call
+            if is_overturned:
+                call_before = "Strike" if call_after == "Ball" else "Ball"
+            else:
+                call_before = call_after
 
-            match = _CHALLENGE_RE.search(description)
-            if not match:
-                continue
+            challenge_team_id = rd.get("challengeTeamId")
+            challenging_team = team_id_map.get(challenge_team_id, str(challenge_team_id))
 
-            call_before = match.group(1).capitalize()
-            verdict     = match.group(2).lower()   # "overturned to" or "upheld as"
-            call_after  = match.group(3).capitalize()
-            result      = "overturned" if "overturned" in verdict else "upheld"
-
-            # Determine which team challenged
-            # If the half is 'top', the batting team is the away team
-            batting_team = away_team if half == "top" else home_team
-            challenging_team = batting_team  # batter challenges their own at-bat
-
-            # Determine type: batter challenge vs manager challenge
-            ch_type = "batter"
-            if "manager" in event_name or "manager" in event_type:
-                ch_type = "manager"
+            # reviewType: "MJ" = manager/player challenge (ABS system)
+            ch_type = rd.get("reviewType", "MJ")
 
             challenges.append({
                 "gamepk":           game["gamepk"],
@@ -125,7 +106,7 @@ def parse_challenges(plays: list, game: dict) -> list[dict]:
                 "challenging_type": ch_type,
                 "call_before":      call_before,
                 "call_after":       call_after,
-                "challenge_result": result,
+                "challenge_result": "overturned" if is_overturned else "upheld",
             })
 
     return challenges
@@ -151,6 +132,13 @@ def upsert_challenges(conn, challenges: list[dict]) -> int:
         inserted += cur.rowcount
     conn.commit()
     return inserted
+
+
+def get_team_id_map(conn) -> dict:
+    """Return {team_id: abbreviation} from division_standings."""
+    cur = conn.cursor()
+    cur.execute("SELECT DISTINCT team_id, team FROM division_standings")
+    return {row[0]: row[1] for row in cur.fetchall()}
 
 
 def get_games(conn, season: int, gamepk: int | None) -> list[dict]:
@@ -179,6 +167,7 @@ def main():
     args = parser.parse_args()
 
     conn = psycopg2.connect(**DB)
+    team_id_map = get_team_id_map(conn)
     games = get_games(conn, args.season, args.gamepk)
 
     if not games:
@@ -193,7 +182,7 @@ def main():
         print(f"  [{i:3d}/{len(games)}] {game['date']} {game['away_team']} @ {game['home_team']} ({game['gamepk']})", end=" ")
         try:
             plays      = fetch_play_by_play(game["gamepk"])
-            challenges = parse_challenges(plays, game)
+            challenges = parse_challenges(plays, game, team_id_map)
             inserted   = upsert_challenges(conn, challenges)
             print(f"→ {len(challenges)} challenge(s), {inserted} new")
             total_inserted += inserted
