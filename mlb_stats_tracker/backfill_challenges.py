@@ -12,6 +12,7 @@ Run once after backfill_game_recaps.py has populated the games table:
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
 import time
@@ -22,7 +23,13 @@ import requests
 BASE = "https://statsapi.mlb.com/api/v1"
 SEASON = 2026
 
-DB = dict(host="localhost", dbname="mlb_stats", user="mlb", password="mlbpass", port=5433)
+DB = dict(
+    host=os.getenv("DB_HOST", "localhost"),
+    port=int(os.getenv("DB_PORT", "5433")),
+    dbname=os.getenv("DB_NAME", "mlb_stats"),
+    user=os.getenv("DB_USER", "mlb"),
+    password=os.getenv("DB_PASS"),
+)
 
 session = requests.Session()
 session.headers["User-Agent"] = "mlb-stats-tracker/1.0"
