@@ -20,7 +20,7 @@ import psycopg2
 import requests
 
 BASE = "https://statsapi.mlb.com/api/v1"
-SEASON = 2025
+SEASON = 2026
 
 DB = dict(host="localhost", dbname="mlb_stats", user="mlb", password="mlbpass", port=5433)
 

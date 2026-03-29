@@ -19,7 +19,7 @@ import time
 import psycopg2
 import requests
 
-SEASON       = int(sys.argv[1]) if len(sys.argv) > 1 else 2025
+SEASON       = int(sys.argv[1]) if len(sys.argv) > 1 else 2026
 BASE         = "https://statsapi.mlb.com/api/v1"
 SEASON_START = datetime.date(SEASON, 3, 20)
 SEASON_END   = min(datetime.date(SEASON, 10, 5), datetime.date.today())

@@ -14,7 +14,7 @@ app = Flask(__name__)
 
 # ── Config ───────────────────────────────────────────────────────────────────
 
-SEASON = int(os.environ.get("SEASON", 2025))
+SEASON = int(os.environ.get("SEASON", 2026))
 TEAM_ABBR = os.environ.get("TEAM_ABBR", "SEA")
 
 _DB = dict(

@@ -17,7 +17,7 @@ import time
 import psycopg2
 import requests
 
-SEASON    = int(sys.argv[1]) if len(sys.argv) > 1 else 2025
+SEASON    = int(sys.argv[1]) if len(sys.argv) > 1 else 2026
 TEAM_ID   = 136
 TEAM_ABBR = "SEA"
 BASE      = "https://statsapi.mlb.com/api/v1"

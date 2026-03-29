@@ -32,7 +32,7 @@ services:
     environment:
       TEAM_ID: "136"           # Seattle Mariners
       TEAM_ABBR: "SEA"
-      SEASON: "2025"
+      SEASON: "2026"
       POLL_INTERVAL: "1800"    # 30 min baseline; auto-shortens during/after games
       DB_HOST: postgres
       DB_PORT: "5432"
@@ -58,7 +58,7 @@ services:
       DB_NAME: ${POSTGRES_DB}
       DB_USER: ${POSTGRES_USER}
       DB_PASS: ${POSTGRES_PASSWORD}
-      SEASON: "2025"
+      SEASON: "2026"
       TEAM_ABBR: "SEA"
     ports:
       - "8080:8080"
