@@ -45,6 +45,29 @@ services:
       postgres:
         condition: service_healthy
 
+  # ── Custom Web Dashboard ──────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: mlb_web
+    restart: unless-stopped
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASS: ${POSTGRES_PASSWORD}
+      SEASON: "2025"
+      TEAM_ABBR: "SEA"
+    ports:
+      - "8080:8080"
+    networks:
+      - monitoring
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   # ── Nginx (SSL termination + reverse proxy) ────────────────────────────────
   nginx:
     image: nginx:latest
@@ -59,6 +82,7 @@ services:
       - monitoring
     depends_on:
       - grafana
+      - web
 
   # ── Grafana ────────────────────────────────────────────────────────────────
   grafana:

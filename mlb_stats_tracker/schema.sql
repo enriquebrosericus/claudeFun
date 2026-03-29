@@ -183,3 +183,24 @@ CREATE TABLE IF NOT EXISTS game_summaries (
 
 CREATE INDEX IF NOT EXISTS idx_games_season_date ON games (season, date);
 CREATE INDEX IF NOT EXISTS idx_games_season_team ON games (season, home_team, away_team);
+
+CREATE TABLE IF NOT EXISTS game_challenges (
+    id               SERIAL       PRIMARY KEY,
+    gamepk           BIGINT       NOT NULL REFERENCES games(gamepk) ON DELETE CASCADE,
+    date             DATE         NOT NULL,
+    season           SMALLINT     NOT NULL,
+    inning           SMALLINT     NOT NULL,
+    inning_half      VARCHAR(6)   NOT NULL,
+    at_bat_index     INT          NOT NULL,
+    pitch_number     INT,
+    challenging_team VARCHAR(10)  NOT NULL,
+    challenging_type VARCHAR(20)  NOT NULL DEFAULT 'batter',
+    call_before      VARCHAR(30)  NOT NULL,
+    call_after       VARCHAR(30)  NOT NULL,
+    challenge_result VARCHAR(20)  NOT NULL,
+    UNIQUE (gamepk, inning, inning_half, at_bat_index, pitch_number)
+);
+
+CREATE INDEX IF NOT EXISTS idx_challenges_gamepk  ON game_challenges (gamepk);
+CREATE INDEX IF NOT EXISTS idx_challenges_season   ON game_challenges (season, date);
+CREATE INDEX IF NOT EXISTS idx_challenges_team     ON game_challenges (season, challenging_team);

@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Players — MLB Stats{% endblock %}
+{% block content %}
+
+<div class="row g-2 mb-3 align-items-center">
+  <div class="col-auto"><select id="season-sel" class="form-select form-select-sm"></select></div>
+  <div class="col-auto"><select id="team-sel" class="form-select form-select-sm"></select></div>
+</div>
+
+<!-- Batter section -->
+<div class="card mb-3">
+  <div class="card-header d-flex align-items-center gap-3">
+    <span>Batter</span>
+    <select id="batter-sel" class="form-select form-select-sm" style="max-width:260px"></select>
+  </div>
+  <div class="card-body">
+    <div class="row g-2 mb-3">
+      {% for id, label in [('bavg','AVG'),('bobp','OBP'),('bslg','SLG'),('bops','OPS'),('biso','ISO'),('bbabip','BABIP'),('bhr','HR'),('brbi','RBI'),('bsb','SB'),('bg','G')] %}
+      <div class="col-6 col-sm-4 col-md-auto flex-grow-1">
+        <div class="card"><div class="stat-card">
+          <div class="stat-label">{{ label }}</div>
+          <div class="stat-value sm" id="stat-{{ id }}">—</div>
+        </div></div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header">AVG / OBP / SLG Over Season</div>
+          <div class="card-body p-2"><canvas id="batter-rate-chart"></canvas></div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header">HR / RBI / Runs</div>
+          <div class="card-body p-2"><canvas id="batter-count-chart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pitcher section -->
+<div class="card">
+  <div class="card-header d-flex align-items-center gap-3">
+    <span>Pitcher</span>
+    <select id="pitcher-sel" class="form-select form-select-sm" style="max-width:260px"></select>
+  </div>
+  <div class="card-body">
+    <div class="row g-2 mb-3">
+      {% for id, label in [('pera','ERA'),('pwhip','WHIP'),('pfip','FIP'),('pk9','K/9'),('pbb9','BB/9'),('pw','W'),('pl','L'),('psv','SV'),('pso','SO'),('pip','IP')] %}
+      <div class="col-6 col-sm-4 col-md-auto flex-grow-1">
+        <div class="card"><div class="stat-card">
+          <div class="stat-label">{{ label }}</div>
+          <div class="stat-value sm" id="stat-{{ id }}">—</div>
+        </div></div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header">ERA / WHIP / FIP Over Season</div>
+          <div class="card-body p-2"><canvas id="pitcher-era-chart"></canvas></div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header">K/9 vs BB/9</div>
+          <div class="card-body p-2"><canvas id="pitcher-k9-chart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+const p = new URLSearchParams(location.search);
+let season    = p.get('season')    || '{{ default_season }}';
+let team      = p.get('team')      || '{{ default_team }}';
+let batterId  = p.get('batter_id') ? parseInt(p.get('batter_id'))  : null;
+let pitcherId = p.get('pitcher_id')? parseInt(p.get('pitcher_id')) : null;
+
+function sync() {
+  p.set('season', season); p.set('team', team);
+  if (batterId)  p.set('batter_id',  batterId);
+  if (pitcherId) p.set('pitcher_id', pitcherId);
+  history.replaceState({}, '', '?' + p);
+}
+
+async function loadBatter() {
+  if (!batterId) return;
+  const [summary, trend] = await Promise.all([
+    api(`/api/players/batter_summary?player_id=${batterId}&season=${season}`),
+    api(`/api/players/batter_trend?player_id=${batterId}&season=${season}`),
+  ]);
+  if (summary) {
+    set('stat-bavg',   fmt(summary.avg,   3));
+    set('stat-bobp',   fmt(summary.obp,   3));
+    set('stat-bslg',   fmt(summary.slg,   3));
+    set('stat-bops',   fmt(summary.ops,   3));
+    set('stat-biso',   fmt(summary.iso,   3));
+    set('stat-bbabip', fmt(summary.babip, 3));
+    set('stat-bhr',    summary.home_runs);
+    set('stat-brbi',   summary.rbi);
+    set('stat-bsb',    summary.stolen_bases);
+    set('stat-bg',     summary.games_played);
+  }
+  if (trend?.length) {
+    const dates = trend.map(r => r.date);
+    mkChart('batter-rate-chart', {
+      type: 'line',
+      data: { labels: dates, datasets: [
+        { label: 'AVG', data: trend.map(r => r.avg),  borderColor: '#3b82f6', tension: 0.3, pointRadius: 0 },
+        { label: 'OBP', data: trend.map(r => r.obp),  borderColor: '#22c55e', tension: 0.3, pointRadius: 0 },
+        { label: 'SLG', data: trend.map(r => r.slg),  borderColor: '#eab308', tension: 0.3, pointRadius: 0 },
+      ]},
+      options: { responsive: true, maintainAspectRatio: false },
+    });
+    mkChart('batter-count-chart', {
+      type: 'line',
+      data: { labels: dates, datasets: [
+        { label: 'HR',  data: trend.map(r => r.home_runs), borderColor: '#ef4444', tension: 0.3, pointRadius: 0 },
+        { label: 'RBI', data: trend.map(r => r.rbi),       borderColor: '#a855f7', tension: 0.3, pointRadius: 0 },
+        { label: 'R',   data: trend.map(r => r.runs),      borderColor: '#06b6d4', tension: 0.3, pointRadius: 0 },
+      ]},
+      options: { responsive: true, maintainAspectRatio: false },
+    });
+  }
+}
+
+async function loadPitcher() {
+  if (!pitcherId) return;
+  const [summary, trend] = await Promise.all([
+    api(`/api/players/pitcher_summary?player_id=${pitcherId}&season=${season}`),
+    api(`/api/players/pitcher_trend?player_id=${pitcherId}&season=${season}`),
+  ]);
+  if (summary) {
+    set('stat-pera',  fmt(summary.era,  2));
+    set('stat-pwhip', fmt(summary.whip, 3));
+    set('stat-pfip',  fmt(summary.fip,  2));
+    set('stat-pk9',   fmt(summary.k9,   1));
+    set('stat-pbb9',  fmt(summary.bb9,  1));
+    set('stat-pw',    summary.wins);
+    set('stat-pl',    summary.losses);
+    set('stat-psv',   summary.saves);
+    set('stat-pso',   summary.strikeouts);
+    set('stat-pip',   summary.innings_pitched);
+  }
+  if (trend?.length) {
+    const dates = trend.map(r => r.date);
+    mkChart('pitcher-era-chart', {
+      type: 'line',
+      data: { labels: dates, datasets: [
+        { label: 'ERA',  data: trend.map(r => r.era),  borderColor: '#ef4444', tension: 0.3, pointRadius: 0 },
+        { label: 'WHIP', data: trend.map(r => r.whip), borderColor: '#eab308', tension: 0.3, pointRadius: 0 },
+        { label: 'FIP',  data: trend.map(r => r.fip),  borderColor: '#a855f7', tension: 0.3, pointRadius: 0 },
+      ]},
+      options: { responsive: true, maintainAspectRatio: false },
+    });
+    mkChart('pitcher-k9-chart', {
+      type: 'line',
+      data: { labels: dates, datasets: [
+        { label: 'K/9',  data: trend.map(r => r.k9),  borderColor: '#22c55e', tension: 0.3, pointRadius: 0 },
+        { label: 'BB/9', data: trend.map(r => r.bb9), borderColor: '#ef4444', tension: 0.3, pointRadius: 0 },
+      ]},
+      options: { responsive: true, maintainAspectRatio: false },
+    });
+  }
+}
+
+async function reloadRosters() {
+  const [batters, pitchers] = await Promise.all([
+    api(`/api/players/batters?team=${team}&season=${season}`),
+    api(`/api/players/pitchers?team=${team}&season=${season}`),
+  ]);
+  populateSelect('batter-sel',  batters  || [], batterId,  r => r.player, r => r.player_id);
+  populateSelect('pitcher-sel', pitchers || [], pitcherId, r => r.player, r => r.player_id);
+  if (!batterId  && batters?.length)  batterId  = batters[0].player_id;
+  if (!pitcherId && pitchers?.length) pitcherId = pitchers[0].player_id;
+  await Promise.all([loadBatter(), loadPitcher()]);
+}
+
+document.getElementById('season-sel').addEventListener('change', e => { season = e.target.value; sync(); reloadRosters(); });
+document.getElementById('team-sel').addEventListener('change',   e => { team   = e.target.value; batterId = null; pitcherId = null; sync(); reloadRosters(); });
+document.getElementById('batter-sel').addEventListener('change', e => { batterId  = parseInt(e.target.value); sync(); loadBatter(); });
+document.getElementById('pitcher-sel').addEventListener('change',e => { pitcherId = parseInt(e.target.value); sync(); loadPitcher(); });
+
+(async () => {
+  const [seasons, teams] = await Promise.all([api('/api/seasons'), api('/api/teams/list')]);
+  populateSelect('season-sel', seasons || [], season);
+  populateSelect('team-sel',   teams   || [], team);
+  await reloadRosters();
+})();
+</script>
+{% endblock %}

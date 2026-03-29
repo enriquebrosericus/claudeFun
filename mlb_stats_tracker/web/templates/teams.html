@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}Teams — MLB Stats{% endblock %}
+{% block content %}
+
+<div class="row g-2 mb-3 align-items-center">
+  <div class="col-auto">
+    <select id="season-sel" class="form-select form-select-sm"></select>
+  </div>
+  <div class="col-auto">
+    <select id="team-sel" class="form-select form-select-sm"></select>
+  </div>
+</div>
+
+<!-- Stat cards -->
+<div class="row g-2 mb-3">
+  {% for id, label in [('w','W'),('l','L'),('pct','PCT'),('gb','GB'),('str','Streak'),('l10','Last 10'),('rs','RS'),('ra','RA')] %}
+  <div class="col-6 col-sm-3 col-md-auto flex-grow-1">
+    <div class="card"><div class="stat-card">
+      <div class="stat-label">{{ label }}</div>
+      <div class="stat-value" id="stat-{{ id }}">—</div>
+    </div></div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Trends row -->
+<div class="row g-3 mb-3">
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-header">Season Record</div>
+      <div class="card-body p-2"><canvas id="wl-chart"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header">Run Differential</div>
+      <div class="card-body p-2"><canvas id="rd-chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- GB Trend -->
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">Games Behind — Division</div>
+      <div class="card-body p-2"><canvas id="gb-chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- Batting leaders -->
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">Batting Leaders</div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead><tr>
+              <th>Player</th><th>Pos</th><th>G</th><th>AB</th><th>AVG</th>
+              <th>OBP</th><th>SLG</th><th>OPS</th><th>HR</th><th>RBI</th>
+              <th>R</th><th>H</th><th>SB</th>
+            </tr></thead>
+            <tbody id="batting-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pitching leaders -->
+<div class="row g-3">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">Pitching Leaders</div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead><tr>
+              <th>Player</th><th>Pos</th><th>G</th><th>IP</th><th>ERA</th>
+              <th>WHIP</th><th>FIP</th><th>W</th><th>L</th><th>SV</th>
+              <th>SO</th><th>K/9</th><th>QS</th>
+            </tr></thead>
+            <tbody id="pitching-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+const p = new URLSearchParams(location.search);
+let season = p.get('season') || '{{ default_season }}';
+let team   = p.get('team')   || '{{ default_team }}';
+
+function sync() { p.set('season', season); p.set('team', team); history.replaceState({}, '', '?' + p); }
+
+async function load() {
+  const [summary, trends, gbTrend, batting, pitching] = await Promise.all([
+    api(`/api/teams/summary?season=${season}&team=${team}`),
+    api(`/api/teams/trends?season=${season}&team=${team}`),
+    api(`/api/teams/gb_trend?season=${season}&team=${team}`),
+    api(`/api/teams/batting_leaders?season=${season}&team=${team}`),
+    api(`/api/teams/pitching_leaders?season=${season}&team=${team}`),
+  ]);
+
+  // Stat cards
+  if (summary) {
+    set('stat-w',   summary.wins);
+    set('stat-l',   summary.losses);
+    set('stat-pct', fmt(summary.win_pct, 3));
+    const gb = summary.games_behind;
+    set('stat-gb', gb == 0 ? '—' : gb);
+    const str = summary.streak;
+    set('stat-str', str ? (str > 0 ? `W${str}` : `L${Math.abs(str)}`) : '—');
+    const l10w = summary.last10_wins;
+    set('stat-l10', l10w != null ? `${l10w}-${10-l10w}` : '—');
+    set('stat-rs', summary.runs_scored);
+    set('stat-ra', summary.runs_allowed);
+  }
+
+  // W/L chart
+  if (trends?.length) {
+    const dates = trends.map(r => r.date);
+    mkChart('wl-chart', {
+      type: 'line',
+      data: {
+        labels: dates,
+        datasets: [
+          { label: 'Wins',   data: trends.map(r => r.wins),   borderColor: '#22c55e', tension: 0.3, pointRadius: 0 },
+          { label: 'Losses', data: trends.map(r => r.losses), borderColor: '#ef4444', tension: 0.3, pointRadius: 0 },
+        ],
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } },
+    });
+    const rdData = trends.map(r => (r.runs_scored || 0) - (r.runs_allowed || 0));
+    mkChart('rd-chart', {
+      type: 'bar',
+      data: {
+        labels: dates,
+        datasets: [{ label: 'Run Diff', data: rdData,
+          backgroundColor: rdData.map(v => v >= 0 ? 'rgba(34,197,94,0.7)' : 'rgba(239,68,68,0.7)') }],
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } },
+    });
+  }
+
+  // GB trend
+  if (gbTrend?.length) {
+    mkChart('gb-chart', {
+      type: 'line',
+      data: {
+        labels: gbTrend.map(r => r.date),
+        datasets: [{ label: 'GB', data: gbTrend.map(r => r.games_behind),
+          borderColor: teamColor(team), backgroundColor: teamColor(team, 0.1),
+          tension: 0.3, pointRadius: 0, fill: true }],
+      },
+      options: { responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { reverse: true } } },
+    });
+  }
+
+  // Batting table
+  const btbody = document.getElementById('batting-tbody');
+  btbody.innerHTML = (batting || []).map(r => `<tr>
+    <td class="fw-500">${r.player}</td><td class="text-muted">${r.position||''}</td>
+    <td>${r.games_played||0}</td><td>${r.at_bats||0}</td>
+    <td>${fmt(r.avg,3)}</td><td>${fmt(r.obp,3)}</td><td>${fmt(r.slg,3)}</td>
+    <td><strong>${fmt(r.ops,3)}</strong></td>
+    <td>${r.home_runs||0}</td><td>${r.rbi||0}</td><td>${r.runs||0}</td>
+    <td>${r.hits||0}</td><td>${r.stolen_bases||0}</td>
+  </tr>`).join('');
+
+  // Pitching table
+  const ptbody = document.getElementById('pitching-tbody');
+  ptbody.innerHTML = (pitching || []).map(r => `<tr>
+    <td class="fw-500">${r.player}</td><td class="text-muted">${r.position||''}</td>
+    <td>${r.games||0}</td><td>${r.innings_pitched||0}</td>
+    <td><strong>${fmt(r.era,2)}</strong></td><td>${fmt(r.whip,3)}</td><td>${fmt(r.fip,2)}</td>
+    <td>${r.wins||0}</td><td>${r.losses||0}</td><td>${r.saves||0}</td>
+    <td>${r.strikeouts||0}</td><td>${fmt(r.k9,1)}</td><td>${r.quality_starts||0}</td>
+  </tr>`).join('');
+}
+
+document.getElementById('season-sel').addEventListener('change', e => { season = e.target.value; sync(); load(); });
+document.getElementById('team-sel').addEventListener('change',   e => { team   = e.target.value; sync(); load(); });
+
+(async () => {
+  const [seasons, teams] = await Promise.all([api('/api/seasons'), api('/api/teams/list')]);
+  populateSelect('season-sel', seasons || [], season);
+  populateSelect('team-sel',   teams   || [], team);
+  await load();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Division Race — MLB Stats{% endblock %}
+{% block content %}
+
+<div class="row g-2 mb-3 align-items-center">
+  <div class="col-auto"><select id="season-sel" class="form-select form-select-sm"></select></div>
+</div>
+
+<div id="divisions-grid" class="row g-3"></div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+const DIVS = ['AL East','AL Central','AL West','NL East','NL Central','NL West'];
+const p = new URLSearchParams(location.search);
+let season = p.get('season') || '{{ default_season }}';
+
+function sync() { p.set('season', season); history.replaceState({}, '', '?' + p); }
+
+const WIN_PCT_COLORS = ['#22c55e','#84cc16','#eab308','#f97316','#ef4444'];
+
+function pct(wins, losses) {
+  const tot = wins + losses;
+  return tot ? (wins/tot).toFixed(3) : '.000';
+}
+
+function standingsTable(teams) {
+  const rows = teams.map((t, i) => `<tr>
+    <td class="fw-500">${i === 0 ? '🏆 ' : ''}${t.team}</td>
+    <td>${t.wins}</td><td>${t.losses}</td>
+    <td>${pct(t.wins||0, t.losses||0)}</td>
+    <td>${i === 0 ? '—' : t.games_behind}</td>
+  </tr>`).join('');
+  return `<table class="table table-sm mb-0">
+    <thead><tr><th>Team</th><th>W</th><th>L</th><th>PCT</th><th>GB</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function raceChart(canvasId, divData) {
+  const { dates, teams } = divData.race;
+  const teamNames = Object.keys(teams);
+  const datasets = teamNames.map((t, i) => ({
+    label: t,
+    data: teams[t].map(v => v != null ? -v : null),
+    borderColor: teamColor(t),
+    backgroundColor: teamColor(t, 0.1),
+    tension: 0.3,
+    pointRadius: 0,
+    spanGaps: true,
+  }));
+  mkChart(canvasId, {
+    type: 'line',
+    data: { labels: dates, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } },
+      scales: {
+        y: { ticks: { callback: v => v == 0 ? '1st' : `${-v} GB` }, reverse: false },
+      },
+    },
+  });
+}
+
+function renderDiv(div, data) {
+  const safeId = div.replace(/\s+/g, '-').toLowerCase();
+  return `<div class="col-md-6 col-xl-4">
+    <div class="card h-100">
+      <div class="card-header">${div}</div>
+      <div class="card-body p-0">
+        <div class="table-responsive">${standingsTable(data.standings)}</div>
+        <div class="p-2"><canvas id="race-${safeId}" style="max-height:180px"></canvas></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function load() {
+  const all = await api(`/api/divisions/all?season=${season}`);
+  if (!all) return;
+  const grid = document.getElementById('divisions-grid');
+  grid.innerHTML = DIVS.map(d => renderDiv(d, all[d])).join('');
+  DIVS.forEach(d => {
+    const safeId = d.replace(/\s+/g, '-').toLowerCase();
+    if (all[d]?.race?.dates?.length) raceChart(`race-${safeId}`, all[d]);
+  });
+}
+
+document.getElementById('season-sel').addEventListener('change', e => { season = e.target.value; sync(); load(); });
+
+(async () => {
+  const seasons = await api('/api/seasons');
+  populateSelect('season-sel', seasons||[], season);
+  await load();
+})();
+</script>
+{% endblock %}

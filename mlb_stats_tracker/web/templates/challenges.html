@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}Challenges — MLB Stats{% endblock %}
+{% block content %}
+
+<div class="row g-2 mb-3 align-items-center">
+  <div class="col-auto"><select id="season-sel" class="form-select form-select-sm"></select></div>
+  <div class="col-auto"><select id="team-sel" class="form-select form-select-sm"></select></div>
+</div>
+
+<!-- Summary cards -->
+<div class="row g-2 mb-3">
+  {% for id, label in [('total','Challenges'),('overturned','Overturned'),('rate','Overturn %'),('ball-ch','Ball Chal.'),('str-ch','Strike Chal.'),('ball-ot','Ball OT'),('str-ot','Strike OT')] %}
+  <div class="col-6 col-sm-4 col-md-auto flex-grow-1">
+    <div class="card"><div class="stat-card">
+      <div class="stat-label">{{ label }}</div>
+      <div class="stat-value sm" id="ch-{{ id }}">—</div>
+    </div></div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Charts row -->
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header">Challenge Breakdown</div>
+      <div class="card-body d-flex align-items-center justify-content-center" style="min-height:200px">
+        <canvas id="breakdown-chart" style="max-height:200px;max-width:200px"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-8">
+    <div class="card h-100">
+      <div class="card-header">Success Rate Over Season (rolling)</div>
+      <div class="card-body p-2"><canvas id="trend-chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- By-team table (when showing all teams) -->
+<div class="card mb-3" id="by-team-section">
+  <div class="card-header">By Team</div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>Team</th><th>Challenges</th><th>Overturned</th><th>Overturn %</th></tr></thead>
+        <tbody id="by-team-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Per-game challenges -->
+<div class="card" id="game-detail-section">
+  <div class="card-header d-flex align-items-center gap-3">
+    <span>Game Detail</span>
+    <select id="game-sel" class="form-select form-select-sm" style="max-width:280px"></select>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm mb-0">
+        <thead><tr><th>Inn</th><th>Half</th><th>Team</th><th>Type</th><th>Original Call</th><th>Result Call</th><th>Outcome</th></tr></thead>
+        <tbody id="game-challenges-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="no-data" class="text-muted text-center py-5 d-none">
+  No challenge data yet. Run <code>python backfill_challenges.py</code> to populate.
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+const p = new URLSearchParams(location.search);
+let season = p.get('season') || '{{ default_season }}';
+let team   = p.get('team')   || '';
+let gamepk = p.get('gamepk') ? parseInt(p.get('gamepk')) : null;
+
+function sync() { p.set('season', season); p.set('team', team||''); if(gamepk) p.set('gamepk', gamepk); history.replaceState({}, '', '?' + p); }
+
+async function load() {
+  const teamParam = team ? `&team=${team}` : '';
+  const [summary, byTeam, games, trend] = await Promise.all([
+    api(`/api/challenges/summary?season=${season}${teamParam}`),
+    api(`/api/challenges/by_team?season=${season}`),
+    api(`/api/challenges/game_list?season=${season}${teamParam}`),
+    api(`/api/challenges/trend?season=${season}${teamParam}`),
+  ]);
+
+  if (!summary || summary.total == 0) {
+    document.getElementById('no-data').classList.remove('d-none');
+    return;
+  }
+  document.getElementById('no-data').classList.add('d-none');
+
+  set('ch-total',    summary.total);
+  set('ch-overturned', summary.overturned);
+  set('ch-rate',     summary.overturn_rate != null ? `${summary.overturn_rate}%` : '—');
+  set('ch-ball-ch',  summary.ball_challenges);
+  set('ch-str-ch',   summary.strike_challenges);
+  set('ch-ball-ot',  summary.ball_overturned);
+  set('ch-str-ot',   summary.strike_overturned);
+
+  // Breakdown doughnut
+  const bCh = summary.ball_challenges   || 0;
+  const sCh = summary.strike_challenges || 0;
+  const bOt = summary.ball_overturned   || 0;
+  const sOt = summary.strike_overturned || 0;
+  mkChart('breakdown-chart', {
+    type: 'doughnut',
+    data: {
+      labels: ['Ball → Strike (OT)', 'Strike → Ball (OT)', 'Ball (upheld)', 'Strike (upheld)'],
+      datasets: [{ data: [bOt, sOt, bCh - bOt, sCh - sOt],
+        backgroundColor: ['#22c55e','#3b82f6','rgba(34,197,94,0.3)','rgba(59,130,246,0.3)'],
+        borderColor: '#1e293b', borderWidth: 2 }],
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 12 } } } },
+  });
+
+  // Trend chart: cumulative success rate
+  if (trend?.length) {
+    let cumTotal = 0, cumOt = 0;
+    const rates = trend.map(r => {
+      cumTotal += r.total    || 0;
+      cumOt    += r.overturned || 0;
+      return cumTotal ? +(cumOt / cumTotal * 100).toFixed(1) : null;
+    });
+    mkChart('trend-chart', {
+      type: 'line',
+      data: { labels: trend.map(r => r.date), datasets: [
+        { label: 'Cumulative Overturn %', data: rates, borderColor: '#22c55e', tension: 0.3, pointRadius: 0 },
+      ]},
+      options: { responsive: true, maintainAspectRatio: false,
+        scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } } },
+    });
+  }
+
+  // By-team table
+  const btbody = document.getElementById('by-team-tbody');
+  btbody.innerHTML = (byTeam || []).map(r => `<tr>
+    <td><strong>${r.team}</strong></td>
+    <td>${r.total}</td>
+    <td>${r.overturned}</td>
+    <td>${r.overturn_rate ?? '—'}%</td>
+  </tr>`).join('');
+
+  // Game list for detail dropdown
+  populateSelect('game-sel', games||[], gamepk, r => r.label||r.gamepk, r => r.gamepk);
+  if (!gamepk && games?.length) gamepk = games[0].gamepk;
+  if (gamepk) loadGameDetail();
+}
+
+async function loadGameDetail() {
+  if (!gamepk) return;
+  const rows = await api(`/api/challenges/game?gamepk=${gamepk}`);
+  const tbody = document.getElementById('game-challenges-tbody');
+  if (!rows?.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-muted text-center py-3">No challenge data for this game.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const isOt = r.challenge_result === 'overturned';
+    return `<tr>
+      <td>${r.inning}</td>
+      <td>${r.inning_half}</td>
+      <td><strong>${r.challenging_team}</strong></td>
+      <td class="text-muted">${r.challenging_type}</td>
+      <td>${r.call_before}</td>
+      <td>${r.call_after}</td>
+      <td class="${isOt ? 'challenge-overturned' : 'challenge-upheld'}">${isOt ? '✓ Overturned' : 'Upheld'}</td>
+    </tr>`;
+  }).join('');
+}
+
+document.getElementById('season-sel').addEventListener('change', e => { season = e.target.value; sync(); load(); });
+document.getElementById('team-sel').addEventListener('change',   e => { team   = e.target.value; gamepk = null; sync(); load(); });
+document.getElementById('game-sel').addEventListener('change',   e => { gamepk = parseInt(e.target.value); sync(); loadGameDetail(); });
+
+(async () => {
+  const [seasons, teams] = await Promise.all([api('/api/seasons'), api('/api/teams/list')]);
+  populateSelect('season-sel', seasons||[], season);
+  // Add "All Teams" option
+  const allTeamsOpt = document.createElement('option');
+  allTeamsOpt.value = ''; allTeamsOpt.textContent = 'All Teams';
+  const teamSel = document.getElementById('team-sel');
+  teamSel.appendChild(allTeamsOpt);
+  (teams||[]).forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    if (t === team) opt.selected = true;
+    teamSel.appendChild(opt);
+  });
+  await load();
+})();
+</script>
+{% endblock %}

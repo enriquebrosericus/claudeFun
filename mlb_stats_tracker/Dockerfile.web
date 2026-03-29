@@ -1,0 +1,9 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir flask>=3.0 psycopg2-binary>=2.9 gunicorn>=21.0
+
+COPY web/ ./web/
+
+CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:8080", "--timeout", "30", "web.app:app"]

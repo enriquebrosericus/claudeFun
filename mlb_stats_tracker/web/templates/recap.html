@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}Game Recap — MLB Stats{% endblock %}
+{% block content %}
+
+<div class="row g-2 mb-3 align-items-center">
+  <div class="col-auto"><select id="season-sel" class="form-select form-select-sm"></select></div>
+  <div class="col-auto" style="min-width:280px">
+    <select id="game-sel" class="form-select form-select-sm"></select>
+  </div>
+</div>
+
+<div id="recap-body" class="d-none">
+  <!-- Game header -->
+  <div class="row g-2 mb-3">
+    {% for id, label in [('result','Result'),('date','Date'),('venue','Venue'),('win-p','Win'),('loss-p','Loss'),('save-p','Save')] %}
+    <div class="col-6 col-md-2">
+      <div class="card"><div class="stat-card">
+        <div class="stat-label">{{ label }}</div>
+        <div class="stat-value sm" id="hdr-{{ id }}">—</div>
+      </div></div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Linescore -->
+  <div class="card mb-3">
+    <div class="card-header">Line Score</div>
+    <div class="card-body p-2">
+      <div class="table-responsive">
+        <table class="table linescore mb-0" id="linescore-table"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Box scores (2 columns) -->
+  <div class="row g-3 mb-3">
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header" id="batting-away-hdr">Batting</div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table box-score mb-0">
+              <thead><tr><th class="player-name">Player</th><th>AB</th><th>R</th><th>H</th><th>2B</th><th>3B</th><th>HR</th><th>RBI</th><th>BB</th><th>SO</th><th>SB</th></tr></thead>
+              <tbody id="batting-away-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header" id="batting-home-hdr">Batting</div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table box-score mb-0">
+              <thead><tr><th class="player-name">Player</th><th>AB</th><th>R</th><th>H</th><th>2B</th><th>3B</th><th>HR</th><th>RBI</th><th>BB</th><th>SO</th><th>SB</th></tr></thead>
+              <tbody id="batting-home-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header" id="pitching-away-hdr">Pitching</div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table box-score mb-0">
+              <thead><tr><th class="player-name">Pitcher</th><th>IP</th><th>H</th><th>R</th><th>ER</th><th>BB</th><th>SO</th><th>HR</th><th>P</th><th>ERA</th><th></th></tr></thead>
+              <tbody id="pitching-away-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header" id="pitching-home-hdr">Pitching</div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table box-score mb-0">
+              <thead><tr><th class="player-name">Pitcher</th><th>IP</th><th>H</th><th>R</th><th>ER</th><th>BB</th><th>SO</th><th>HR</th><th>P</th><th>ERA</th><th></th></tr></thead>
+              <tbody id="pitching-home-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI summary -->
+  <div id="ai-section" class="card d-none">
+    <div class="card-header">AI Game Summary</div>
+    <div class="card-body">
+      <div id="ai-text" class="ai-summary"></div>
+      <div id="ai-meta" class="text-muted mt-2" style="font-size:0.75rem"></div>
+    </div>
+  </div>
+</div>
+
+<div id="no-game" class="text-muted text-center py-5">Select a game above.</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+const p = new URLSearchParams(location.search);
+let season = p.get('season') || '{{ default_season }}';
+let gamepk = p.get('gamepk') ? parseInt(p.get('gamepk')) : null;
+
+function sync() { p.set('season', season); if (gamepk) p.set('gamepk', gamepk); history.replaceState({}, '', '?' + p); }
+
+function battingRow(r) {
+  return `<tr><td class="player-name">${r.player}</td>
+    <td>${r.ab}</td><td>${r.r}</td><td>${r.h}</td>
+    <td>${r.doubles}</td><td>${r.triples}</td><td>${r.hr}</td>
+    <td>${r.rbi}</td><td>${r.bb}</td><td>${r.so}</td><td>${r.sb}</td></tr>`;
+}
+
+function pitchingRow(r) {
+  const noteSpan = r.note ? `<span class="badge bg-secondary ms-1" style="font-size:0.65rem">${r.note}</span>` : '';
+  return `<tr><td class="player-name">${r.player}${noteSpan}</td>
+    <td>${r.ip}</td><td>${r.h}</td><td>${r.r}</td><td>${r.er}</td>
+    <td>${r.bb}</td><td>${r.so}</td><td>${r.hr}</td>
+    <td>${r.pitches??'—'}</td><td>${fmt(r.era,2)}</td><td></td></tr>`;
+}
+
+function renderLinescore(ls) {
+  const { innings, rows } = ls;
+  const thead = `<thead><tr><th>Team</th>${innings.map(i=>`<th>${i}</th>`).join('')}<th class="col-total">R</th><th class="col-total">H</th><th class="col-total">E</th></tr></thead>`;
+  const tbody = `<tbody>${rows.map(r =>
+    `<tr><th>${r.team}</th>${r.cells.map(c=>`<td>${c}</td>`).join('')}<td class="col-total fw-bold">${r.R}</td><td class="col-total">${r.H}</td><td class="col-total">${r.E}</td></tr>`
+  ).join('')}</tbody>`;
+  document.getElementById('linescore-table').innerHTML = thead + tbody;
+}
+
+async function loadGame() {
+  if (!gamepk) return;
+  const data = await api(`/api/recap/game?gamepk=${gamepk}`);
+  if (!data?.game) return;
+
+  document.getElementById('recap-body').classList.remove('d-none');
+  document.getElementById('no-game').classList.add('d-none');
+
+  const g = data.game;
+  const resultEl = document.getElementById('hdr-result');
+  resultEl.textContent = g.result || '—';
+  resultEl.className = `stat-value sm ${g.result === 'W' ? 'text-success' : g.result === 'L' ? 'text-danger' : ''}`;
+
+  const d = new Date(g.date);
+  set('hdr-date',   `${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}  ${g.sea_score}–${g.opp_score}`);
+  set('hdr-venue',  g.venue || '—');
+  set('hdr-win-p',  g.winning_pitcher || '—');
+  set('hdr-loss-p', g.losing_pitcher  || '—');
+  set('hdr-save-p', g.save_pitcher    || 'None');
+
+  renderLinescore(data.linescore);
+
+  document.getElementById('batting-away-hdr').textContent  = `${g.away_team} Batting`;
+  document.getElementById('batting-home-hdr').textContent  = `${g.home_team} Batting`;
+  document.getElementById('pitching-away-hdr').textContent = `${g.away_team} Pitching`;
+  document.getElementById('pitching-home-hdr').textContent = `${g.home_team} Pitching`;
+
+  document.getElementById('batting-away-tbody').innerHTML  = data.batting.away.map(battingRow).join('');
+  document.getElementById('batting-home-tbody').innerHTML  = data.batting.home.map(battingRow).join('');
+  document.getElementById('pitching-away-tbody').innerHTML = data.pitching.away.map(pitchingRow).join('');
+  document.getElementById('pitching-home-tbody').innerHTML = data.pitching.home.map(pitchingRow).join('');
+
+  if (data.ai_summary?.summary_text) {
+    const ai = document.getElementById('ai-section');
+    ai.classList.remove('d-none');
+    const paras = data.ai_summary.summary_text.split(/\n+/).filter(Boolean);
+    document.getElementById('ai-text').innerHTML = paras.map(t => `<p>${t}</p>`).join('');
+    const genAt = new Date(data.ai_summary.generated_at);
+    document.getElementById('ai-meta').textContent =
+      `Generated ${genAt.toLocaleDateString()} · Claude`;
+  } else {
+    document.getElementById('ai-section').classList.add('d-none');
+  }
+}
+
+document.getElementById('season-sel').addEventListener('change', async e => {
+  season = e.target.value; gamepk = null; sync();
+  const games = await api(`/api/recap/games?season=${season}`);
+  populateSelect('game-sel', games||[], gamepk, r=>r.label, r=>r.gamepk);
+  if (games?.length) { gamepk = games[0].gamepk; sync(); loadGame(); }
+});
+document.getElementById('game-sel').addEventListener('change', e => {
+  gamepk = parseInt(e.target.value); sync(); loadGame();
+});
+
+(async () => {
+  const [seasons, games] = await Promise.all([
+    api('/api/seasons'),
+    api(`/api/recap/games?season=${season}`),
+  ]);
+  populateSelect('season-sel', seasons||[], season);
+  populateSelect('game-sel',   games||[], gamepk, r=>r.label, r=>r.gamepk);
+  if (!gamepk && games?.length) gamepk = games[0].gamepk;
+  sync();
+  await loadGame();
+})();
+</script>
+{% endblock %}
