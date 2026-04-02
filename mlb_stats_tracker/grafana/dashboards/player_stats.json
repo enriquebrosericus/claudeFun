@@ -6,13 +6,14 @@
       "pluginId": "postgres"
     }
   ],
-  "title": "Mariners \u2014 Player Detail",
+  "title": "Mariners — Player Detail",
   "uid": "mlb-sea-player",
   "tags": ["mlb", "mariners", "baseball", "player"],
   "refresh": "5m",
   "time": {"from": "now-1y", "to": "now"},
   "timezone": "browser",
   "schemaVersion": 38,
+  "style": "dark",
   "templating": {
     "list": [
       {
@@ -76,7 +77,7 @@
   "panels": [
     {
       "id": 1, "type": "row",
-      "title": "\ud83c\udfcf Batter \u2014 ${batter}",
+      "title": "▓▒░ BATTER — ${batter} ░▒▓",
       "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}
     },
     {
@@ -89,9 +90,9 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "red", "value": null},
-              {"color": "yellow", "value": 0.250},
-              {"color": "green", "value": 0.300}
+              {"color": "#FF1493", "value": null},
+              {"color": "#FF9500", "value": 0.250},
+              {"color": "#00FFFF", "value": 0.300}
             ]
           },
           "color": {"mode": "thresholds"}
@@ -114,9 +115,9 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "red", "value": null},
-              {"color": "yellow", "value": 0.320},
-              {"color": "green", "value": 0.370}
+              {"color": "#FF1493", "value": null},
+              {"color": "#FF9500", "value": 0.320},
+              {"color": "#00FFFF", "value": 0.370}
             ]
           },
           "color": {"mode": "thresholds"}
@@ -139,9 +140,9 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "red", "value": null},
-              {"color": "yellow", "value": 0.400},
-              {"color": "green", "value": 0.500}
+              {"color": "#FF1493", "value": null},
+              {"color": "#FF9500", "value": 0.400},
+              {"color": "#00FFFF", "value": 0.500}
             ]
           },
           "color": {"mode": "thresholds"}
@@ -164,10 +165,10 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "red", "value": null},
-              {"color": "yellow", "value": 0.700},
-              {"color": "green", "value": 0.800},
-              {"color": "super-light-green", "value": 0.900}
+              {"color": "#FF1493", "value": null},
+              {"color": "#FF9500", "value": 0.700},
+              {"color": "#00FFFF", "value": 0.800},
+              {"color": "#39FF14", "value": 0.900}
             ]
           },
           "color": {"mode": "thresholds"}
@@ -187,8 +188,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "color": {"fixedColor": "orange", "mode": "fixed"},
-          "thresholds": {"mode": "absolute", "steps": [{"color": "orange", "value": null}]}
+          "color": {"fixedColor": "#FF6B00", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "#FF6B00", "value": null}]}
         }
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
@@ -205,8 +206,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "color": {"fixedColor": "blue", "mode": "fixed"},
-          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]}
+          "color": {"fixedColor": "#00F0FF", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "#00F0FF", "value": null}]}
         }
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
@@ -223,8 +224,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "color": {"fixedColor": "purple", "mode": "fixed"},
-          "thresholds": {"mode": "absolute", "steps": [{"color": "purple", "value": null}]}
+          "color": {"fixedColor": "#BF00FF", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "#BF00FF", "value": null}]}
         }
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
@@ -241,8 +242,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "color": {"fixedColor": "gray", "mode": "fixed"},
-          "thresholds": {"mode": "absolute", "steps": [{"color": "gray", "value": null}]}
+          "color": {"fixedColor": "#666699", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "#666699", "value": null}]}
         }
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
@@ -259,19 +260,24 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "drawStyle": "line", "lineWidth": 2,
-            "fillOpacity": 10, "lineInterpolation": "stepAfter"
+            "drawStyle": "line", "lineWidth": 3,
+            "fillOpacity": 15, "lineInterpolation": "stepAfter",
+            "gradientMode": "opacity"
           },
           "unit": "none"
         },
         "overrides": [
           {
             "matcher": {"id": "byName", "options": "home_runs"},
-            "properties": [{"id": "color", "value": {"fixedColor": "orange", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#FF6B00", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "rbi"},
-            "properties": [{"id": "color", "value": {"fixedColor": "blue", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#00F0FF", "mode": "fixed"}}]
+          },
+          {
+            "matcher": {"id": "byName", "options": "runs"},
+            "properties": [{"id": "color", "value": {"fixedColor": "#39FF14", "mode": "fixed"}}]
           }
         ]
       },
@@ -292,11 +298,30 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "drawStyle": "line", "lineWidth": 2,
-            "fillOpacity": 5, "lineInterpolation": "linear"
+            "drawStyle": "line", "lineWidth": 3,
+            "fillOpacity": 10, "lineInterpolation": "linear",
+            "gradientMode": "opacity"
           },
           "unit": "none", "decimals": 3
-        }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "avg"},
+            "properties": [{"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}}]
+          },
+          {
+            "matcher": {"id": "byName", "options": "obp"},
+            "properties": [{"id": "color", "value": {"fixedColor": "#FF00FF", "mode": "fixed"}}]
+          },
+          {
+            "matcher": {"id": "byName", "options": "slg"},
+            "properties": [{"id": "color", "value": {"fixedColor": "#39FF14", "mode": "fixed"}}]
+          },
+          {
+            "matcher": {"id": "byName", "options": "ops"},
+            "properties": [{"id": "color", "value": {"fixedColor": "#FFFF00", "mode": "fixed"}}]
+          }
+        ]
       },
       "options": {
         "legend": {"displayMode": "table", "calcs": ["last"], "placement": "bottom", "showLegend": true},
@@ -310,7 +335,7 @@
     },
     {
       "id": 20, "type": "row",
-      "title": "\u26be Pitcher \u2014 ${pitcher}",
+      "title": "▓▒░ PITCHER — ${pitcher} ░▒▓",
       "gridPos": {"h": 1, "w": 24, "x": 0, "y": 15}
     },
     {
@@ -323,9 +348,9 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 3.5},
-              {"color": "red", "value": 5.0}
+              {"color": "#00FFFF", "value": null},
+              {"color": "#FF9500", "value": 3.5},
+              {"color": "#FF1493", "value": 5.0}
             ]
           },
           "color": {"mode": "thresholds"}
@@ -348,9 +373,9 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 1.2},
-              {"color": "red", "value": 1.5}
+              {"color": "#00FFFF", "value": null},
+              {"color": "#FF9500", "value": 1.2},
+              {"color": "#FF1493", "value": 1.5}
             ]
           },
           "color": {"mode": "thresholds"}
@@ -373,9 +398,9 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 3.5},
-              {"color": "red", "value": 5.0}
+              {"color": "#00FFFF", "value": null},
+              {"color": "#FF9500", "value": 3.5},
+              {"color": "#FF1493", "value": 5.0}
             ]
           },
           "color": {"mode": "thresholds"}
@@ -398,9 +423,9 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "red", "value": null},
-              {"color": "yellow", "value": 7.0},
-              {"color": "green", "value": 9.0}
+              {"color": "#FF1493", "value": null},
+              {"color": "#FF9500", "value": 7.0},
+              {"color": "#00FFFF", "value": 9.0}
             ]
           },
           "color": {"mode": "thresholds"}
@@ -420,8 +445,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "color": {"fixedColor": "green", "mode": "fixed"},
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+          "color": {"fixedColor": "#39FF14", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "#39FF14", "value": null}]}
         }
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
@@ -438,8 +463,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "color": {"fixedColor": "blue", "mode": "fixed"},
-          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]}
+          "color": {"fixedColor": "#BF00FF", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "#BF00FF", "value": null}]}
         }
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"},
@@ -456,11 +481,26 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "drawStyle": "line", "lineWidth": 2,
-            "fillOpacity": 10, "lineInterpolation": "linear"
+            "drawStyle": "line", "lineWidth": 3,
+            "fillOpacity": 15, "lineInterpolation": "linear",
+            "gradientMode": "opacity"
           },
           "unit": "none", "decimals": 2
-        }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "era"},
+            "properties": [{"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}}]
+          },
+          {
+            "matcher": {"id": "byName", "options": "whip"},
+            "properties": [{"id": "color", "value": {"fixedColor": "#FF00FF", "mode": "fixed"}}]
+          },
+          {
+            "matcher": {"id": "byName", "options": "fip"},
+            "properties": [{"id": "color", "value": {"fixedColor": "#39FF14", "mode": "fixed"}}]
+          }
+        ]
       },
       "options": {
         "legend": {"displayMode": "table", "calcs": ["last"], "placement": "bottom", "showLegend": true},
@@ -479,11 +519,22 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "drawStyle": "line", "lineWidth": 2,
-            "fillOpacity": 10, "lineInterpolation": "stepAfter"
+            "drawStyle": "line", "lineWidth": 3,
+            "fillOpacity": 15, "lineInterpolation": "stepAfter",
+            "gradientMode": "opacity"
           },
           "unit": "none"
-        }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "strikeouts"},
+            "properties": [{"id": "color", "value": {"fixedColor": "#BF00FF", "mode": "fixed"}}]
+          },
+          {
+            "matcher": {"id": "byName", "options": "innings_pitched"},
+            "properties": [{"id": "color", "value": {"fixedColor": "#00F0FF", "mode": "fixed"}}]
+          }
+        ]
       },
       "options": {
         "legend": {"displayMode": "table", "calcs": ["last"], "placement": "bottom", "showLegend": true},

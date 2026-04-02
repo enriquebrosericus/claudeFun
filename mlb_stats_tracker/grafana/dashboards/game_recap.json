@@ -1,12 +1,13 @@
 {
   "__inputs": [{"name": "DS_POSTGRES", "type": "datasource", "pluginId": "postgres"}],
-  "title": "Mariners \u2014 Game Recap",
+  "title": "Mariners — Game Recap",
   "uid": "mlb-sea-recap",
   "tags": ["mlb", "mariners", "baseball", "recap"],
   "refresh": false,
   "time": {"from": "now-1y", "to": "now"},
   "timezone": "browser",
   "schemaVersion": 38,
+  "style": "dark",
   "templating": {
     "list": [
       {"name": "DS_POSTGRES", "type": "datasource", "query": "postgres", "hide": 2},
@@ -39,7 +40,7 @@
   },
   "panels": [
     {
-      "id": 1, "type": "row", "title": "Game Header",
+      "id": 1, "type": "row", "title": "▓▒░ GAME HEADER ░▒▓",
       "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}
     },
     {
@@ -50,10 +51,10 @@
         "defaults": {
           "unit": "string",
           "mappings": [
-            {"type": "value", "options": {"W": {"text": "W", "color": "green", "index": 0}}},
-            {"type": "value", "options": {"L": {"text": "L", "color": "red",   "index": 1}}}
+            {"type": "value", "options": {"W": {"text": "W", "color": "#39FF14", "index": 0}}},
+            {"type": "value", "options": {"L": {"text": "L", "color": "#FF00FF", "index": 1}}}
           ],
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "#39FF14", "value": null}]},
           "color": {"mode": "thresholds"},
           "custom": {"fontSize": 48}
         }
@@ -68,8 +69,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "color": {"fixedColor": "#00A3E0", "mode": "fixed"},
-          "thresholds": {"mode": "absolute", "steps": [{"color": "#00A3E0", "value": null}]}
+          "color": {"fixedColor": "#00FFFF", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "#00FFFF", "value": null}]}
         }
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
@@ -82,8 +83,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "color": {"fixedColor": "gray", "mode": "fixed"},
-          "thresholds": {"mode": "absolute", "steps": [{"color": "gray", "value": null}]}
+          "color": {"fixedColor": "#666699", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "#666699", "value": null}]}
         }
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
@@ -110,12 +111,12 @@
       "fieldConfig": {
         "defaults": {
           "unit": "string",
-          "color": {"fixedColor": "green", "mode": "fixed"},
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+          "color": {"fixedColor": "#39FF14", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "#39FF14", "value": null}]}
         }
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "/.*/"}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
-      "targets": [{"rawSql": "SELECT COALESCE(winning_pitcher, '\u2014') FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
+      "targets": [{"rawSql": "SELECT COALESCE(winning_pitcher, '—') FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
     },
     {
       "id": 7, "type": "stat", "title": "Loss",
@@ -124,12 +125,12 @@
       "fieldConfig": {
         "defaults": {
           "unit": "string",
-          "color": {"fixedColor": "red", "mode": "fixed"},
-          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}]}
+          "color": {"fixedColor": "#FF00FF", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "#FF00FF", "value": null}]}
         }
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "/.*/"}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
-      "targets": [{"rawSql": "SELECT COALESCE(losing_pitcher, '\u2014') FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
+      "targets": [{"rawSql": "SELECT COALESCE(losing_pitcher, '—') FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
     },
     {
       "id": 8, "type": "stat", "title": "Save",
@@ -138,15 +139,15 @@
       "fieldConfig": {
         "defaults": {
           "unit": "string",
-          "color": {"fixedColor": "#4B9CD3", "mode": "fixed"},
-          "thresholds": {"mode": "absolute", "steps": [{"color": "#4B9CD3", "value": null}]}
+          "color": {"fixedColor": "#00F0FF", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "#00F0FF", "value": null}]}
         }
       },
       "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "/.*/"}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
-      "targets": [{"rawSql": "SELECT COALESCE(save_pitcher, '\u2014') FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
+      "targets": [{"rawSql": "SELECT COALESCE(save_pitcher, '—') FROM games WHERE gamepk = ${game}", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
     },
     {
-      "id": 10, "type": "row", "title": "Line Score",
+      "id": 10, "type": "row", "title": "▓▒░ LINE SCORE ░▒▓",
       "gridPos": {"h": 1, "w": 24, "x": 0, "y": 6}
     },
     {
@@ -156,17 +157,35 @@
       "fieldConfig": {
         "defaults": {"unit": "none", "decimals": 0, "custom": {"align": "center", "width": 40}},
         "overrides": [
-          {"matcher": {"id": "byName", "options": "Team"}, "properties": [{"id": "custom.width", "value": 60}, {"id": "custom.align", "value": "left"}]},
-          {"matcher": {"id": "byName", "options": "R"}, "properties": [{"id": "custom.width", "value": 50}, {"id": "displayName", "value": "R"}, {"id": "color", "value": {"fixedColor": "yellow", "mode": "fixed"}}, {"id": "custom.displayMode", "value": "color-text"}]},
-          {"matcher": {"id": "byName", "options": "H"}, "properties": [{"id": "custom.width", "value": 50}]},
-          {"matcher": {"id": "byName", "options": "E"}, "properties": [{"id": "custom.width", "value": 50}]}
+          {"matcher": {"id": "byName", "options": "Team"}, "properties": [
+            {"id": "custom.width", "value": 60},
+            {"id": "custom.align", "value": "left"},
+            {"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}},
+            {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+          ]},
+          {"matcher": {"id": "byName", "options": "R"}, "properties": [
+            {"id": "custom.width", "value": 50},
+            {"id": "displayName", "value": "R"},
+            {"id": "color", "value": {"fixedColor": "#FFFF00", "mode": "fixed"}},
+            {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+          ]},
+          {"matcher": {"id": "byName", "options": "H"}, "properties": [
+            {"id": "custom.width", "value": 50},
+            {"id": "color", "value": {"fixedColor": "#00F0FF", "mode": "fixed"}},
+            {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+          ]},
+          {"matcher": {"id": "byName", "options": "E"}, "properties": [
+            {"id": "custom.width", "value": 50},
+            {"id": "color", "value": {"fixedColor": "#FF1493", "mode": "fixed"}},
+            {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+          ]}
         ]
       },
       "options": {"footer": {"show": false}, "cellHeight": "md"},
       "targets": [{"rawSql": "SELECT team AS \"Team\", COALESCE(MAX(CASE WHEN inning=1 THEN runs::text END),'-') AS \"1\", COALESCE(MAX(CASE WHEN inning=2 THEN runs::text END),'-') AS \"2\", COALESCE(MAX(CASE WHEN inning=3 THEN runs::text END),'-') AS \"3\", COALESCE(MAX(CASE WHEN inning=4 THEN runs::text END),'-') AS \"4\", COALESCE(MAX(CASE WHEN inning=5 THEN runs::text END),'-') AS \"5\", COALESCE(MAX(CASE WHEN inning=6 THEN runs::text END),'-') AS \"6\", COALESCE(MAX(CASE WHEN inning=7 THEN runs::text END),'-') AS \"7\", COALESCE(MAX(CASE WHEN inning=8 THEN runs::text END),'-') AS \"8\", COALESCE(MAX(CASE WHEN inning=9 THEN runs::text END),'X') AS \"9\", COALESCE(SUM(CASE WHEN inning>9 THEN runs END)::text,'') AS \"EX\", SUM(runs)::text AS \"R\", SUM(hits)::text AS \"H\", SUM(errors)::text AS \"E\" FROM game_linescore WHERE gamepk=${game} GROUP BY team ORDER BY CASE WHEN team=(SELECT away_team FROM games WHERE gamepk=${game}) THEN 0 ELSE 1 END", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
     },
     {
-      "id": 20, "type": "row", "title": "Box Score",
+      "id": 20, "type": "row", "title": "▓▒░ BOX SCORE ░▒▓",
       "gridPos": {"h": 1, "w": 24, "x": 0, "y": 11}
     },
     {
@@ -176,20 +195,25 @@
       "fieldConfig": {
         "defaults": {"unit": "none", "decimals": 0, "custom": {"align": "center", "width": 45}},
         "overrides": [
-          {"matcher": {"id": "byName", "options": "Player"}, "properties": [{"id": "custom.width", "value": 160}, {"id": "custom.align", "value": "left"}]},
+          {"matcher": {"id": "byName", "options": "Player"}, "properties": [
+            {"id": "custom.width", "value": 160},
+            {"id": "custom.align", "value": "left"},
+            {"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}},
+            {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+          ]},
           {"matcher": {"id": "byName", "options": "AB"}, "properties": [{"id": "custom.width", "value": 45}]},
           {
             "matcher": {"id": "byName", "options": "HR"},
             "properties": [
-              {"id": "custom.displayMode", "value": "color-text"},
-              {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "text", "value": null}, {"color": "orange", "value": 1}]}}
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}},
+              {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "text", "value": null}, {"color": "#FF6B00", "value": 1}]}}
             ]
           },
           {
             "matcher": {"id": "byName", "options": "RBI"},
             "properties": [
-              {"id": "custom.displayMode", "value": "color-text"},
-              {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "text", "value": null}, {"color": "green", "value": 2}]}}
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}},
+              {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "text", "value": null}, {"color": "#39FF14", "value": 2}]}}
             ]
           }
         ]
@@ -205,7 +229,12 @@
       "fieldConfig": {
         "defaults": {"unit": "none", "decimals": 0, "custom": {"align": "center", "width": 50}},
         "overrides": [
-          {"matcher": {"id": "byName", "options": "Pitcher"}, "properties": [{"id": "custom.width", "value": 150}, {"id": "custom.align", "value": "left"}]},
+          {"matcher": {"id": "byName", "options": "Pitcher"}, "properties": [
+            {"id": "custom.width", "value": 150},
+            {"id": "custom.align", "value": "left"},
+            {"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}},
+            {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+          ]},
           {"matcher": {"id": "byName", "options": "IP"}, "properties": [{"id": "decimals", "value": 1}, {"id": "custom.width", "value": 50}]},
           {"matcher": {"id": "byName", "options": "ERA"}, "properties": [{"id": "decimals", "value": 2}, {"id": "custom.width", "value": 55}]},
           {
@@ -214,9 +243,9 @@
               {"id": "custom.width", "value": 45},
               {"id": "custom.displayMode", "value": "color-background"},
               {"id": "mappings", "value": [
-                {"type": "value", "options": {"W": {"text": "W", "color": "green", "index": 0}}},
-                {"type": "value", "options": {"L": {"text": "L", "color": "red",   "index": 1}}},
-                {"type": "value", "options": {"S": {"text": "S", "color": "blue",  "index": 2}}}
+                {"type": "value", "options": {"W": {"text": "W", "color": "#39FF14", "index": 0}}},
+                {"type": "value", "options": {"L": {"text": "L", "color": "#FF00FF", "index": 1}}},
+                {"type": "value", "options": {"S": {"text": "S", "color": "#00F0FF", "index": 2}}}
               ]}
             ]
           }
@@ -226,7 +255,7 @@
       "targets": [{"rawSql": "SELECT player AS \"Pitcher\", ip AS \"IP\", h AS \"H\", r AS \"R\", er AS \"ER\", bb AS \"BB\", so AS \"SO\", hr AS \"HR\", COALESCE(pitches::text,'-') AS \"P\", era AS \"ERA\", COALESCE(note,'') AS \"Dec\" FROM game_pitching_lines WHERE gamepk=${game} AND team='SEA' ORDER BY pitch_order", "format": "table", "refId": "A", "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"}}]
     },
     {
-      "id": 30, "type": "row", "title": "Opponent Box Score",
+      "id": 30, "type": "row", "title": "▓▒░ OPPONENT BOX SCORE ░▒▓",
       "gridPos": {"h": 1, "w": 24, "x": 0, "y": 22},
       "collapsed": true,
       "panels": [
@@ -237,7 +266,12 @@
           "fieldConfig": {
             "defaults": {"unit": "none", "decimals": 0, "custom": {"align": "center", "width": 45}},
             "overrides": [
-              {"matcher": {"id": "byName", "options": "Player"}, "properties": [{"id": "custom.width", "value": 160}, {"id": "custom.align", "value": "left"}]}
+              {"matcher": {"id": "byName", "options": "Player"}, "properties": [
+                {"id": "custom.width", "value": 160},
+                {"id": "custom.align", "value": "left"},
+                {"id": "color", "value": {"fixedColor": "#BF00FF", "mode": "fixed"}},
+                {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+              ]}
             ]
           },
           "options": {"footer": {"show": false}},
@@ -251,7 +285,12 @@
           "fieldConfig": {
             "defaults": {"unit": "none", "decimals": 0, "custom": {"align": "center", "width": 50}},
             "overrides": [
-              {"matcher": {"id": "byName", "options": "Pitcher"}, "properties": [{"id": "custom.width", "value": 150}, {"id": "custom.align", "value": "left"}]},
+              {"matcher": {"id": "byName", "options": "Pitcher"}, "properties": [
+                {"id": "custom.width", "value": 150},
+                {"id": "custom.align", "value": "left"},
+                {"id": "color", "value": {"fixedColor": "#BF00FF", "mode": "fixed"}},
+                {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+              ]},
               {"matcher": {"id": "byName", "options": "IP"}, "properties": [{"id": "decimals", "value": 1}]},
               {"matcher": {"id": "byName", "options": "ERA"}, "properties": [{"id": "decimals", "value": 2}]},
               {
@@ -259,9 +298,9 @@
                 "properties": [
                   {"id": "custom.displayMode", "value": "color-background"},
                   {"id": "mappings", "value": [
-                    {"type": "value", "options": {"W": {"text": "W", "color": "green", "index": 0}}},
-                    {"type": "value", "options": {"L": {"text": "L", "color": "red",   "index": 1}}},
-                    {"type": "value", "options": {"S": {"text": "S", "color": "blue",  "index": 2}}}
+                    {"type": "value", "options": {"W": {"text": "W", "color": "#39FF14", "index": 0}}},
+                    {"type": "value", "options": {"L": {"text": "L", "color": "#FF00FF", "index": 1}}},
+                    {"type": "value", "options": {"S": {"text": "S", "color": "#00F0FF", "index": 2}}}
                   ]}
                 ]
               }
@@ -273,7 +312,7 @@
       ]
     },
     {
-      "id": 40, "type": "row", "title": "Game Summary",
+      "id": 40, "type": "row", "title": "▓▒░ GAME SUMMARY ░▒▓",
       "gridPos": {"h": 1, "w": 24, "x": 0, "y": 23}
     },
     {

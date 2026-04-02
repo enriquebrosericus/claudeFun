@@ -27,13 +27,13 @@
 <div class="row g-3 mb-3">
   <div class="col-lg-8">
     <div class="card h-100">
-      <div class="card-header">Season Record</div>
+      <div class="card-header">▓▒░ SEASON RECORD ░▒▓</div>
       <div class="card-body p-2"><canvas id="wl-chart"></canvas></div>
     </div>
   </div>
   <div class="col-lg-4">
     <div class="card h-100">
-      <div class="card-header">Run Differential</div>
+      <div class="card-header">▓▒░ RUN DIFFERENTIAL ░▒▓</div>
       <div class="card-body p-2"><canvas id="rd-chart"></canvas></div>
     </div>
   </div>
@@ -43,7 +43,7 @@
 <div class="row g-3 mb-3">
   <div class="col-12">
     <div class="card">
-      <div class="card-header">Games Behind — Division</div>
+      <div class="card-header">▓▒░ GAMES BEHIND — DIVISION ░▒▓</div>
       <div class="card-body p-2"><canvas id="gb-chart"></canvas></div>
     </div>
   </div>
@@ -53,7 +53,7 @@
 <div class="row g-3 mb-3">
   <div class="col-12">
     <div class="card">
-      <div class="card-header">Batting Leaders</div>
+      <div class="card-header">▓▒░ BATTING LEADERS ░▒▓</div>
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-hover mb-0">
@@ -74,7 +74,7 @@
 <div class="row g-3">
   <div class="col-12">
     <div class="card">
-      <div class="card-header">Pitching Leaders</div>
+      <div class="card-header">▓▒░ PITCHING LEADERS ░▒▓</div>
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-hover mb-0">
@@ -132,8 +132,8 @@ async function load() {
       data: {
         labels: dates,
         datasets: [
-          { label: 'Wins',   data: trends.map(r => r.wins),   borderColor: '#22c55e', tension: 0.3, pointRadius: 0 },
-          { label: 'Losses', data: trends.map(r => r.losses), borderColor: '#ef4444', tension: 0.3, pointRadius: 0 },
+          { label: 'Wins',   data: trends.map(r => r.wins),   borderColor: '#39FF14', tension: 0.3, pointRadius: 0 },
+          { label: 'Losses', data: trends.map(r => r.losses), borderColor: '#FF1493', tension: 0.3, pointRadius: 0 },
         ],
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } },
@@ -144,7 +144,7 @@ async function load() {
       data: {
         labels: dates,
         datasets: [{ label: 'Run Diff', data: rdData,
-          backgroundColor: rdData.map(v => v >= 0 ? 'rgba(34,197,94,0.7)' : 'rgba(239,68,68,0.7)') }],
+          backgroundColor: rdData.map(v => v >= 0 ? 'rgba(57,255,20,0.7)' : 'rgba(255,20,147,0.7)') }],
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } },
     });

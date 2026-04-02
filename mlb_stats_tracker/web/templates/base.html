@@ -10,7 +10,7 @@
 <body>
   <nav class="navbar navbar-expand-md sticky-top">
     <div class="container-fluid px-3">
-      <a class="navbar-brand text-light" href="/">⚾ MLB Stats</a>
+      <a class="navbar-brand" href="/">⚾ MLB Stats</a>
       <button class="navbar-toggler border-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -34,7 +34,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script>
     Chart.defaults.color = '#94a3b8';
-    Chart.defaults.borderColor = '#334155';
+    Chart.defaults.borderColor = '#1e2d4a';
 
     function mkChart(id, cfg) {
       const el = document.getElementById(id);
@@ -76,7 +76,7 @@
       if (el) el.textContent = val ?? '—';
     }
 
-    const COLORS = ['#3b82f6','#22c55e','#ef4444','#eab308','#a855f7','#f97316','#06b6d4','#ec4899','#84cc16','#14b8a6'];
+    const COLORS = ['#00FFFF','#39FF14','#FF1493','#FF9500','#BF00FF','#FF6B00','#00F0FF','#FF00FF','#FFFF00','#14b8a6'];
     const TEAM_COLORS = {
       SEA:'#005C5C', HOU:'#EB6E1F', TEX:'#003278', LAA:'#BA0021', OAK:'#003831',
       ATH:'#003831', NYY:'#003087', BOS:'#BD3039', TOR:'#134A8E', BAL:'#DF4601',

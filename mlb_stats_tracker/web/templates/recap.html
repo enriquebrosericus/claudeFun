@@ -24,7 +24,7 @@
 
   <!-- Linescore -->
   <div class="card mb-3">
-    <div class="card-header">Line Score</div>
+    <div class="card-header">▓▒░ LINE SCORE ░▒▓</div>
     <div class="card-body p-2">
       <div class="table-responsive">
         <table class="table linescore mb-0" id="linescore-table"></table>
@@ -36,7 +36,7 @@
   <div class="row g-3 mb-3">
     <div class="col-lg-6">
       <div class="card">
-        <div class="card-header" id="batting-away-hdr">Batting</div>
+        <div class="card-header" id="batting-away-hdr">▓▒░ BATTING ░▒▓</div>
         <div class="card-body p-0">
           <div class="table-responsive">
             <table class="table box-score mb-0">
@@ -49,7 +49,7 @@
     </div>
     <div class="col-lg-6">
       <div class="card">
-        <div class="card-header" id="batting-home-hdr">Batting</div>
+        <div class="card-header" id="batting-home-hdr">▓▒░ BATTING ░▒▓</div>
         <div class="card-body p-0">
           <div class="table-responsive">
             <table class="table box-score mb-0">
@@ -65,7 +65,7 @@
   <div class="row g-3 mb-3">
     <div class="col-lg-6">
       <div class="card">
-        <div class="card-header" id="pitching-away-hdr">Pitching</div>
+        <div class="card-header" id="pitching-away-hdr">▓▒░ PITCHING ░▒▓</div>
         <div class="card-body p-0">
           <div class="table-responsive">
             <table class="table box-score mb-0">
@@ -78,7 +78,7 @@
     </div>
     <div class="col-lg-6">
       <div class="card">
-        <div class="card-header" id="pitching-home-hdr">Pitching</div>
+        <div class="card-header" id="pitching-home-hdr">▓▒░ PITCHING ░▒▓</div>
         <div class="card-body p-0">
           <div class="table-responsive">
             <table class="table box-score mb-0">
@@ -93,7 +93,7 @@
 
   <!-- AI summary -->
   <div id="ai-section" class="card d-none">
-    <div class="card-header">AI Game Summary</div>
+    <div class="card-header">▓▒░ AI GAME SUMMARY ░▒▓</div>
     <div class="card-body">
       <div id="ai-text" class="ai-summary"></div>
       <div id="ai-meta" class="text-muted mt-2" style="font-size:0.75rem"></div>
@@ -158,10 +158,10 @@ async function loadGame() {
 
   renderLinescore(data.linescore);
 
-  document.getElementById('batting-away-hdr').textContent  = `${g.away_team} Batting`;
-  document.getElementById('batting-home-hdr').textContent  = `${g.home_team} Batting`;
-  document.getElementById('pitching-away-hdr').textContent = `${g.away_team} Pitching`;
-  document.getElementById('pitching-home-hdr').textContent = `${g.home_team} Pitching`;
+  document.getElementById('batting-away-hdr').textContent  = `▓▒░ ${g.away_team} BATTING ░▒▓`;
+  document.getElementById('batting-home-hdr').textContent  = `▓▒░ ${g.home_team} BATTING ░▒▓`;
+  document.getElementById('pitching-away-hdr').textContent = `▓▒░ ${g.away_team} PITCHING ░▒▓`;
+  document.getElementById('pitching-home-hdr').textContent = `▓▒░ ${g.home_team} PITCHING ░▒▓`;
 
   document.getElementById('batting-away-tbody').innerHTML  = data.batting.away.map(battingRow).join('');
   document.getElementById('batting-home-tbody').innerHTML  = data.batting.home.map(battingRow).join('');

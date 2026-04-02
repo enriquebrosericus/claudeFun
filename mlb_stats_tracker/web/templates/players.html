@@ -10,7 +10,7 @@
 <!-- Batter section -->
 <div class="card mb-3">
   <div class="card-header d-flex align-items-center gap-3">
-    <span>Batter</span>
+    <span>▓▒░ BATTER ░▒▓</span>
     <select id="batter-sel" class="form-select form-select-sm" style="max-width:260px"></select>
   </div>
   <div class="card-body">
@@ -27,13 +27,13 @@
     <div class="row g-3">
       <div class="col-lg-6">
         <div class="card">
-          <div class="card-header">AVG / OBP / SLG Over Season</div>
+          <div class="card-header">▓▒░ AVG / OBP / SLG OVER SEASON ░▒▓</div>
           <div class="card-body p-2"><canvas id="batter-rate-chart"></canvas></div>
         </div>
       </div>
       <div class="col-lg-6">
         <div class="card">
-          <div class="card-header">HR / RBI / Runs</div>
+          <div class="card-header">▓▒░ HR / RBI / RUNS ░▒▓</div>
           <div class="card-body p-2"><canvas id="batter-count-chart"></canvas></div>
         </div>
       </div>
@@ -44,7 +44,7 @@
 <!-- Pitcher section -->
 <div class="card">
   <div class="card-header d-flex align-items-center gap-3">
-    <span>Pitcher</span>
+    <span>▓▒░ PITCHER ░▒▓</span>
     <select id="pitcher-sel" class="form-select form-select-sm" style="max-width:260px"></select>
   </div>
   <div class="card-body">
@@ -61,13 +61,13 @@
     <div class="row g-3">
       <div class="col-lg-6">
         <div class="card">
-          <div class="card-header">ERA / WHIP / FIP Over Season</div>
+          <div class="card-header">▓▒░ ERA / WHIP / FIP OVER SEASON ░▒▓</div>
           <div class="card-body p-2"><canvas id="pitcher-era-chart"></canvas></div>
         </div>
       </div>
       <div class="col-lg-6">
         <div class="card">
-          <div class="card-header">K/9 vs BB/9</div>
+          <div class="card-header">▓▒░ K/9 VS BB/9 ░▒▓</div>
           <div class="card-body p-2"><canvas id="pitcher-k9-chart"></canvas></div>
         </div>
       </div>
@@ -114,18 +114,18 @@ async function loadBatter() {
     mkChart('batter-rate-chart', {
       type: 'line',
       data: { labels: dates, datasets: [
-        { label: 'AVG', data: trend.map(r => r.avg),  borderColor: '#3b82f6', tension: 0.3, pointRadius: 0 },
-        { label: 'OBP', data: trend.map(r => r.obp),  borderColor: '#22c55e', tension: 0.3, pointRadius: 0 },
-        { label: 'SLG', data: trend.map(r => r.slg),  borderColor: '#eab308', tension: 0.3, pointRadius: 0 },
+        { label: 'AVG', data: trend.map(r => r.avg),  borderColor: '#00FFFF', tension: 0.3, pointRadius: 0 },
+        { label: 'OBP', data: trend.map(r => r.obp),  borderColor: '#39FF14', tension: 0.3, pointRadius: 0 },
+        { label: 'SLG', data: trend.map(r => r.slg),  borderColor: '#FF9500', tension: 0.3, pointRadius: 0 },
       ]},
       options: { responsive: true, maintainAspectRatio: false },
     });
     mkChart('batter-count-chart', {
       type: 'line',
       data: { labels: dates, datasets: [
-        { label: 'HR',  data: trend.map(r => r.home_runs), borderColor: '#ef4444', tension: 0.3, pointRadius: 0 },
-        { label: 'RBI', data: trend.map(r => r.rbi),       borderColor: '#a855f7', tension: 0.3, pointRadius: 0 },
-        { label: 'R',   data: trend.map(r => r.runs),      borderColor: '#06b6d4', tension: 0.3, pointRadius: 0 },
+        { label: 'HR',  data: trend.map(r => r.home_runs), borderColor: '#FF1493', tension: 0.3, pointRadius: 0 },
+        { label: 'RBI', data: trend.map(r => r.rbi),       borderColor: '#BF00FF', tension: 0.3, pointRadius: 0 },
+        { label: 'R',   data: trend.map(r => r.runs),      borderColor: '#00FFFF', tension: 0.3, pointRadius: 0 },
       ]},
       options: { responsive: true, maintainAspectRatio: false },
     });
@@ -155,17 +155,17 @@ async function loadPitcher() {
     mkChart('pitcher-era-chart', {
       type: 'line',
       data: { labels: dates, datasets: [
-        { label: 'ERA',  data: trend.map(r => r.era),  borderColor: '#ef4444', tension: 0.3, pointRadius: 0 },
-        { label: 'WHIP', data: trend.map(r => r.whip), borderColor: '#eab308', tension: 0.3, pointRadius: 0 },
-        { label: 'FIP',  data: trend.map(r => r.fip),  borderColor: '#a855f7', tension: 0.3, pointRadius: 0 },
+        { label: 'ERA',  data: trend.map(r => r.era),  borderColor: '#FF1493', tension: 0.3, pointRadius: 0 },
+        { label: 'WHIP', data: trend.map(r => r.whip), borderColor: '#FF9500', tension: 0.3, pointRadius: 0 },
+        { label: 'FIP',  data: trend.map(r => r.fip),  borderColor: '#BF00FF', tension: 0.3, pointRadius: 0 },
       ]},
       options: { responsive: true, maintainAspectRatio: false },
     });
     mkChart('pitcher-k9-chart', {
       type: 'line',
       data: { labels: dates, datasets: [
-        { label: 'K/9',  data: trend.map(r => r.k9),  borderColor: '#22c55e', tension: 0.3, pointRadius: 0 },
-        { label: 'BB/9', data: trend.map(r => r.bb9), borderColor: '#ef4444', tension: 0.3, pointRadius: 0 },
+        { label: 'K/9',  data: trend.map(r => r.k9),  borderColor: '#39FF14', tension: 0.3, pointRadius: 0 },
+        { label: 'BB/9', data: trend.map(r => r.bb9), borderColor: '#FF1493', tension: 0.3, pointRadius: 0 },
       ]},
       options: { responsive: true, maintainAspectRatio: false },
     });

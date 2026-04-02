@@ -6,13 +6,14 @@
       "pluginId": "postgres"
     }
   ],
-  "title": "MLB \u2014 Teams",
+  "title": "MLB — Teams",
   "uid": "mlb-sea-team",
   "tags": ["mlb", "baseball"],
   "refresh": "5m",
   "time": {"from": "now-1y", "to": "now"},
   "timezone": "browser",
   "schemaVersion": 38,
+  "style": "dark",
   "templating": {
     "list": [
       {
@@ -64,7 +65,7 @@
     {
       "id": 1,
       "type": "row",
-      "title": "Season Record",
+      "title": "▓▒░ SEASON RECORD ░▒▓",
       "collapsed": false,
       "panels": [],
       "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}
@@ -72,14 +73,14 @@
     {
       "id": 2,
       "type": "stat",
-      "title": "Wins",
+      "title": "WINS",
       "gridPos": {"h": 5, "w": 4, "x": 0, "y": 1},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "color": {"fixedColor": "green", "mode": "fixed"},
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+          "color": {"fixedColor": "#39FF14", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "#39FF14", "value": null}]}
         },
         "overrides": []
       },
@@ -101,14 +102,14 @@
     {
       "id": 3,
       "type": "stat",
-      "title": "Losses",
+      "title": "LOSSES",
       "gridPos": {"h": 5, "w": 4, "x": 4, "y": 1},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "color": {"fixedColor": "red", "mode": "fixed"},
-          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}]}
+          "color": {"fixedColor": "#FF00FF", "mode": "fixed"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "#FF00FF", "value": null}]}
         },
         "overrides": []
       },
@@ -130,7 +131,7 @@
     {
       "id": 4,
       "type": "stat",
-      "title": "Win %",
+      "title": "WIN %",
       "gridPos": {"h": 5, "w": 4, "x": 8, "y": 1},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -140,9 +141,9 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "red", "value": null},
-              {"color": "yellow", "value": 0.45},
-              {"color": "green", "value": 0.55}
+              {"color": "#FF1493", "value": null},
+              {"color": "#FF9500", "value": 0.45},
+              {"color": "#00FFFF", "value": 0.55}
             ]
           },
           "color": {"mode": "thresholds"}
@@ -167,7 +168,7 @@
     {
       "id": 5,
       "type": "stat",
-      "title": "Games Behind",
+      "title": "GAMES BACK",
       "gridPos": {"h": 5, "w": 4, "x": 12, "y": 1},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -177,9 +178,9 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 3},
-              {"color": "red", "value": 8}
+              {"color": "#00FFFF", "value": null},
+              {"color": "#FF9500", "value": 3},
+              {"color": "#FF1493", "value": 8}
             ]
           },
           "color": {"mode": "thresholds"}
@@ -204,7 +205,7 @@
     {
       "id": 6,
       "type": "stat",
-      "title": "Streak",
+      "title": "STREAK",
       "gridPos": {"h": 5, "w": 4, "x": 16, "y": 1},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -213,9 +214,9 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "red", "value": null},
-              {"color": "yellow", "value": 0},
-              {"color": "green", "value": 1}
+              {"color": "#FF1493", "value": null},
+              {"color": "#FF9500", "value": 0},
+              {"color": "#00FFFF", "value": 1}
             ]
           },
           "color": {"mode": "thresholds"},
@@ -241,7 +242,7 @@
     {
       "id": 7,
       "type": "stat",
-      "title": "Last 10",
+      "title": "LAST 10",
       "gridPos": {"h": 5, "w": 4, "x": 20, "y": 1},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -250,9 +251,9 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "red", "value": null},
-              {"color": "yellow", "value": 5},
-              {"color": "green", "value": 7}
+              {"color": "#FF1493", "value": null},
+              {"color": "#FF9500", "value": 5},
+              {"color": "#00FFFF", "value": 7}
             ]
           },
           "color": {"mode": "thresholds"}
@@ -277,7 +278,7 @@
     {
       "id": 10,
       "type": "row",
-      "title": "Season Trends",
+      "title": "▓▒░ SEASON TRENDS ░▒▓",
       "collapsed": false,
       "panels": [],
       "gridPos": {"h": 1, "w": 24, "x": 0, "y": 7}
@@ -292,20 +293,21 @@
         "defaults": {
           "custom": {
             "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "lineInterpolation": "stepAfter"
+            "lineWidth": 3,
+            "fillOpacity": 20,
+            "lineInterpolation": "stepAfter",
+            "gradientMode": "opacity"
           },
           "unit": "none"
         },
         "overrides": [
           {
             "matcher": {"id": "byName", "options": "wins"},
-            "properties": [{"id": "color", "value": {"fixedColor": "green", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#39FF14", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "losses"},
-            "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#FF00FF", "mode": "fixed"}}]
           }
         ]
       },
@@ -332,16 +334,17 @@
         "defaults": {
           "custom": {
             "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 20,
-            "lineInterpolation": "stepAfter"
+            "lineWidth": 3,
+            "fillOpacity": 30,
+            "lineInterpolation": "stepAfter",
+            "gradientMode": "scheme"
           },
           "unit": "none",
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "red", "value": null},
-              {"color": "green", "value": 0}
+              {"color": "#FF00FF", "value": null},
+              {"color": "#00FFFF", "value": 0}
             ]
           },
           "color": {"mode": "thresholds"}
@@ -364,7 +367,7 @@
     {
       "id": 13,
       "type": "row",
-      "title": "Division Standing",
+      "title": "▓▒░ DIVISION STANDING ░▒▓",
       "collapsed": false,
       "panels": [],
       "gridPos": {"h": 1, "w": 24, "x": 0, "y": 18}
@@ -372,32 +375,45 @@
     {
       "id": 14,
       "type": "table",
-      "title": "Division \u2014 Current Standings",
+      "title": "Division — Current Standings",
       "gridPos": {"h": 8, "w": 10, "x": 0, "y": 19},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {
-          "unit": "none"
+          "unit": "none",
+          "custom": {
+            "cellOptions": {"type": "color-text"}
+          }
         },
         "overrides": [
           {
             "matcher": {"id": "byName", "options": "Team"},
             "properties": [
               {"id": "custom.width", "value": 60},
-              {"id": "custom.align", "value": "left"}
+              {"id": "custom.align", "value": "left"},
+              {"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}}
             ]
           },
           {
             "matcher": {"id": "byName", "options": "W"},
-            "properties": [{"id": "decimals", "value": 0}]
+            "properties": [
+              {"id": "decimals", "value": 0},
+              {"id": "color", "value": {"fixedColor": "#39FF14", "mode": "fixed"}}
+            ]
           },
           {
             "matcher": {"id": "byName", "options": "L"},
-            "properties": [{"id": "decimals", "value": 0}]
+            "properties": [
+              {"id": "decimals", "value": 0},
+              {"id": "color", "value": {"fixedColor": "#FF00FF", "mode": "fixed"}}
+            ]
           },
           {
             "matcher": {"id": "byName", "options": "PCT"},
-            "properties": [{"id": "decimals", "value": 3}]
+            "properties": [
+              {"id": "decimals", "value": 3},
+              {"id": "color", "value": {"fixedColor": "#BF00FF", "mode": "fixed"}}
+            ]
           },
           {
             "matcher": {"id": "byName", "options": "GB"},
@@ -409,9 +425,9 @@
                 "value": {
                   "mode": "absolute",
                   "steps": [
-                    {"color": "green", "value": null},
-                    {"color": "yellow", "value": 3},
-                    {"color": "red", "value": 8}
+                    {"color": "#00FFFF", "value": null},
+                    {"color": "#FF9500", "value": 3},
+                    {"color": "#FF1493", "value": 8}
                   ]
                 }
               }
@@ -421,7 +437,9 @@
       },
       "options": {
         "footer": {"show": false},
-        "sortBy": [{"displayName": "GB", "desc": false}]
+        "sortBy": [{"displayName": "GB", "desc": false}],
+        "frameIndex": 0,
+        "showHeader": true
       },
       "targets": [
         {
@@ -435,7 +453,7 @@
     {
       "id": 15,
       "type": "timeseries",
-      "title": "Division Race \u2014 Games Ahead",
+      "title": "Division Race — Games Ahead",
       "gridPos": {"h": 8, "w": 14, "x": 10, "y": 19},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -443,14 +461,15 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "stepAfter",
-            "lineWidth": 2,
-            "fillOpacity": 10,
+            "lineWidth": 3,
+            "fillOpacity": 15,
             "spanNulls": true,
-            "axisLabel": "Games Ahead of 1st Place (0 = tied for 1st)"
+            "axisLabel": "Games Ahead of 1st Place (0 = tied for 1st)",
+            "gradientMode": "opacity"
           },
           "unit": "none",
           "decimals": 1,
-          "color": {"fixedColor": "#00A3E0", "mode": "fixed"}
+          "color": {"fixedColor": "#00F0FF", "mode": "fixed"}
         },
         "overrides": []
       },
@@ -470,7 +489,7 @@
     {
       "id": 20,
       "type": "row",
-      "title": "Batting Leaderboard",
+      "title": "▓▒░ BATTING LEADERBOARD ░▒▓",
       "collapsed": false,
       "panels": [],
       "gridPos": {"h": 1, "w": 24, "x": 0, "y": 28}
@@ -478,17 +497,40 @@
     {
       "id": 21,
       "type": "table",
-      "title": "Batters \u2014 Season Stats",
+      "title": "Batters — Season Stats",
       "gridPos": {"h": 12, "w": 24, "x": 0, "y": 29},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {"unit": "none", "decimals": 3},
         "overrides": [
-          {"matcher": {"id": "byName", "options": "HR"}, "properties": [{"id": "decimals", "value": 0}]},
-          {"matcher": {"id": "byName", "options": "RBI"}, "properties": [{"id": "decimals", "value": 0}]},
-          {"matcher": {"id": "byName", "options": "R"}, "properties": [{"id": "decimals", "value": 0}]},
+          {
+            "matcher": {"id": "byName", "options": "Player"},
+            "properties": [
+              {"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+            ]
+          },
+          {"matcher": {"id": "byName", "options": "HR"}, "properties": [
+            {"id": "decimals", "value": 0},
+            {"id": "color", "value": {"fixedColor": "#FF6B00", "mode": "fixed"}},
+            {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+          ]},
+          {"matcher": {"id": "byName", "options": "RBI"}, "properties": [
+            {"id": "decimals", "value": 0},
+            {"id": "color", "value": {"fixedColor": "#00F0FF", "mode": "fixed"}},
+            {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+          ]},
+          {"matcher": {"id": "byName", "options": "R"}, "properties": [
+            {"id": "decimals", "value": 0},
+            {"id": "color", "value": {"fixedColor": "#39FF14", "mode": "fixed"}},
+            {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+          ]},
           {"matcher": {"id": "byName", "options": "H"}, "properties": [{"id": "decimals", "value": 0}]},
-          {"matcher": {"id": "byName", "options": "SB"}, "properties": [{"id": "decimals", "value": 0}]},
+          {"matcher": {"id": "byName", "options": "SB"}, "properties": [
+            {"id": "decimals", "value": 0},
+            {"id": "color", "value": {"fixedColor": "#BF00FF", "mode": "fixed"}},
+            {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+          ]},
           {"matcher": {"id": "byName", "options": "G"}, "properties": [{"id": "decimals", "value": 0}]},
           {
             "matcher": {"id": "byName", "options": "OPS"},
@@ -499,10 +541,10 @@
                 "value": {
                   "mode": "absolute",
                   "steps": [
-                    {"color": "red", "value": null},
-                    {"color": "yellow", "value": 0.7},
-                    {"color": "green", "value": 0.8},
-                    {"color": "super-light-green", "value": 0.9}
+                    {"color": "#FF1493", "value": null},
+                    {"color": "#FF9500", "value": 0.7},
+                    {"color": "#00FFFF", "value": 0.8},
+                    {"color": "#39FF14", "value": 0.9}
                   ]
                 }
               }
@@ -526,7 +568,7 @@
     {
       "id": 30,
       "type": "row",
-      "title": "Pitching Leaderboard",
+      "title": "▓▒░ PITCHING LEADERBOARD ░▒▓",
       "collapsed": false,
       "panels": [],
       "gridPos": {"h": 1, "w": 24, "x": 0, "y": 42}
@@ -534,16 +576,39 @@
     {
       "id": 31,
       "type": "table",
-      "title": "Pitchers \u2014 Season Stats",
+      "title": "Pitchers — Season Stats",
       "gridPos": {"h": 10, "w": 24, "x": 0, "y": 43},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
         "defaults": {"unit": "none", "decimals": 2},
         "overrides": [
-          {"matcher": {"id": "byName", "options": "W"}, "properties": [{"id": "decimals", "value": 0}]},
-          {"matcher": {"id": "byName", "options": "L"}, "properties": [{"id": "decimals", "value": 0}]},
-          {"matcher": {"id": "byName", "options": "SV"}, "properties": [{"id": "decimals", "value": 0}]},
-          {"matcher": {"id": "byName", "options": "SO"}, "properties": [{"id": "decimals", "value": 0}]},
+          {
+            "matcher": {"id": "byName", "options": "Player"},
+            "properties": [
+              {"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+            ]
+          },
+          {"matcher": {"id": "byName", "options": "W"}, "properties": [
+            {"id": "decimals", "value": 0},
+            {"id": "color", "value": {"fixedColor": "#39FF14", "mode": "fixed"}},
+            {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+          ]},
+          {"matcher": {"id": "byName", "options": "L"}, "properties": [
+            {"id": "decimals", "value": 0},
+            {"id": "color", "value": {"fixedColor": "#FF00FF", "mode": "fixed"}},
+            {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+          ]},
+          {"matcher": {"id": "byName", "options": "SV"}, "properties": [
+            {"id": "decimals", "value": 0},
+            {"id": "color", "value": {"fixedColor": "#00F0FF", "mode": "fixed"}},
+            {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+          ]},
+          {"matcher": {"id": "byName", "options": "SO"}, "properties": [
+            {"id": "decimals", "value": 0},
+            {"id": "color", "value": {"fixedColor": "#BF00FF", "mode": "fixed"}},
+            {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+          ]},
           {"matcher": {"id": "byName", "options": "G"}, "properties": [{"id": "decimals", "value": 0}]},
           {
             "matcher": {"id": "byName", "options": "ERA"},
@@ -554,9 +619,9 @@
                 "value": {
                   "mode": "absolute",
                   "steps": [
-                    {"color": "green", "value": null},
-                    {"color": "yellow", "value": 3.5},
-                    {"color": "red", "value": 5.0}
+                    {"color": "#00FFFF", "value": null},
+                    {"color": "#FF9500", "value": 3.5},
+                    {"color": "#FF1493", "value": 5.0}
                   ]
                 }
               }
@@ -571,9 +636,9 @@
                 "value": {
                   "mode": "absolute",
                   "steps": [
-                    {"color": "green", "value": null},
-                    {"color": "yellow", "value": 1.2},
-                    {"color": "red", "value": 1.5}
+                    {"color": "#00FFFF", "value": null},
+                    {"color": "#FF9500", "value": 1.2},
+                    {"color": "#FF1493", "value": 1.5}
                   ]
                 }
               }

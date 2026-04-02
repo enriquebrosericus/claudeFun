@@ -6,13 +6,14 @@
       "pluginId": "postgres"
     }
   ],
-  "title": "MLB \u2014 Division Race",
+  "title": "MLB — Division Race",
   "uid": "mlb-division-race",
   "tags": ["mlb", "baseball", "standings"],
   "refresh": "5m",
   "time": {"from": "now-1y", "to": "now"},
   "timezone": "browser",
   "schemaVersion": 38,
+  "style": "dark",
   "templating": {
     "list": [
       {
@@ -39,7 +40,7 @@
     {
       "id": 1,
       "type": "row",
-      "title": "American League",
+      "title": "▓▒░ AMERICAN LEAGUE ░▒▓",
       "collapsed": false,
       "panels": [],
       "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}
@@ -47,7 +48,7 @@
     {
       "id": 2,
       "type": "table",
-      "title": "AL East \u2014 Standings",
+      "title": "AL East — Standings",
       "gridPos": {"h": 7, "w": 8, "x": 0, "y": 1},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -57,16 +58,26 @@
             "matcher": {"id": "byName", "options": "Team"},
             "properties": [
               {"id": "custom.width", "value": 60},
-              {"id": "custom.align", "value": "left"}
+              {"id": "custom.align", "value": "left"},
+              {"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
             ]
           },
           {
             "matcher": {"id": "byName", "options": "W"},
-            "properties": [{"id": "decimals", "value": 0}]
+            "properties": [
+              {"id": "decimals", "value": 0},
+              {"id": "color", "value": {"fixedColor": "#39FF14", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+            ]
           },
           {
             "matcher": {"id": "byName", "options": "L"},
-            "properties": [{"id": "decimals", "value": 0}]
+            "properties": [
+              {"id": "decimals", "value": 0},
+              {"id": "color", "value": {"fixedColor": "#FF00FF", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+            ]
           },
           {
             "matcher": {"id": "byName", "options": "PCT"},
@@ -82,9 +93,9 @@
                 "value": {
                   "mode": "absolute",
                   "steps": [
-                    {"color": "green", "value": null},
-                    {"color": "yellow", "value": 3},
-                    {"color": "red", "value": 8}
+                    {"color": "#00FFFF", "value": null},
+                    {"color": "#FF9500", "value": 3},
+                    {"color": "#FF1493", "value": 8}
                   ]
                 }
               }
@@ -108,7 +119,7 @@
     {
       "id": 3,
       "type": "table",
-      "title": "AL Central \u2014 Standings",
+      "title": "AL Central — Standings",
       "gridPos": {"h": 7, "w": 8, "x": 8, "y": 1},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -118,16 +129,26 @@
             "matcher": {"id": "byName", "options": "Team"},
             "properties": [
               {"id": "custom.width", "value": 60},
-              {"id": "custom.align", "value": "left"}
+              {"id": "custom.align", "value": "left"},
+              {"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
             ]
           },
           {
             "matcher": {"id": "byName", "options": "W"},
-            "properties": [{"id": "decimals", "value": 0}]
+            "properties": [
+              {"id": "decimals", "value": 0},
+              {"id": "color", "value": {"fixedColor": "#39FF14", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+            ]
           },
           {
             "matcher": {"id": "byName", "options": "L"},
-            "properties": [{"id": "decimals", "value": 0}]
+            "properties": [
+              {"id": "decimals", "value": 0},
+              {"id": "color", "value": {"fixedColor": "#FF00FF", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+            ]
           },
           {
             "matcher": {"id": "byName", "options": "PCT"},
@@ -143,9 +164,9 @@
                 "value": {
                   "mode": "absolute",
                   "steps": [
-                    {"color": "green", "value": null},
-                    {"color": "yellow", "value": 3},
-                    {"color": "red", "value": 8}
+                    {"color": "#00FFFF", "value": null},
+                    {"color": "#FF9500", "value": 3},
+                    {"color": "#FF1493", "value": 8}
                   ]
                 }
               }
@@ -169,7 +190,7 @@
     {
       "id": 4,
       "type": "table",
-      "title": "AL West \u2014 Standings",
+      "title": "AL West — Standings",
       "gridPos": {"h": 7, "w": 8, "x": 16, "y": 1},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -179,16 +200,26 @@
             "matcher": {"id": "byName", "options": "Team"},
             "properties": [
               {"id": "custom.width", "value": 60},
-              {"id": "custom.align", "value": "left"}
+              {"id": "custom.align", "value": "left"},
+              {"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
             ]
           },
           {
             "matcher": {"id": "byName", "options": "W"},
-            "properties": [{"id": "decimals", "value": 0}]
+            "properties": [
+              {"id": "decimals", "value": 0},
+              {"id": "color", "value": {"fixedColor": "#39FF14", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+            ]
           },
           {
             "matcher": {"id": "byName", "options": "L"},
-            "properties": [{"id": "decimals", "value": 0}]
+            "properties": [
+              {"id": "decimals", "value": 0},
+              {"id": "color", "value": {"fixedColor": "#FF00FF", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+            ]
           },
           {
             "matcher": {"id": "byName", "options": "PCT"},
@@ -204,9 +235,9 @@
                 "value": {
                   "mode": "absolute",
                   "steps": [
-                    {"color": "green", "value": null},
-                    {"color": "yellow", "value": 3},
-                    {"color": "red", "value": 8}
+                    {"color": "#00FFFF", "value": null},
+                    {"color": "#FF9500", "value": 3},
+                    {"color": "#FF1493", "value": 8}
                   ]
                 }
               }
@@ -230,7 +261,7 @@
     {
       "id": 5,
       "type": "timeseries",
-      "title": "AL East \u2014 Division Race",
+      "title": "AL East — Division Race",
       "gridPos": {"h": 10, "w": 8, "x": 0, "y": 8},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -238,10 +269,11 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "stepAfter",
-            "lineWidth": 2,
-            "fillOpacity": 5,
+            "lineWidth": 3,
+            "fillOpacity": 10,
             "spanNulls": true,
-            "axisLabel": "Games Ahead (0 = 1st place)"
+            "axisLabel": "Games Ahead (0 = 1st place)",
+            "gradientMode": "opacity"
           },
           "unit": "none",
           "decimals": 1
@@ -249,23 +281,23 @@
         "overrides": [
           {
             "matcher": {"id": "byName", "options": "TOR"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#134A8E", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "NYY"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#1C3F6E", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#BF00FF", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "BOS"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#BD3039", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#FF1493", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "TB"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#8FBCE6", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#39FF14", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "BAL"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#DF4601", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#FF6B00", "mode": "fixed"}}]
           }
         ]
       },
@@ -285,7 +317,7 @@
     {
       "id": 6,
       "type": "timeseries",
-      "title": "AL Central \u2014 Division Race",
+      "title": "AL Central — Division Race",
       "gridPos": {"h": 10, "w": 8, "x": 8, "y": 8},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -293,10 +325,11 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "stepAfter",
-            "lineWidth": 2,
-            "fillOpacity": 5,
+            "lineWidth": 3,
+            "fillOpacity": 10,
             "spanNulls": true,
-            "axisLabel": "Games Ahead (0 = 1st place)"
+            "axisLabel": "Games Ahead (0 = 1st place)",
+            "gradientMode": "opacity"
           },
           "unit": "none",
           "decimals": 1
@@ -304,23 +337,23 @@
         "overrides": [
           {
             "matcher": {"id": "byName", "options": "CLE"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#E31937", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#FF1493", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "DET"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#1D4289", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "KC"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#004687", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#00F0FF", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "MIN"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#D31145", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#FF00FF", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "CWS"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#C0C0C0", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#CCCCCC", "mode": "fixed"}}]
           }
         ]
       },
@@ -340,7 +373,7 @@
     {
       "id": 7,
       "type": "timeseries",
-      "title": "AL West \u2014 Division Race",
+      "title": "AL West — Division Race",
       "gridPos": {"h": 10, "w": 8, "x": 16, "y": 8},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -348,10 +381,11 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "stepAfter",
-            "lineWidth": 2,
-            "fillOpacity": 5,
+            "lineWidth": 3,
+            "fillOpacity": 10,
             "spanNulls": true,
-            "axisLabel": "Games Ahead (0 = 1st place)"
+            "axisLabel": "Games Ahead (0 = 1st place)",
+            "gradientMode": "opacity"
           },
           "unit": "none",
           "decimals": 1
@@ -359,23 +393,23 @@
         "overrides": [
           {
             "matcher": {"id": "byName", "options": "SEA"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#00A3E0", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "HOU"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#EB6E1F", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#FF6B00", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "TEX"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#4169E1", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#00F0FF", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "ATH"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#003831", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#39FF14", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "LAA"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#BA0021", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#FF1493", "mode": "fixed"}}]
           }
         ]
       },
@@ -395,7 +429,7 @@
     {
       "id": 10,
       "type": "row",
-      "title": "National League",
+      "title": "▓▒░ NATIONAL LEAGUE ░▒▓",
       "collapsed": false,
       "panels": [],
       "gridPos": {"h": 1, "w": 24, "x": 0, "y": 18}
@@ -403,7 +437,7 @@
     {
       "id": 11,
       "type": "table",
-      "title": "NL East \u2014 Standings",
+      "title": "NL East — Standings",
       "gridPos": {"h": 7, "w": 8, "x": 0, "y": 19},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -413,16 +447,26 @@
             "matcher": {"id": "byName", "options": "Team"},
             "properties": [
               {"id": "custom.width", "value": 60},
-              {"id": "custom.align", "value": "left"}
+              {"id": "custom.align", "value": "left"},
+              {"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
             ]
           },
           {
             "matcher": {"id": "byName", "options": "W"},
-            "properties": [{"id": "decimals", "value": 0}]
+            "properties": [
+              {"id": "decimals", "value": 0},
+              {"id": "color", "value": {"fixedColor": "#39FF14", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+            ]
           },
           {
             "matcher": {"id": "byName", "options": "L"},
-            "properties": [{"id": "decimals", "value": 0}]
+            "properties": [
+              {"id": "decimals", "value": 0},
+              {"id": "color", "value": {"fixedColor": "#FF00FF", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+            ]
           },
           {
             "matcher": {"id": "byName", "options": "PCT"},
@@ -438,9 +482,9 @@
                 "value": {
                   "mode": "absolute",
                   "steps": [
-                    {"color": "green", "value": null},
-                    {"color": "yellow", "value": 3},
-                    {"color": "red", "value": 8}
+                    {"color": "#00FFFF", "value": null},
+                    {"color": "#FF9500", "value": 3},
+                    {"color": "#FF1493", "value": 8}
                   ]
                 }
               }
@@ -464,7 +508,7 @@
     {
       "id": 12,
       "type": "table",
-      "title": "NL Central \u2014 Standings",
+      "title": "NL Central — Standings",
       "gridPos": {"h": 7, "w": 8, "x": 8, "y": 19},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -474,16 +518,26 @@
             "matcher": {"id": "byName", "options": "Team"},
             "properties": [
               {"id": "custom.width", "value": 60},
-              {"id": "custom.align", "value": "left"}
+              {"id": "custom.align", "value": "left"},
+              {"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
             ]
           },
           {
             "matcher": {"id": "byName", "options": "W"},
-            "properties": [{"id": "decimals", "value": 0}]
+            "properties": [
+              {"id": "decimals", "value": 0},
+              {"id": "color", "value": {"fixedColor": "#39FF14", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+            ]
           },
           {
             "matcher": {"id": "byName", "options": "L"},
-            "properties": [{"id": "decimals", "value": 0}]
+            "properties": [
+              {"id": "decimals", "value": 0},
+              {"id": "color", "value": {"fixedColor": "#FF00FF", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+            ]
           },
           {
             "matcher": {"id": "byName", "options": "PCT"},
@@ -499,9 +553,9 @@
                 "value": {
                   "mode": "absolute",
                   "steps": [
-                    {"color": "green", "value": null},
-                    {"color": "yellow", "value": 3},
-                    {"color": "red", "value": 8}
+                    {"color": "#00FFFF", "value": null},
+                    {"color": "#FF9500", "value": 3},
+                    {"color": "#FF1493", "value": 8}
                   ]
                 }
               }
@@ -525,7 +579,7 @@
     {
       "id": 13,
       "type": "table",
-      "title": "NL West \u2014 Standings",
+      "title": "NL West — Standings",
       "gridPos": {"h": 7, "w": 8, "x": 16, "y": 19},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -535,16 +589,26 @@
             "matcher": {"id": "byName", "options": "Team"},
             "properties": [
               {"id": "custom.width", "value": 60},
-              {"id": "custom.align", "value": "left"}
+              {"id": "custom.align", "value": "left"},
+              {"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
             ]
           },
           {
             "matcher": {"id": "byName", "options": "W"},
-            "properties": [{"id": "decimals", "value": 0}]
+            "properties": [
+              {"id": "decimals", "value": 0},
+              {"id": "color", "value": {"fixedColor": "#39FF14", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+            ]
           },
           {
             "matcher": {"id": "byName", "options": "L"},
-            "properties": [{"id": "decimals", "value": 0}]
+            "properties": [
+              {"id": "decimals", "value": 0},
+              {"id": "color", "value": {"fixedColor": "#FF00FF", "mode": "fixed"}},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}}
+            ]
           },
           {
             "matcher": {"id": "byName", "options": "PCT"},
@@ -560,9 +624,9 @@
                 "value": {
                   "mode": "absolute",
                   "steps": [
-                    {"color": "green", "value": null},
-                    {"color": "yellow", "value": 3},
-                    {"color": "red", "value": 8}
+                    {"color": "#00FFFF", "value": null},
+                    {"color": "#FF9500", "value": 3},
+                    {"color": "#FF1493", "value": 8}
                   ]
                 }
               }
@@ -586,7 +650,7 @@
     {
       "id": 14,
       "type": "timeseries",
-      "title": "NL East \u2014 Division Race",
+      "title": "NL East — Division Race",
       "gridPos": {"h": 10, "w": 8, "x": 0, "y": 26},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -594,10 +658,11 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "stepAfter",
-            "lineWidth": 2,
-            "fillOpacity": 5,
+            "lineWidth": 3,
+            "fillOpacity": 10,
             "spanNulls": true,
-            "axisLabel": "Games Ahead (0 = 1st place)"
+            "axisLabel": "Games Ahead (0 = 1st place)",
+            "gradientMode": "opacity"
           },
           "unit": "none",
           "decimals": 1
@@ -605,23 +670,23 @@
         "overrides": [
           {
             "matcher": {"id": "byName", "options": "PHI"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#E81828", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#FF1493", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "NYM"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#002D72", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#00F0FF", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "MIA"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#00A3E0", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "ATL"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#CE1141", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#FF00FF", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "WSH"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#14225A", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#BF00FF", "mode": "fixed"}}]
           }
         ]
       },
@@ -641,7 +706,7 @@
     {
       "id": 15,
       "type": "timeseries",
-      "title": "NL Central \u2014 Division Race",
+      "title": "NL Central — Division Race",
       "gridPos": {"h": 10, "w": 8, "x": 8, "y": 26},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -649,10 +714,11 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "stepAfter",
-            "lineWidth": 2,
-            "fillOpacity": 5,
+            "lineWidth": 3,
+            "fillOpacity": 10,
             "spanNulls": true,
-            "axisLabel": "Games Ahead (0 = 1st place)"
+            "axisLabel": "Games Ahead (0 = 1st place)",
+            "gradientMode": "opacity"
           },
           "unit": "none",
           "decimals": 1
@@ -660,23 +726,23 @@
         "overrides": [
           {
             "matcher": {"id": "byName", "options": "MIL"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#12284B", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#00FFFF", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "CHC"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#0E3386", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#00F0FF", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "CIN"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#C6011F", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#FF1493", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "STL"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#C41E3A", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#FF00FF", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "PIT"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#FDB827", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#FFFF00", "mode": "fixed"}}]
           }
         ]
       },
@@ -696,7 +762,7 @@
     {
       "id": 16,
       "type": "timeseries",
-      "title": "NL West \u2014 Division Race",
+      "title": "NL West — Division Race",
       "gridPos": {"h": 10, "w": 8, "x": 16, "y": 26},
       "datasource": {"type": "postgres", "uid": "${DS_POSTGRES}"},
       "fieldConfig": {
@@ -704,10 +770,11 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "stepAfter",
-            "lineWidth": 2,
-            "fillOpacity": 5,
+            "lineWidth": 3,
+            "fillOpacity": 10,
             "spanNulls": true,
-            "axisLabel": "Games Ahead (0 = 1st place)"
+            "axisLabel": "Games Ahead (0 = 1st place)",
+            "gradientMode": "opacity"
           },
           "unit": "none",
           "decimals": 1
@@ -715,23 +782,23 @@
         "overrides": [
           {
             "matcher": {"id": "byName", "options": "LAD"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#005A9C", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#00F0FF", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "SD"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#2F241D", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#FFFF00", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "SF"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#FD5A1E", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#FF6B00", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "AZ"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#A71930", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#FF1493", "mode": "fixed"}}]
           },
           {
             "matcher": {"id": "byName", "options": "COL"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#33006F", "mode": "fixed"}}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#BF00FF", "mode": "fixed"}}]
           }
         ]
       },
