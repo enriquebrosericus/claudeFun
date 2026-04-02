@@ -359,7 +359,7 @@ def api_divisions_all():
         """, (div, season))
         standings.sort(key=lambda x: (float(x.get("games_behind") or 0), -(x.get("wins") or 0)))
         race_rows = q("""
-            SELECT date, team, games_behind
+            SELECT date, team, games_behind, wins, losses
             FROM division_standings
             WHERE division = %s AND season = %s AND game_type = 'R'
             ORDER BY date
@@ -367,14 +367,21 @@ def api_divisions_all():
         teams_in_div = [s["team"] for s in standings]
         dates = sorted(set(str(r["date"]) for r in race_rows))
         by_team: dict[str, dict] = {t: {} for t in teams_in_div}
+        wpct_by_team: dict[str, dict] = {t: {} for t in teams_in_div}
         for r in race_rows:
             if r["team"] in by_team:
                 by_team[r["team"]][str(r["date"])] = float(r.get("games_behind") or 0)
+                w, l = r.get("wins") or 0, r.get("losses") or 0
+                wpct_by_team[r["team"]][str(r["date"])] = round(w / (w + l), 3) if (w + l) else None
         result[div] = {
             "standings": standings,
             "race": {
                 "dates": dates,
                 "teams": {t: [by_team[t].get(d) for d in dates] for t in teams_in_div},
+            },
+            "wpct": {
+                "dates": dates,
+                "teams": {t: [wpct_by_team[t].get(d) for d in dates] for t in teams_in_div},
             },
         }
     return jsn(result)
