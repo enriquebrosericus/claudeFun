@@ -167,7 +167,7 @@ async function load() {
       data: {
         labels: dates,
         datasets: [
-          { label: 'Win %', data: trends.map(r => r.win_pct),
+          { label: 'Win %', data: trends.map(r => parseFloat(r.win_pct)),
             borderColor: teamColor(team), backgroundColor: teamColor(team, 0.1),
             tension: 0.3, pointRadius: 0, fill: true },
           { label: '.500', data: trends.map(() => 0.5),
