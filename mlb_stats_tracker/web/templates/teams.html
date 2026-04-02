@@ -162,10 +162,11 @@ async function load() {
 
   // Win % chart
   if (trends?.length) {
+    const wpctDates = trends.map(r => r.date);
     mkChart('wpct-chart', {
       type: 'line',
       data: {
-        labels: dates,
+        labels: wpctDates,
         datasets: [
           { label: 'Win %', data: trends.map(r => parseFloat(r.win_pct)),
             borderColor: teamColor(team), backgroundColor: teamColor(team, 0.1),
