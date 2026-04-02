@@ -229,6 +229,19 @@ def main():
     for i, game in enumerate(games, 1):
         print(f"  [{i:3d}/{len(games)}] {game['date']} {game['away_team']} @ {game['home_team']} ({game['gamepk']})", end=" ")
         try:
+            # Ensure game row exists (FK constraint)
+            cur = conn.cursor()
+            cur.execute("SELECT 1 FROM games WHERE gamepk = %s", (game["gamepk"],))
+            if not cur.fetchone():
+                cur.execute("""
+                    INSERT INTO games (gamepk, date, season, game_number, home_team, away_team,
+                                       doubleheader, status, game_type)
+                    VALUES (%s, %s, %s, 0, %s, %s, 'N', 'Final', 'R')
+                    ON CONFLICT (gamepk) DO NOTHING
+                """, (game["gamepk"], game["date"], game["season"],
+                      game["home_team"], game["away_team"]))
+                conn.commit()
+
             plays      = fetch_play_by_play(game["gamepk"])
             challenges = parse_challenges(plays, game, team_id_map)
             inserted   = upsert_challenges(conn, challenges)
@@ -236,6 +249,7 @@ def main():
             total_inserted += inserted
         except Exception as e:
             print(f"ERROR: {e}")
+            conn.rollback()
             errors += 1
 
         # Be polite to the API
