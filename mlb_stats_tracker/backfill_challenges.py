@@ -135,28 +135,76 @@ def upsert_challenges(conn, challenges: list[dict]) -> int:
 
 
 def get_team_id_map(conn) -> dict:
-    """Return {team_id: abbreviation} from division_standings."""
-    cur = conn.cursor()
-    cur.execute("SELECT DISTINCT team_id, team FROM division_standings")
-    return {row[0]: row[1] for row in cur.fetchall()}
+    """Return {team_id: abbreviation} from division_standings + MLB API."""
+    mapping = {}
+    # Try DB first
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT DISTINCT team_id, team FROM division_standings")
+        mapping = {row[0]: row[1] for row in cur.fetchall()}
+    except Exception:
+        conn.rollback()
+    # Supplement from API to cover all teams
+    try:
+        resp = session.get(f"{BASE}/teams", params={"sportId": 1}, timeout=20)
+        resp.raise_for_status()
+        for t in resp.json().get("teams", []):
+            tid = t.get("id")
+            if tid and tid not in mapping:
+                mapping[tid] = t.get("abbreviation", "UNK")
+    except Exception as e:
+        print(f"  ⚠ Could not fetch teams from API: {e}")
+    return mapping
 
 
 def get_games(conn, season: int, gamepk: int | None) -> list[dict]:
-    cur = conn.cursor()
+    """Fetch games from MLB API schedule (full league), falling back to DB for single gamepk."""
     if gamepk:
+        cur = conn.cursor()
         cur.execute("""
             SELECT gamepk, date, season, home_team, away_team
             FROM games WHERE gamepk = %s
         """, (gamepk,))
-    else:
-        cur.execute("""
-            SELECT gamepk, date, season, home_team, away_team
-            FROM games
-            WHERE season = %s AND game_type = 'R' AND status = 'Final'
-            ORDER BY date
-        """, (season,))
-    cols = [d[0] for d in cur.description]
-    return [dict(zip(cols, row)) for row in cur.fetchall()]
+        cols = [d[0] for d in cur.description]
+        rows = [dict(zip(cols, row)) for row in cur.fetchall()]
+        if rows:
+            return rows
+        # If not in DB, still allow processing via API
+        return [{"gamepk": gamepk, "date": None, "season": season,
+                 "home_team": "UNK", "away_team": "UNK"}]
+
+    # Fetch full league schedule from MLB API
+    print(f"Fetching {season} league schedule from MLB API...")
+    games = []
+    resp = session.get(
+        f"{BASE}/schedule",
+        params={"sportId": 1, "season": season, "gameType": "R",
+                "hydrate": "team"},
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+
+    team_abbr_map = {}
+    for date_entry in data.get("dates", []):
+        for g in date_entry.get("games", []):
+            if g.get("status", {}).get("abstractGameState") != "Final":
+                continue
+            home = g.get("teams", {}).get("home", {}).get("team", {})
+            away = g.get("teams", {}).get("away", {}).get("team", {})
+            team_abbr_map[home.get("id")] = home.get("abbreviation", "UNK")
+            team_abbr_map[away.get("id")] = away.get("abbreviation", "UNK")
+            games.append({
+                "gamepk":    g["gamePk"],
+                "date":      date_entry["date"],
+                "season":    season,
+                "home_team": home.get("abbreviation", "UNK"),
+                "away_team": away.get("abbreviation", "UNK"),
+            })
+
+    games.sort(key=lambda g: (g["date"], g["gamepk"]))
+    print(f"  {len(games)} completed games found")
+    return games
 
 
 def main():
