@@ -579,18 +579,28 @@ def sleep_until_next_scrape(session: requests.Session) -> None:
     time.sleep(POLL_INTERVAL)
 
 
+PLAYER_SCRAPE_INTERVAL = int(os.getenv("PLAYER_SCRAPE_INTERVAL", "43200"))  # 12 hours
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 def main() -> None:
     log.info("MLB Stats Tracker starting — Team=%s  Season=%s", TEAM_ABBR, SEASON)
     conn = wait_for_db()
     session = make_session()
+    last_player_scrape = 0.0
 
     while True:
         today = datetime.date.today()
         try:
             log.info("── Scrape cycle %s ──", today)
             scrape_standings(session, conn, today)
-            scrape_players(session, conn, today)
+            now = time.time()
+            if now - last_player_scrape >= PLAYER_SCRAPE_INTERVAL:
+                scrape_players(session, conn, today)
+                last_player_scrape = now
+            else:
+                remaining = PLAYER_SCRAPE_INTERVAL - (now - last_player_scrape)
+                log.info("Player scrape skipped — next in %.0f min", remaining / 60)
             scrape_game_recap(session, conn)
             log.info("Cycle complete")
         except Exception as e:
