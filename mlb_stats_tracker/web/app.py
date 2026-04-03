@@ -117,7 +117,7 @@ def recap():
 
 @app.route("/divisions")
 def divisions():
-    return render_template("divisions.html", default_season=SEASON)
+    return render_template("divisions.html", default_season=SEASON, default_division="AL West")
 
 @app.route("/challenges")
 def challenges():
@@ -343,10 +343,29 @@ def api_recap_game():
 
 # ── API: Divisions ────────────────────────────────────────────────────────────
 
+DIVS = ["AL East", "AL Central", "AL West", "NL East", "NL Central", "NL West"]
+
+
+def _div_teams(div, season):
+    """Return list of team abbreviations in a division (ordered by standings)."""
+    rows = q("""
+        SELECT DISTINCT ON (team) team, wins, losses, games_behind
+        FROM division_standings
+        WHERE division = %s AND season = %s AND game_type = 'R'
+        ORDER BY team, date DESC
+    """, (div, season))
+    rows.sort(key=lambda x: (float(x.get("games_behind") or 0), -(x.get("wins") or 0)))
+    return [r["team"] for r in rows]
+
+
+@app.route("/api/divisions/list")
+def api_divisions_list():
+    return jsn(DIVS)
+
+
 @app.route("/api/divisions/all")
 def api_divisions_all():
     season = request.args.get("season", SEASON, int)
-    DIVS = ["AL East", "AL Central", "AL West", "NL East", "NL Central", "NL West"]
     result = {}
     for div in DIVS:
         standings = q("""
@@ -385,6 +404,191 @@ def api_divisions_all():
             },
         }
     return jsn(result)
+
+
+@app.route("/api/divisions/batting_leaders")
+def api_divisions_batting_leaders():
+    season = request.args.get("season", SEASON, int)
+    div = request.args.get("division", "AL West")
+    teams = _div_teams(div, season)
+    if not teams:
+        return jsn([])
+    rows = q("""
+        SELECT player, team, position, avg, obp, slg, ops,
+               home_runs, rbi, runs, hits, stolen_bases, games_played, at_bats
+        FROM (
+            SELECT DISTINCT ON (player_id)
+                player, team, position, avg, obp, slg, ops,
+                home_runs, rbi, runs, hits, stolen_bases, games_played, at_bats
+            FROM player_batting
+            WHERE team = ANY(%s) AND season = %s AND game_type = 'R' AND at_bats > 0
+            ORDER BY player_id, date DESC
+        ) latest
+        ORDER BY ops DESC NULLS LAST
+        LIMIT 15
+    """, (teams, season))
+    return jsn(rows)
+
+
+@app.route("/api/divisions/pitching_leaders")
+def api_divisions_pitching_leaders():
+    season = request.args.get("season", SEASON, int)
+    div = request.args.get("division", "AL West")
+    teams = _div_teams(div, season)
+    if not teams:
+        return jsn([])
+    rows = q("""
+        SELECT player, team, position, era, whip, fip, wins, losses, saves,
+               strikeouts, innings_pitched, k9, bb9, games, quality_starts
+        FROM (
+            SELECT DISTINCT ON (player_id)
+                player, team, position, era, whip, fip, wins, losses, saves,
+                strikeouts, innings_pitched, k9, bb9, games, quality_starts
+            FROM player_pitching
+            WHERE team = ANY(%s) AND season = %s AND game_type = 'R' AND innings_pitched > 0
+            ORDER BY player_id, date DESC
+        ) latest
+        ORDER BY era ASC NULLS LAST
+        LIMIT 15
+    """, (teams, season))
+    return jsn(rows)
+
+
+@app.route("/api/divisions/run_diff")
+def api_divisions_run_diff():
+    """Run differential trend per team in a division."""
+    season = request.args.get("season", SEASON, int)
+    div = request.args.get("division", "AL West")
+    teams = _div_teams(div, season)
+    if not teams:
+        return jsn({"dates": [], "teams": {}})
+    rows = q("""
+        SELECT date, team, runs_scored, runs_allowed
+        FROM team_stats
+        WHERE team = ANY(%s) AND season = %s AND game_type = 'R'
+        ORDER BY date
+    """, (teams, season))
+    dates = sorted(set(str(r["date"]) for r in rows))
+    rd_by_team: dict[str, dict] = {t: {} for t in teams}
+    for r in rows:
+        t = r["team"]
+        if t in rd_by_team:
+            rs = r.get("runs_scored") or 0
+            ra = r.get("runs_allowed") or 0
+            rd_by_team[t][str(r["date"])] = rs - ra
+    return jsn({
+        "dates": dates,
+        "teams": {t: [rd_by_team[t].get(d) for d in dates] for t in teams},
+    })
+
+
+@app.route("/api/divisions/hr_race")
+def api_divisions_hr_race():
+    """Top HR hitters over time within a division."""
+    season = request.args.get("season", SEASON, int)
+    div = request.args.get("division", "AL West")
+    teams = _div_teams(div, season)
+    if not teams:
+        return jsn({"dates": [], "players": {}})
+    # Find top 8 HR hitters (latest snapshot)
+    top = q("""
+        SELECT player_id, player, team FROM (
+            SELECT DISTINCT ON (player_id) player_id, player, team, home_runs
+            FROM player_batting
+            WHERE team = ANY(%s) AND season = %s AND game_type = 'R' AND at_bats > 0
+            ORDER BY player_id, date DESC
+        ) latest ORDER BY home_runs DESC NULLS LAST LIMIT 8
+    """, (teams, season))
+    if not top:
+        return jsn({"dates": [], "players": {}})
+    pids = [r["player_id"] for r in top]
+    pnames = {r["player_id"]: f"{r['player']} ({r['team']})" for r in top}
+    rows = q("""
+        SELECT date, player_id, home_runs
+        FROM player_batting
+        WHERE player_id = ANY(%s) AND season = %s AND game_type = 'R'
+        ORDER BY date
+    """, (pids, season))
+    dates = sorted(set(str(r["date"]) for r in rows))
+    by_player: dict[int, dict] = {pid: {} for pid in pids}
+    for r in rows:
+        by_player[r["player_id"]][str(r["date"])] = r["home_runs"] or 0
+    return jsn({
+        "dates": dates,
+        "players": {pnames[pid]: [by_player[pid].get(d) for d in dates] for pid in pids},
+    })
+
+
+@app.route("/api/divisions/sb_race")
+def api_divisions_sb_race():
+    """Top stolen base leaders over time within a division."""
+    season = request.args.get("season", SEASON, int)
+    div = request.args.get("division", "AL West")
+    teams = _div_teams(div, season)
+    if not teams:
+        return jsn({"dates": [], "players": {}})
+    top = q("""
+        SELECT player_id, player, team FROM (
+            SELECT DISTINCT ON (player_id) player_id, player, team, stolen_bases
+            FROM player_batting
+            WHERE team = ANY(%s) AND season = %s AND game_type = 'R' AND at_bats > 0
+            ORDER BY player_id, date DESC
+        ) latest ORDER BY stolen_bases DESC NULLS LAST LIMIT 8
+    """, (teams, season))
+    if not top:
+        return jsn({"dates": [], "players": {}})
+    pids = [r["player_id"] for r in top]
+    pnames = {r["player_id"]: f"{r['player']} ({r['team']})" for r in top}
+    rows = q("""
+        SELECT date, player_id, stolen_bases
+        FROM player_batting
+        WHERE player_id = ANY(%s) AND season = %s AND game_type = 'R'
+        ORDER BY date
+    """, (pids, season))
+    dates = sorted(set(str(r["date"]) for r in rows))
+    by_player: dict[int, dict] = {pid: {} for pid in pids}
+    for r in rows:
+        by_player[r["player_id"]][str(r["date"])] = r["stolen_bases"] or 0
+    return jsn({
+        "dates": dates,
+        "players": {pnames[pid]: [by_player[pid].get(d) for d in dates] for pid in pids},
+    })
+
+
+@app.route("/api/divisions/k_race")
+def api_divisions_k_race():
+    """Top strikeout pitchers over time within a division."""
+    season = request.args.get("season", SEASON, int)
+    div = request.args.get("division", "AL West")
+    teams = _div_teams(div, season)
+    if not teams:
+        return jsn({"dates": [], "players": {}})
+    top = q("""
+        SELECT player_id, player, team FROM (
+            SELECT DISTINCT ON (player_id) player_id, player, team, strikeouts
+            FROM player_pitching
+            WHERE team = ANY(%s) AND season = %s AND game_type = 'R' AND innings_pitched > 0
+            ORDER BY player_id, date DESC
+        ) latest ORDER BY strikeouts DESC NULLS LAST LIMIT 8
+    """, (teams, season))
+    if not top:
+        return jsn({"dates": [], "players": {}})
+    pids = [r["player_id"] for r in top]
+    pnames = {r["player_id"]: f"{r['player']} ({r['team']})" for r in top}
+    rows = q("""
+        SELECT date, player_id, strikeouts
+        FROM player_pitching
+        WHERE player_id = ANY(%s) AND season = %s AND game_type = 'R'
+        ORDER BY date
+    """, (pids, season))
+    dates = sorted(set(str(r["date"]) for r in rows))
+    by_player: dict[int, dict] = {pid: {} for pid in pids}
+    for r in rows:
+        by_player[r["player_id"]][str(r["date"])] = r["strikeouts"] or 0
+    return jsn({
+        "dates": dates,
+        "players": {pnames[pid]: [by_player[pid].get(d) for d in dates] for pid in pids},
+    })
 
 # ── API: Challenges ───────────────────────────────────────────────────────────
 
