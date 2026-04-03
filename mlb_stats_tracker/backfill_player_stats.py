@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
-Backfill 2025 Mariners player stats (game-by-game progression) into PostgreSQL.
+Backfill player stats (game-by-game progression) for all 30 MLB teams into PostgreSQL.
 
 Fetches each player's game log from MLB Stats API, accumulates counting stats
 game-by-game, and inserts one row per game date into player_batting / player_pitching.
 
 Usage (from inside scraper container or locally with port 5433 forwarded):
-  python3 backfill_player_stats.py [SEASON]   # default: 2025
+  python3 backfill_player_stats.py [SEASON] [TEAM_ABBR]
+  # SEASON default: 2026
+  # TEAM_ABBR: optional — if provided, only backfill that team (e.g. "SEA")
 """
 
 import datetime
@@ -17,10 +19,9 @@ import time
 import psycopg2
 import requests
 
-SEASON    = int(sys.argv[1]) if len(sys.argv) > 1 else 2026
-TEAM_ID   = 136
-TEAM_ABBR = "SEA"
-BASE      = "https://statsapi.mlb.com/api/v1"
+SEASON     = int(sys.argv[1]) if len(sys.argv) > 1 else 2026
+ONLY_TEAM  = sys.argv[2].upper() if len(sys.argv) > 2 else None
+BASE       = "https://statsapi.mlb.com/api/v1"
 
 session = requests.Session()
 session.headers.update({"User-Agent": "MLBPlayerBackfill/2.0", "Accept": "application/json"})
@@ -61,14 +62,30 @@ def thirds_to_ip(thirds: int) -> float:
     return round(thirds // 3 + (thirds % 3) / 10, 1)
 
 
-def get_roster():
-    data = api_get(f"/teams/{TEAM_ID}/roster", rosterType="active", season=SEASON)
+def get_all_teams() -> list[dict]:
+    """Return list of {id, abbr} for all 30 MLB teams."""
+    teams = []
+    for league_id in (103, 104):
+        data = api_get("/standings", leagueId=league_id, season=SEASON,
+                       standingsTypes="regularSeason", hydrate="team")
+        for div in data.get("records", []):
+            for rec in div.get("teamRecords", []):
+                t = rec.get("team", {})
+                abbr = t.get("abbreviation", "UNK")
+                if ONLY_TEAM and abbr != ONLY_TEAM:
+                    continue
+                teams.append({"id": t.get("id"), "abbr": abbr})
+    return teams
+
+
+def get_roster(team_id):
+    data = api_get(f"/teams/{team_id}/roster", rosterType="active", season=SEASON)
     return data.get("roster", [])
 
 
 # ── Batter backfill ───────────────────────────────────────────────────────────
 
-def backfill_batter(cur, person_id: int, name: str, pos: str) -> int:
+def backfill_batter(cur, person_id: int, name: str, pos: str, team_abbr: str) -> int:
     data = api_get(f"/people/{person_id}/stats",
                    stats="gameLog", season=SEASON, group="hitting", sportId=1)
     splits = (data.get("stats") or [{}])[0].get("splits", [])
@@ -116,7 +133,7 @@ def backfill_batter(cur, person_id: int, name: str, pos: str) -> int:
                 triples=EXCLUDED.triples, avg=EXCLUDED.avg, obp=EXCLUDED.obp,
                 slg=EXCLUDED.slg, ops=EXCLUDED.ops, babip=EXCLUDED.babip,
                 iso=EXCLUDED.iso
-        """, (date, SEASON, name, person_id, TEAM_ABBR, "R", pos,
+        """, (date, SEASON, name, person_id, team_abbr, "R", pos,
               cum_g, cum_ab, cum_h, cum_hr, cum_rbi, cum_r,
               cum_bb, cum_k, cum_sb, cum_2b, cum_3b,
               avg, obp, slg, ops, babip, round(slg - avg, 3)))
@@ -127,7 +144,7 @@ def backfill_batter(cur, person_id: int, name: str, pos: str) -> int:
 
 # ── Pitcher backfill ──────────────────────────────────────────────────────────
 
-def backfill_pitcher(cur, person_id: int, name: str, pos: str) -> int:
+def backfill_pitcher(cur, person_id: int, name: str, pos: str, team_abbr: str) -> int:
     data = api_get(f"/people/{person_id}/stats",
                    stats="gameLog", season=SEASON, group="pitching", sportId=1)
     splits = (data.get("stats") or [{}])[0].get("splits", [])
@@ -180,7 +197,7 @@ def backfill_pitcher(cur, person_id: int, name: str, pos: str) -> int:
                 walks=EXCLUDED.walks, home_runs_allowed=EXCLUDED.home_runs_allowed,
                 earned_runs=EXCLUDED.earned_runs, era=EXCLUDED.era, whip=EXCLUDED.whip,
                 k9=EXCLUDED.k9, bb9=EXCLUDED.bb9, hr9=EXCLUDED.hr9, fip=EXCLUDED.fip
-        """, (date, SEASON, name, person_id, TEAM_ABBR, "R", pos,
+        """, (date, SEASON, name, person_id, team_abbr, "R", pos,
               cum_g, cum_w, cum_l, cum_sv, cum_hld, cum_qs,
               cum_ip, cum_so, cum_bb, cum_hr, cum_er,
               era, whip, k9, bb9, hr9, fip))
@@ -195,37 +212,53 @@ def main():
     conn = get_db()
     cur  = conn.cursor()
 
-    roster = get_roster()
-    print(f"Roster: {len(roster)} players for {SEASON}", file=sys.stderr)
+    teams = get_all_teams()
+    scope = ONLY_TEAM or "all teams"
+    print(f"Backfilling {len(teams)} team(s) for {SEASON} ({scope})", file=sys.stderr)
 
-    batters = pitchers = total_rows = 0
+    grand_total = 0
 
-    for entry in roster:
-        person    = entry.get("person", {})
-        pid       = person.get("id")
-        name      = person.get("fullName", "Unknown")
-        pos       = entry.get("position", {})
-        pos_code  = pos.get("code", "")
-        is_pitcher = pos.get("type") == "Pitcher"
-
-        print(f"  {'P' if is_pitcher else 'B'}  {name} ({pid})", file=sys.stderr)
+    for tm in teams:
+        team_id, team_abbr = tm["id"], tm["abbr"]
         try:
-            if is_pitcher:
-                rows = backfill_pitcher(cur, pid, name, pos_code)
-                pitchers += 1
-            else:
-                rows = backfill_batter(cur, pid, name, pos_code)
-                batters += 1
-            total_rows += rows
+            roster = get_roster(team_id)
         except Exception as e:
-            print(f"     ERROR: {e}", file=sys.stderr)
+            print(f"  {team_abbr}: roster failed — {e}", file=sys.stderr)
+            continue
 
-        conn.commit()
-        time.sleep(0.2)
+        print(f"  {team_abbr}: {len(roster)} players", file=sys.stderr)
+        batters = pitchers = total_rows = 0
+
+        for entry in roster:
+            person    = entry.get("person", {})
+            pid       = person.get("id")
+            name      = person.get("fullName", "Unknown")
+            pos       = entry.get("position", {})
+            pos_code  = pos.get("code", "")
+            is_pitcher = pos.get("type") == "Pitcher"
+
+            print(f"    {'P' if is_pitcher else 'B'}  {name} ({pid})", file=sys.stderr)
+            try:
+                if is_pitcher:
+                    rows = backfill_pitcher(cur, pid, name, pos_code, team_abbr)
+                    pitchers += 1
+                else:
+                    rows = backfill_batter(cur, pid, name, pos_code, team_abbr)
+                    batters += 1
+                total_rows += rows
+            except Exception as e:
+                print(f"       ERROR: {e}", file=sys.stderr)
+
+            conn.commit()
+            time.sleep(0.15)
+
+        grand_total += total_rows
+        print(f"  {team_abbr}: {batters} batters, {pitchers} pitchers, {total_rows} rows",
+              file=sys.stderr)
 
     cur.close()
     conn.close()
-    print(f"\nDone: {batters} batters, {pitchers} pitchers, {total_rows} rows inserted.",
+    print(f"\nDone: {grand_total} total rows inserted across {len(teams)} team(s).",
           file=sys.stderr)
 
 

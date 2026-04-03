@@ -164,8 +164,21 @@ def scrape_standings(session: requests.Session, conn, today: datetime.date) -> N
 
 
 # ── Player Stats ──────────────────────────────────────────────────────────────
-def get_roster(session: requests.Session) -> list:
-    data = api_get(session, f"/teams/{TEAM_ID}/roster",
+def get_all_teams(session: requests.Session) -> list[dict]:
+    """Return list of {id, abbr} for all 30 MLB teams."""
+    teams = []
+    for league_id in (103, 104):
+        data = api_get(session, "/standings", leagueId=league_id, season=SEASON,
+                       standingsTypes="regularSeason", hydrate="team")
+        for div in data.get("records", []):
+            for rec in div.get("teamRecords", []):
+                t = rec.get("team", {})
+                teams.append({"id": t.get("id"), "abbr": t.get("abbreviation", "UNK")})
+    return teams
+
+
+def get_roster(session: requests.Session, team_id: int = TEAM_ID) -> list:
+    data = api_get(session, f"/teams/{team_id}/roster",
                    rosterType="active", season=SEASON)
     return data.get("roster", [])
 
@@ -190,7 +203,7 @@ def get_pitching_stats(session, person_id) -> Optional[dict]:
     return splits[0].get("stat") if splits else None
 
 
-def upsert_batter(cur, today, player_id, name, pos, stat) -> None:
+def upsert_batter(cur, today, player_id, name, pos, stat, team_abbr=TEAM_ABBR) -> None:
     avg = sf(stat.get("avg"))
     slg = sf(stat.get("slg"))
     cur.execute("""
@@ -210,7 +223,7 @@ def upsert_batter(cur, today, player_id, name, pos, stat) -> None:
             slg=EXCLUDED.slg, ops=EXCLUDED.ops, babip=EXCLUDED.babip,
             iso=EXCLUDED.iso
     """, (
-        today, SEASON, name, player_id, TEAM_ABBR, GAME_TYPE, pos,
+        today, SEASON, name, player_id, team_abbr, GAME_TYPE, pos,
         int(sf(stat.get("gamesPlayed"))), int(sf(stat.get("atBats"))),
         int(sf(stat.get("hits"))), int(sf(stat.get("homeRuns"))),
         int(sf(stat.get("rbi"))), int(sf(stat.get("runs"))),
@@ -222,7 +235,7 @@ def upsert_batter(cur, today, player_id, name, pos, stat) -> None:
     ))
 
 
-def upsert_pitcher(cur, today, player_id, name, pos, stat) -> None:
+def upsert_pitcher(cur, today, player_id, name, pos, stat, team_abbr=TEAM_ABBR) -> None:
     ip     = sf(stat.get("inningsPitched"))
     hr     = sf(stat.get("homeRunsAllowed", stat.get("homeRuns")))
     bb     = sf(stat.get("baseOnBalls"))
@@ -245,7 +258,7 @@ def upsert_pitcher(cur, today, player_id, name, pos, stat) -> None:
             whip=EXCLUDED.whip, k9=EXCLUDED.k9, bb9=EXCLUDED.bb9,
             hr9=EXCLUDED.hr9, fip=EXCLUDED.fip
     """, (
-        today, SEASON, name, player_id, TEAM_ABBR, GAME_TYPE, pos,
+        today, SEASON, name, player_id, team_abbr, GAME_TYPE, pos,
         int(sf(stat.get("gamesPitched"))), int(sf(stat.get("wins"))),
         int(sf(stat.get("losses"))), int(sf(stat.get("saves"))),
         int(sf(stat.get("holds"))), int(sf(stat.get("qualityStarts"))),
@@ -258,37 +271,49 @@ def upsert_pitcher(cur, today, player_id, name, pos, stat) -> None:
 
 
 def scrape_players(session: requests.Session, conn, today: datetime.date) -> None:
-    roster = get_roster(session)
-    log.info("Roster: %d players", len(roster))
+    teams = get_all_teams(session)
+    log.info("Scraping player stats for %d teams", len(teams))
     cur = conn.cursor()
-    count = 0
+    total = 0
 
-    for entry in roster:
-        person    = entry.get("person", {})
-        pid       = person.get("id")
-        name      = person.get("fullName", "Unknown")
-        pos       = entry.get("position", {})
-        pos_code  = pos.get("code", "")
-        is_pitcher = pos.get("type") == "Pitcher"
-
+    for tm in teams:
+        team_id, team_abbr = tm["id"], tm["abbr"]
         try:
-            if is_pitcher:
-                stat = get_pitching_stats(session, pid)
-                if stat:
-                    upsert_pitcher(cur, today, pid, name, pos_code, stat)
-                    count += 1
-            else:
-                stat = get_hitting_stats(session, pid)
-                if stat:
-                    upsert_batter(cur, today, pid, name, pos_code, stat)
-                    count += 1
-            time.sleep(0.2)
+            roster = get_roster(session, team_id)
         except Exception as e:
-            log.warning("Stats failed for %s: %s", name, e)
+            log.warning("Roster failed for %s: %s", team_abbr, e)
+            continue
 
-    conn.commit()
+        count = 0
+        for entry in roster:
+            person    = entry.get("person", {})
+            pid       = person.get("id")
+            name      = person.get("fullName", "Unknown")
+            pos       = entry.get("position", {})
+            pos_code  = pos.get("code", "")
+            is_pitcher = pos.get("type") == "Pitcher"
+
+            try:
+                if is_pitcher:
+                    stat = get_pitching_stats(session, pid)
+                    if stat:
+                        upsert_pitcher(cur, today, pid, name, pos_code, stat, team_abbr)
+                        count += 1
+                else:
+                    stat = get_hitting_stats(session, pid)
+                    if stat:
+                        upsert_batter(cur, today, pid, name, pos_code, stat, team_abbr)
+                        count += 1
+                time.sleep(0.15)
+            except Exception as e:
+                log.warning("Stats failed for %s (%s): %s", name, team_abbr, e)
+
+        conn.commit()
+        total += count
+        log.info("  %s: %d/%d players", team_abbr, count, len(roster))
+
     cur.close()
-    log.info("Players: %d/%d updated", count, len(roster))
+    log.info("Players total: %d updated across %d teams", total, len(teams))
 
 
 # ── Game Recap ────────────────────────────────────────────────────────────────
