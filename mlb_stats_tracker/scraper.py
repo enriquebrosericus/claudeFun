@@ -63,7 +63,15 @@ def make_session() -> requests.Session:
 
 
 def api_get(session: requests.Session, path: str, **params) -> dict:
-    resp = session.get(f"{MLB_API}{path}", params=params, timeout=15)
+    for attempt in range(4):
+        resp = session.get(f"{MLB_API}{path}", params=params, timeout=15)
+        if resp.status_code == 429 or resp.status_code >= 500:
+            wait = 2 ** attempt * 5  # 5, 10, 20, 40s
+            log.warning("MLB API %s (attempt %d) — retrying in %ds", resp.status_code, attempt + 1, wait)
+            time.sleep(wait)
+            continue
+        resp.raise_for_status()
+        return resp.json()
     resp.raise_for_status()
     return resp.json()
 
@@ -304,7 +312,7 @@ def scrape_players(session: requests.Session, conn, today: datetime.date) -> Non
                     if stat:
                         upsert_batter(cur, today, pid, name, pos_code, stat, team_abbr)
                         count += 1
-                time.sleep(0.15)
+                time.sleep(0.25)
             except Exception as e:
                 log.warning("Stats failed for %s (%s): %s", name, team_abbr, e)
 

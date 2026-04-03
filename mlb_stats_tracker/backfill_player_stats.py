@@ -38,7 +38,16 @@ def get_db():
 
 
 def api_get(path, **params):
-    resp = session.get(f"{BASE}{path}", params=params, timeout=15)
+    for attempt in range(4):
+        resp = session.get(f"{BASE}{path}", params=params, timeout=15)
+        if resp.status_code == 429 or resp.status_code >= 500:
+            wait = 2 ** attempt * 5  # 5, 10, 20, 40s
+            print(f"  MLB API {resp.status_code} (attempt {attempt+1}) — retrying in {wait}s",
+                  file=sys.stderr)
+            time.sleep(wait)
+            continue
+        resp.raise_for_status()
+        return resp.json()
     resp.raise_for_status()
     return resp.json()
 
