@@ -4,7 +4,8 @@
 
 <div class="row g-2 mb-3 align-items-center">
   <div class="col-auto"><select id="season-sel" class="form-select form-select-sm"></select></div>
-  <div class="col-auto" style="min-width:280px">
+  <div class="col-auto"><select id="team-sel" class="form-select form-select-sm"></select></div>
+  <div class="col-auto" style="min-width:320px">
     <select id="game-sel" class="form-select form-select-sm"></select>
   </div>
 </div>
@@ -108,9 +109,20 @@
 <script>
 const p = new URLSearchParams(location.search);
 let season = p.get('season') || '{{ default_season }}';
+let team   = p.get('team')   || '{{ default_team }}';
 let gamepk = p.get('gamepk') ? parseInt(p.get('gamepk')) : null;
 
-function sync() { p.set('season', season); if (gamepk) p.set('gamepk', gamepk); history.replaceState({}, '', '?' + p); }
+function sync() {
+  p.set('season', season); p.set('team', team);
+  if (gamepk) p.set('gamepk', gamepk);
+  history.replaceState({}, '', '?' + p);
+}
+
+async function loadGames() {
+  const games = await api(`/api/recap/games?season=${season}&team=${team}`);
+  populateSelect('game-sel', games||[], gamepk, r=>r.label, r=>r.gamepk);
+  return games;
+}
 
 function battingRow(r) {
   return `<tr><td class="player-name">${r.player}</td>
@@ -146,11 +158,12 @@ async function loadGame() {
 
   const g = data.game;
   const resultEl = document.getElementById('hdr-result');
-  resultEl.textContent = g.result || '—';
-  resultEl.className = `stat-value sm ${g.result === 'W' ? 'text-success' : g.result === 'L' ? 'text-danger' : ''}`;
+  const as = g.away_score ?? '?', hs = g.home_score ?? '?';
+  resultEl.textContent = `${g.away_team} ${as} – ${hs} ${g.home_team}`;
+  resultEl.className = 'stat-value sm';
 
   const d = new Date(g.date);
-  set('hdr-date',   `${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}  ${g.sea_score}–${g.opp_score}`);
+  set('hdr-date', d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}));
   set('hdr-venue',  g.venue || '—');
   set('hdr-win-p',  g.winning_pitcher || '—');
   set('hdr-loss-p', g.losing_pitcher  || '—');
@@ -183,8 +196,12 @@ async function loadGame() {
 
 document.getElementById('season-sel').addEventListener('change', async e => {
   season = e.target.value; gamepk = null; sync();
-  const games = await api(`/api/recap/games?season=${season}`);
-  populateSelect('game-sel', games||[], gamepk, r=>r.label, r=>r.gamepk);
+  const games = await loadGames();
+  if (games?.length) { gamepk = games[0].gamepk; sync(); loadGame(); }
+});
+document.getElementById('team-sel').addEventListener('change', async e => {
+  team = e.target.value; gamepk = null; sync();
+  const games = await loadGames();
   if (games?.length) { gamepk = games[0].gamepk; sync(); loadGame(); }
 });
 document.getElementById('game-sel').addEventListener('change', e => {
@@ -192,12 +209,13 @@ document.getElementById('game-sel').addEventListener('change', e => {
 });
 
 (async () => {
-  const [seasons, games] = await Promise.all([
+  const [seasons, teams] = await Promise.all([
     api('/api/seasons'),
-    api(`/api/recap/games?season=${season}`),
+    api('/api/teams/list'),
   ]);
   populateSelect('season-sel', seasons||[], season);
-  populateSelect('game-sel',   games||[], gamepk, r=>r.label, r=>r.gamepk);
+  populateSelect('team-sel', ['ALL', ...(teams||[])], team);
+  const games = await loadGames();
   if (!gamepk && games?.length) gamepk = games[0].gamepk;
   sync();
   await loadGame();

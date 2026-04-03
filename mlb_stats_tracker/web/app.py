@@ -113,7 +113,7 @@ def players():
 
 @app.route("/recap")
 def recap():
-    return render_template("recap.html", default_season=SEASON)
+    return render_template("recap.html", default_season=SEASON, default_team=TEAM_ABBR)
 
 @app.route("/divisions")
 def divisions():
@@ -296,14 +296,38 @@ def api_players_pitcher_trend():
 @app.route("/api/recap/games")
 def api_recap_games():
     season = request.args.get("season", SEASON, int)
-    rows = q("""
-        SELECT gamepk, date, home_team, away_team, doubleheader, result, sea_score, opp_score
-        FROM games
-        WHERE season = %s AND status = 'Final' AND game_type = 'R'
-          AND result IS NOT NULL
-        ORDER BY date DESC, gamepk DESC
-    """, (season,))
-    return jsn([{"gamepk": r["gamepk"], "label": _game_label(r)} for r in rows])
+    team = request.args.get("team", "")
+    if team and team != "ALL":
+        rows = q("""
+            SELECT gamepk, date, home_team, away_team, doubleheader,
+                   home_score, away_score
+            FROM games
+            WHERE season = %s AND status = 'Final' AND game_type = 'R'
+              AND result IS NOT NULL
+              AND (home_team = %s OR away_team = %s)
+            ORDER BY date DESC, gamepk DESC
+        """, (season, team, team))
+    else:
+        rows = q("""
+            SELECT gamepk, date, home_team, away_team, doubleheader,
+                   home_score, away_score
+            FROM games
+            WHERE season = %s AND status = 'Final' AND game_type = 'R'
+              AND result IS NOT NULL
+            ORDER BY date DESC, gamepk DESC
+        """, (season,))
+    out = []
+    for r in rows:
+        d = r.get("date")
+        date_str = d.strftime("%b %d") if d else "?"
+        dh = r.get("doubleheader", "N")
+        dh_str = " (DH)" if dh in ("Y", "S") else ""
+        home, away = r.get("home_team", "?"), r.get("away_team", "?")
+        hs = r.get("home_score") if r.get("home_score") is not None else "?"
+        as_ = r.get("away_score") if r.get("away_score") is not None else "?"
+        label = f"{date_str}{dh_str}  {away} @ {home}  ({as_}-{hs})"
+        out.append({"gamepk": r["gamepk"], "label": label})
+    return jsn(out)
 
 @app.route("/api/recap/game")
 def api_recap_game():
