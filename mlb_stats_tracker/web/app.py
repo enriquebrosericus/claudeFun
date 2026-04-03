@@ -300,6 +300,7 @@ def api_recap_games():
         SELECT gamepk, date, home_team, away_team, doubleheader, result, sea_score, opp_score
         FROM games
         WHERE season = %s AND status = 'Final' AND game_type = 'R'
+          AND result IS NOT NULL
         ORDER BY date DESC, gamepk DESC
     """, (season,))
     return jsn([{"gamepk": r["gamepk"], "label": _game_label(r)} for r in rows])
