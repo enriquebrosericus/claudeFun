@@ -165,8 +165,8 @@ async function load() {
       data: {
         labels: dates,
         datasets: [
-          { label: 'Wins',   data: trends.map(r => r.wins),   borderColor: '#39FF14', tension: 0.3, pointRadius: 0 },
-          { label: 'Losses', data: trends.map(r => r.losses), borderColor: '#FF1493', tension: 0.3, pointRadius: 0 },
+          { label: 'Wins',   data: trends.map(r => r.wins),   borderColor: '#a1c05c', tension: 0.3, pointRadius: 0 },
+          { label: 'Losses', data: trends.map(r => r.losses), borderColor: '#c03a47', tension: 0.3, pointRadius: 0 },
         ],
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } },
@@ -177,7 +177,7 @@ async function load() {
       data: {
         labels: dates,
         datasets: [{ label: 'Run Diff', data: rdData,
-          backgroundColor: rdData.map(v => v >= 0 ? 'rgba(57,255,20,0.7)' : 'rgba(255,20,147,0.7)') }],
+          backgroundColor: rdData.map(v => v >= 0 ? 'rgba(161,192,92,0.7)' : 'rgba(192,58,71,0.7)') }],
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } },
     });

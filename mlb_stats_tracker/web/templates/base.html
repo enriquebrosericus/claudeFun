@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}MLB Stats{% endblock %}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap">
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
@@ -33,8 +34,10 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script>
-    Chart.defaults.color = '#94a3b8';
-    Chart.defaults.borderColor = '#1e2d4a';
+    Chart.defaults.color = '#898c93';
+    Chart.defaults.borderColor = '#2e3340';
+    Chart.defaults.font.family = "'Silkscreen', monospace";
+    Chart.defaults.font.size = 9;
 
     function mkChart(id, cfg) {
       const el = document.getElementById(id);
@@ -76,7 +79,7 @@
       if (el) el.textContent = val ?? '—';
     }
 
-    const COLORS = ['#00FFFF','#39FF14','#FF1493','#FF9500','#BF00FF','#FF6B00','#00F0FF','#FF00FF','#FFFF00','#14b8a6'];
+    const COLORS = ['#3cb9c2','#a1c05c','#d458a3','#cc8449','#a461c8','#c03a47','#5a8fcd','#c29e42','#6f7685','#d3d5d3'];
     const TEAM_COLORS = {
       SEA:'#005C5C', HOU:'#EB6E1F', TEX:'#003278', LAA:'#BA0021', OAK:'#003831',
       ATH:'#003831', NYY:'#003087', BOS:'#BD3039', TOR:'#134A8E', BAL:'#DF4601',

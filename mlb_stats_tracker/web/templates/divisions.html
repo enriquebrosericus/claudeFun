@@ -123,15 +123,15 @@ let div    = p.get('division') || '{{ default_division }}';
 
 function sync() { p.set('season', season); p.set('division', div); history.replaceState({}, '', '?' + p); }
 
-const PLAYER_COLORS = ['#00FFFF','#39FF14','#FF1493','#FF9500','#BF00FF','#FF6B00','#FFFF00','#14b8a6'];
+const PLAYER_COLORS = ['#3cb9c2','#a1c05c','#d458a3','#cc8449','#a461c8','#c03a47','#5a8fcd','#c29e42'];
 
 const DIV_COLORS = {
-  'AL East':    { NYY:'#BF00FF', BOS:'#FF1493', TOR:'#00FFFF', TB:'#39FF14',  BAL:'#FF6B00' },
-  'AL Central': { CLE:'#FF1493', DET:'#00FFFF', KC:'#FFFF00',  MIN:'#BF00FF', CWS:'#CCCCCC' },
-  'AL West':    { SEA:'#00FFFF', HOU:'#FF6B00', TEX:'#FFFF00', ATH:'#39FF14', LAA:'#FF1493' },
-  'NL East':    { PHI:'#FF1493', NYM:'#FFFF00', MIA:'#00FFFF', ATL:'#FF00FF', WSH:'#39FF14' },
-  'NL Central': { MIL:'#00FFFF', CHC:'#FFFF00', CIN:'#FF1493', STL:'#FF00FF', PIT:'#FF6B00' },
-  'NL West':    { LAD:'#00FFFF', SD:'#FFFF00',  SF:'#FF6B00',  ARI:'#FF1493', COL:'#BF00FF' },
+  'AL East':    { NYY:'#5a8fcd', BOS:'#c03a47', TOR:'#3cb9c2', TB:'#a1c05c',  BAL:'#cc8449' },
+  'AL Central': { CLE:'#c03a47', DET:'#3cb9c2', KC:'#c29e42',  MIN:'#a461c8', CWS:'#898c93' },
+  'AL West':    { SEA:'#3cb9c2', HOU:'#cc8449', TEX:'#5a8fcd', ATH:'#a1c05c', LAA:'#c03a47' },
+  'NL East':    { PHI:'#c03a47', NYM:'#5a8fcd', MIA:'#3cb9c2', ATL:'#d458a3', WSH:'#a1c05c' },
+  'NL Central': { MIL:'#3cb9c2', CHC:'#5a8fcd', CIN:'#c03a47', STL:'#d458a3', PIT:'#cc8449' },
+  'NL West':    { LAD:'#5a8fcd', SD:'#c29e42',  SF:'#cc8449',  ARI:'#c03a47', COL:'#a461c8' },
 };
 
 function divColor(d, team, alpha=1) {

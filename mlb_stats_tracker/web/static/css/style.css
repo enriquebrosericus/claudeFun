@@ -1,75 +1,118 @@
 :root {
-  --bg: #0a0e1a;
-  --surface: #111827;
-  --surface2: #1a2236;
-  --border: #1e2d4a;
-  --muted: #4a5568;
-  --text: #e0e7ff;
-  --text-muted: #94a3b8;
-  --green: #39FF14;
-  --red: #FF1493;
-  --blue: #00FFFF;
-  --yellow: #FF9500;
-  --magenta: #FF00FF;
-  --purple: #BF00FF;
-  --neon-orange: #FF6B00;
+  --bg: #14161c;
+  --surface: #191d28;
+  --surface2: #24262c;
+  --border: #2e3340;
+  --muted: #6f7685;
+  --text: #d3d5d3;
+  --text-muted: #898c93;
+  --cyan: #3cb9c2;
+  --green: #a1c05c;
+  --orange: #cc8449;
+  --yellow: #c29e42;
+  --purple: #a461c8;
+  --red: #c03a47;
+  --blue: #5a8fcd;
+  --pink: #d458a3;
+  --pixel-font: 'Silkscreen', monospace;
 }
 
 body {
   background-color: var(--bg);
   color: var(--text);
-  font-size: 0.9rem;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.88rem;
+  line-height: 1.35;
 }
 
+/* ── Navbar ─────────────────────────────────────────────────────── */
 .navbar {
   background-color: var(--surface) !important;
-  border-bottom: 1px solid var(--border);
-  box-shadow: 0 1px 12px rgba(0, 255, 255, 0.08);
+  border-bottom: 2px solid var(--cyan);
+  box-shadow: 0 2px 12px rgba(60, 185, 194, 0.12);
 }
 
-.navbar-brand { font-weight: 700; letter-spacing: 0.02em; color: var(--blue) !important; text-shadow: 0 0 10px rgba(0, 255, 255, 0.4); }
+.navbar-brand {
+  font-family: var(--pixel-font);
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+  color: var(--cyan) !important;
+  text-shadow: 0 0 8px rgba(60, 185, 194, 0.5);
+}
 
-.nav-link { color: var(--text-muted) !important; }
-.nav-link.active, .nav-link:hover { color: var(--blue) !important; text-shadow: 0 0 8px rgba(0, 255, 255, 0.3); }
+.nav-link { color: var(--text-muted) !important; font-family: var(--pixel-font); font-size: 0.72rem; letter-spacing: 0.04em; }
+.nav-link.active, .nav-link:hover { color: var(--green) !important; text-shadow: 0 0 6px rgba(161, 192, 92, 0.4); }
 
+/* ── Cards ──────────────────────────────────────────────────────── */
 .card {
   background-color: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  box-shadow: 0 0 8px rgba(0, 255, 255, 0.04);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .card-header {
   background-color: var(--surface2);
   border-bottom: 1px solid var(--border);
-  font-size: 0.7rem;
+  font-family: var(--pixel-font);
+  font-size: 0.65rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  padding: 0.5rem 0.75rem;
+  letter-spacing: 0.1em;
+  color: var(--cyan);
+  padding: 0.55rem 0.75rem;
+  text-shadow: 0 0 4px rgba(60, 185, 194, 0.25);
 }
 
+/* ── Stat cards ─────────────────────────────────────────────────── */
 .stat-card { text-align: center; padding: 0.75rem 0.5rem; }
-.stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.2rem; }
-.stat-value { font-size: 1.9rem; font-weight: 700; line-height: 1.1; color: var(--blue); text-shadow: 0 0 6px rgba(0, 255, 255, 0.3); }
-.stat-value.sm { font-size: 1.3rem; }
+.stat-label {
+  font-family: var(--pixel-font);
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+.stat-value {
+  font-family: var(--pixel-font);
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--green);
+  text-shadow: 0 0 6px rgba(161, 192, 92, 0.3);
+}
+.stat-value.sm { font-size: 1.15rem; }
 
+/* ── Tables ─────────────────────────────────────────────────────── */
 .table { color: var(--text); font-size: 0.82rem; }
-.table th { color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; border-color: var(--border); font-weight: 600; }
+.table th {
+  color: var(--cyan);
+  font-family: var(--pixel-font);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-color: var(--border);
+  font-weight: 400;
+}
 .table td { border-color: var(--border); vertical-align: middle; }
 .table tbody tr:hover { background-color: var(--surface2); }
 
+/* ── Form elements ──────────────────────────────────────────────── */
 .form-select {
   background-color: var(--surface2);
-  border-color: var(--border);
+  border: 1px solid var(--border);
   color: var(--text);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  border-radius: 3px;
 }
-.form-select:focus { border-color: var(--blue); box-shadow: 0 0 0 0.15rem rgba(59,130,246,.25); }
+.form-select:focus { border-color: var(--cyan); box-shadow: 0 0 0 0.15rem rgba(60, 185, 194, 0.2); }
 
-.badge-w { background-color: var(--green); color: #000; box-shadow: 0 0 6px rgba(57, 255, 20, 0.4); }
-.badge-l { background-color: var(--red); color: #fff; box-shadow: 0 0 6px rgba(255, 20, 147, 0.4); }
+/* ── Badges ─────────────────────────────────────────────────────── */
+.badge-w { background-color: var(--green); color: #14161c; }
+.badge-l { background-color: var(--red); color: #fff; }
 
+/* ── Linescore ──────────────────────────────────────────────────── */
 .linescore th, .linescore td {
   text-align: center;
   width: 2rem;
@@ -78,26 +121,44 @@ body {
 }
 .linescore .col-total { font-weight: 700; border-left: 2px solid var(--border); }
 
+/* ── Box score ──────────────────────────────────────────────────── */
 .box-score th, .box-score td { font-size: 0.78rem; padding: 0.2rem 0.4rem; }
 .box-score .player-name { font-weight: 500; min-width: 120px; }
 
+/* ── AI summary ─────────────────────────────────────────────────── */
 .ai-summary {
   background-color: var(--surface2);
   border-left: 3px solid var(--purple);
   padding: 1rem 1.25rem;
-  border-radius: 0 0.25rem 0.25rem 0;
-  font-size: 0.9rem;
-  line-height: 1.7;
+  border-radius: 0 3px 3px 0;
+  font-size: 0.88rem;
+  line-height: 1.65;
   color: var(--text-muted);
-  box-shadow: -3px 0 12px rgba(191, 0, 255, 0.15);
 }
 .ai-summary p { margin-bottom: 0.75rem; }
 .ai-summary p:last-child { margin-bottom: 0; }
 
-.challenge-overturned { color: var(--green); font-weight: 600; text-shadow: 0 0 6px rgba(57, 255, 20, 0.4); }
+/* ── Challenges ─────────────────────────────────────────────────── */
+.challenge-overturned { color: var(--green); font-weight: 600; }
 .challenge-upheld { color: var(--text-muted); }
 
+/* ── Division grid ──────────────────────────────────────────────── */
 .division-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 @media (max-width: 768px) { .division-grid { grid-template-columns: 1fr; } }
 
+/* ── Charts ─────────────────────────────────────────────────────── */
 canvas { max-height: 240px; }
+
+/* ── Scrollbar ──────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ── Selection ──────────────────────────────────────────────────── */
+::selection { background: rgba(60, 185, 194, 0.3); color: #fff; }
+
+/* ── Text utility ───────────────────────────────────────────────── */
+.text-success { color: var(--green) !important; }
+.text-danger { color: var(--red) !important; }
+.fw-500 { font-weight: 500; }
