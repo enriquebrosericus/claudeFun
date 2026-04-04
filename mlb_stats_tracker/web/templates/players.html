@@ -15,7 +15,7 @@
   </div>
   <div class="card-body">
     <div class="row g-2 mb-3">
-      {% for id, label in [('bavg','AVG'),('bobp','OBP'),('bslg','SLG'),('bops','OPS'),('biso','ISO'),('bbabip','BABIP'),('bhr','HR'),('brbi','RBI'),('bsb','SB'),('bg','G')] %}
+      {% for id, label in [('bavg','AVG'),('bobp','OBP'),('bslg','SLG'),('bops','OPS'),('biso','ISO'),('bbabip','BABIP'),('bhr','HR'),('brbi','RBI'),('bsb','SB'),('bab','AB'),('bg','G')] %}
       <div class="col-6 col-sm-4 col-md-auto flex-grow-1">
         <div class="card"><div class="stat-card">
           <div class="stat-label">{{ label }}</div>
@@ -107,6 +107,7 @@ async function loadBatter() {
     set('stat-bhr',    summary.home_runs);
     set('stat-brbi',   summary.rbi);
     set('stat-bsb',    summary.stolen_bases);
+    set('stat-bab',    summary.at_bats);
     set('stat-bg',     summary.games_played);
   }
   if (trend?.length) {
