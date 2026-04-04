@@ -175,6 +175,121 @@ def api_teams_gb_trend():
     """, (team, season))
     return jsn(rows)
 
+@app.route("/api/teams/splits")
+def api_teams_splits():
+    season = request.args.get("season", SEASON, int)
+    team = request.args.get("team", TEAM_ABBR)
+
+    # Get all finished games for this team
+    rows = q("""
+        SELECT date, home_team, away_team, home_score, away_score
+        FROM games
+        WHERE season = %s AND game_type = 'R' AND result IS NOT NULL
+          AND (home_team = %s OR away_team = %s)
+        ORDER BY date
+    """, (season, team, team))
+
+    # Also grab max innings per game to detect extras
+    extras_set = set()
+    ls_rows = q("""
+        SELECT gl.gamepk, MAX(gl.inning) AS max_inn
+        FROM game_linescore gl
+        JOIN games g ON g.gamepk = gl.gamepk
+        WHERE g.season = %s AND g.game_type = 'R' AND g.result IS NOT NULL
+          AND (g.home_team = %s OR g.away_team = %s)
+        GROUP BY gl.gamepk
+        HAVING MAX(gl.inning) > 9
+    """, (season, team, team))
+    extras_pks = {r["gamepk"] for r in (ls_rows or [])}
+
+    # Also get gamepks for the rows
+    pk_rows = q("""
+        SELECT gamepk, home_team, away_team
+        FROM games
+        WHERE season = %s AND game_type = 'R' AND result IS NOT NULL
+          AND (home_team = %s OR away_team = %s)
+        ORDER BY date
+    """, (season, team, team))
+    pks = [r["gamepk"] for r in pk_rows]
+
+    def make_split(games):
+        w = l = rs = ra = 0
+        for g in games:
+            is_home = g["home_team"] == team
+            ts = g["home_score"] if is_home else g["away_score"]
+            os_ = g["away_score"] if is_home else g["home_score"]
+            if ts is None or os_ is None:
+                continue
+            rs += ts; ra += os_
+            if ts > os_:
+                w += 1
+            else:
+                l += 1
+        total = w + l
+        return {"w": w, "l": l, "rs": rs, "ra": ra,
+                "pct": round(w / total, 3) if total else 0}
+
+    # Overall
+    overall = make_split(rows)
+
+    # Home / Road
+    home_games = [r for r in rows if r["home_team"] == team]
+    road_games = [r for r in rows if r["away_team"] == team]
+
+    # Month by month
+    months = {}
+    for r in rows:
+        m = r["date"].strftime("%B")
+        months.setdefault(m, []).append(r)
+    month_splits = {m: make_split(gs) for m, gs in months.items()}
+
+    # By opponent
+    opp_map = {}
+    for r in rows:
+        opp = r["away_team"] if r["home_team"] == team else r["home_team"]
+        opp_map.setdefault(opp, []).append(r)
+    opp_splits = {o: make_split(gs) for o, gs in opp_map.items()}
+
+    # Extra innings vs 9-inning
+    extra_games = []
+    nine_games = []
+    for i, r in enumerate(rows):
+        if i < len(pks) and pks[i] in extras_pks:
+            extra_games.append(r)
+        else:
+            nine_games.append(r)
+
+    # One-run games
+    one_run = []
+    for r in rows:
+        is_home = r["home_team"] == team
+        ts = r["home_score"] if is_home else r["away_score"]
+        os_ = r["away_score"] if is_home else r["home_score"]
+        if ts is not None and os_ is not None and abs(ts - os_) == 1:
+            one_run.append(r)
+
+    # Blowouts (5+ run margin)
+    blowouts = []
+    for r in rows:
+        is_home = r["home_team"] == team
+        ts = r["home_score"] if is_home else r["away_score"]
+        os_ = r["away_score"] if is_home else r["home_score"]
+        if ts is not None and os_ is not None and abs(ts - os_) >= 5:
+            blowouts.append(r)
+
+    return jsn({
+        "overall": overall,
+        "home": make_split(home_games),
+        "road": make_split(road_games),
+        "months": month_splits,
+        "opponents": opp_splits,
+        "nine_inning": make_split(nine_games),
+        "extra_inning": make_split(extra_games),
+        "one_run": make_split(one_run),
+        "blowout": make_split(blowouts),
+    })
+
+
 @app.route("/api/teams/batting_leaders")
 def api_teams_batting_leaders():
     season = request.args.get("season", SEASON, int)

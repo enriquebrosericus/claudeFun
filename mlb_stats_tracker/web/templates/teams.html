@@ -59,6 +59,28 @@
   </div>
 </div>
 
+<!-- Win/Loss Splits -->
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header">▓▒░ OVERALL / HOME / ROAD ░▒▓</div>
+      <div class="card-body p-0"><div class="table-responsive" id="splits-overall"></div></div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header">▓▒░ SITUATIONAL ░▒▓</div>
+      <div class="card-body p-0"><div class="table-responsive" id="splits-situational"></div></div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header">▓▒░ VS OPPONENT ░▒▓</div>
+      <div class="card-body p-0"><div class="table-responsive" id="splits-opponents"></div></div>
+    </div>
+  </div>
+</div>
+
 <!-- Batting leaders -->
 <div class="row g-3 mb-3">
   <div class="col-12">
@@ -111,10 +133,11 @@ let team   = p.get('team')   || '{{ default_team }}';
 function sync() { p.set('season', season); p.set('team', team); history.replaceState({}, '', '?' + p); }
 
 async function load() {
-  const [summary, trends, gbTrend, batting, pitching] = await Promise.all([
+  const [summary, trends, gbTrend, splits, batting, pitching] = await Promise.all([
     api(`/api/teams/summary?season=${season}&team=${team}`),
     api(`/api/teams/trends?season=${season}&team=${team}`),
     api(`/api/teams/gb_trend?season=${season}&team=${team}`),
+    api(`/api/teams/splits?season=${season}&team=${team}`),
     api(`/api/teams/batting_leaders?season=${season}&team=${team}`),
     api(`/api/teams/pitching_leaders?season=${season}&team=${team}`),
   ]);
@@ -196,6 +219,38 @@ async function load() {
         plugins: { legend: { display: false } },
         scales: { y: { reverse: true } } },
     });
+  }
+
+  // Splits tables
+  if (splits) {
+    const sRow = s => `<tr><td>${s.name}</td><td>${s.w}</td><td>${s.l}</td><td>${s.rs}</td><td>${s.ra}</td><td>${s.pct.toFixed(3)}</td></tr>`;
+    const sTable = rows => `<table class="table table-sm mb-0">
+      <thead><tr><th>Split</th><th>W</th><th>L</th><th>RS</th><th>RA</th><th>W-L%</th></tr></thead>
+      <tbody>${rows.map(sRow).join('')}</tbody></table>`;
+
+    // Overall / Home / Road / Month
+    const col1 = [
+      { name: 'Overall', ...splits.overall },
+      { name: 'Home', ...splits.home },
+      { name: 'Road', ...splits.road },
+    ];
+    const monthRows = Object.entries(splits.months || {}).map(([m, s]) => ({ name: m, ...s }));
+    document.getElementById('splits-overall').innerHTML = sTable([...col1, ...monthRows]);
+
+    // Situational
+    const col2 = [
+      { name: '9-Inning', ...splits.nine_inning },
+      { name: 'Extra Innings', ...splits.extra_inning },
+      { name: 'One-Run', ...splits.one_run },
+      { name: 'Blowout (5+)', ...splits.blowout },
+    ];
+    document.getElementById('splits-situational').innerHTML = sTable(col2);
+
+    // Opponents
+    const oppRows = Object.entries(splits.opponents || {})
+      .map(([o, s]) => ({ name: o, ...s }))
+      .sort((a, b) => b.w + b.l - (a.w + a.l));
+    document.getElementById('splits-opponents').innerHTML = sTable(oppRows);
   }
 
   // Batting table
