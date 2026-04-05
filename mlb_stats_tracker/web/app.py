@@ -229,12 +229,41 @@ def api_teams_splits():
         return {"w": w, "l": l, "rs": rs, "ra": ra,
                 "pct": round(w / total, 3) if total else 0}
 
-    # Overall
-    overall = make_split(rows)
+    # Overall / Home / Road from team_stats (always current from standings API)
+    ts_row = q1("""
+        SELECT DISTINCT ON (team) wins, losses, runs_scored, runs_allowed,
+               home_wins, away_wins
+        FROM team_stats
+        WHERE team = %s AND season = %s AND game_type = 'R'
+        ORDER BY team, date DESC
+    """, (team, season))
 
-    # Home / Road
-    home_games = [r for r in rows if r["home_team"] == team]
-    road_games = [r for r in rows if r["away_team"] == team]
+    if ts_row:
+        w, l = ts_row["wins"] or 0, ts_row["losses"] or 0
+        hw, aw = ts_row["home_wins"] or 0, ts_row["away_wins"] or 0
+        rs, ra = int(ts_row["runs_scored"] or 0), int(ts_row["runs_allowed"] or 0)
+        hl, al = (w + l) - hw - aw, 0  # Can't split losses precisely
+        # Derive home/road losses: total games = w+l, home_games = hw+hl, road_games = aw+al
+        # We know hw and aw from standings; compute losses from games table counts
+        home_games_count = len([r for r in rows if r["home_team"] == team])
+        road_games_count = len([r for r in rows if r["away_team"] == team])
+        hl = home_games_count - hw if home_games_count >= hw else l - (road_games_count - aw)
+        al = l - hl if hl <= l else 0
+        # RS/RA per split from games table
+        home_rs = sum((r["home_score"] or 0) for r in rows if r["home_team"] == team)
+        home_ra = sum((r["away_score"] or 0) for r in rows if r["home_team"] == team)
+        road_rs = sum((r["away_score"] or 0) for r in rows if r["away_team"] == team)
+        road_ra = sum((r["home_score"] or 0) for r in rows if r["away_team"] == team)
+        overall = {"w": w, "l": l, "rs": rs, "ra": ra,
+                   "pct": round(w / (w + l), 3) if (w + l) else 0}
+        home_split = {"w": hw, "l": hl, "rs": home_rs, "ra": home_ra,
+                      "pct": round(hw / (hw + hl), 3) if (hw + hl) else 0}
+        road_split = {"w": aw, "l": al, "rs": road_rs, "ra": road_ra,
+                      "pct": round(aw / (aw + al), 3) if (aw + al) else 0}
+    else:
+        overall = make_split(rows)
+        home_split = make_split([r for r in rows if r["home_team"] == team])
+        road_split = make_split([r for r in rows if r["away_team"] == team])
 
     # Month by month
     months = {}
@@ -279,8 +308,8 @@ def api_teams_splits():
 
     return jsn({
         "overall": overall,
-        "home": make_split(home_games),
-        "road": make_split(road_games),
+        "home": home_split,
+        "road": road_split,
         "months": month_splits,
         "opponents": opp_splits,
         "nine_inning": make_split(nine_games),
