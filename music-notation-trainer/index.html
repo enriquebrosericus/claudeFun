@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Music Notation Trainer</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    @font-face {
+      font-family: 'Bravura';
+      src: url('Bravura.woff2') format('woff2');
+      font-weight: normal;
+      font-style: normal;
+      font-display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button id="close-settings" class="close-btn" aria-label="Close settings">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label class="setting-row">
+          <span>Note Range</span>
+          <select id="range-select">
+            <option value="full">Full Grand Staff (C3–C6)</option>
+            <option value="treble">Treble Clef Only (C4–G5)</option>
+            <option value="bass">Bass Clef Only (C3–B3)</option>
+          </select>
+        </label>
+        <label class="setting-row">
+          <span>Show Note Name Hint</span>
+          <input type="checkbox" id="hint-toggle" />
+        </label>
+        <label class="setting-row">
+          <span>Sound Feedback</span>
+          <input type="checkbox" id="sound-toggle" checked />
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div class="app-container">
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <h1 class="app-title">Note Trainer</h1>
+      </div>
+      <div class="header-right">
+        <div class="score-display">
+          <span class="score-label">Score</span>
+          <span id="score-value" class="score-number">0</span>
+        </div>
+        <div class="streak-display">
+          <span class="score-label">Streak</span>
+          <span id="streak-value" class="score-number">0</span>
+        </div>
+        <button id="settings-btn" class="icon-btn" aria-label="Open settings">
+          <!-- Gear SVG -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06
+                     a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09
+                     A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83
+                     l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
+                     A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83
+                     l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09
+                     a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83
+                     l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09
+                     a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Staff Card -->
+    <main class="staff-section">
+      <div class="staff-card">
+        <div class="note-question">
+          <p class="question-text">Which key on the piano is this note?</p>
+          <p id="hint-text" class="hint-text hidden"></p>
+        </div>
+        <!-- Grand staff SVG rendered by JS -->
+        <div id="staff-container" class="staff-container">
+          <svg id="grand-staff" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+        <div class="feedback-row">
+          <div id="feedback-box" class="feedback-box neutral">
+            <span id="feedback-text">Click a piano key to answer</span>
+          </div>
+          <button id="reset-btn" class="reset-btn">New Note</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Piano Keyboard -->
+    <section class="keyboard-section" aria-label="Piano keyboard">
+      <div id="keyboard" class="keyboard"></div>
+    </section>
+
+  </div>
+
+  <script src="theory.js"></script>
+  <script src="staff.js"></script>
+  <script src="keyboard.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
