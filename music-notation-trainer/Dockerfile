@@ -22,7 +22,7 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 RUN apk add --no-cache openssl
 
-EXPOSE 443
+EXPOSE 80 443
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-check-certificate -qO- https://localhost/ || exit 1

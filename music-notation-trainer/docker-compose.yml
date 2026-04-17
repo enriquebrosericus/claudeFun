@@ -6,6 +6,7 @@ services:
     container_name: notation-trainer
     command: ["/bin/sh", "-c", "mkdir -p /etc/nginx/ssl && openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/key.pem -out /etc/nginx/ssl/cert.pem -subj '/CN=localhost' && nginx -g 'daemon off;'"]
     ports:
+      - "8877:80"
       - "8443:443"
     restart: unless-stopped
     healthcheck:

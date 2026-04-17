@@ -232,6 +232,37 @@
     }
   });
 
+  // ── Show Notes (hold to reveal reference staff overlay) ─────────────────────
+  const showNotesBtn = document.getElementById('show-notes-btn');
+  const refOverlay = document.getElementById('reference-overlay');
+  const refContainer = document.getElementById('reference-staff');
+
+  let refVisible = false;
+
+  function showReferenceStaff() {
+    if (refVisible) return;
+    refVisible = true;
+    refContainer.innerHTML = Staff.renderReferenceStaff();
+    refOverlay.classList.remove('hidden');
+    showNotesBtn.classList.add('active');
+  }
+
+  function hideReferenceStaff() {
+    if (!refVisible) return;
+    refVisible = false;
+    refOverlay.classList.add('hidden');
+    showNotesBtn.classList.remove('active');
+  }
+
+  // Show on press
+  showNotesBtn.addEventListener('mousedown', showReferenceStaff);
+  showNotesBtn.addEventListener('touchstart', e => { e.preventDefault(); showReferenceStaff(); });
+
+  // Hide on ANY mouseup/touchend (document-level so it works even if overlay covers the button)
+  document.addEventListener('mouseup', hideReferenceStaff);
+  document.addEventListener('touchend', hideReferenceStaff);
+  document.addEventListener('touchcancel', hideReferenceStaff);
+
   // ── Keyboard resize handling ───────────────────────────────────────────────
   let resizeTimer;
   window.addEventListener('resize', () => {

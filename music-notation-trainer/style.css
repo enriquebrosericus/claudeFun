@@ -215,6 +215,40 @@ html, body {
 .reset-btn:active { transform: scale(0.97); }
 
 /* ─────────────────────────────────────────────
+   Show Notes Button
+───────────────────────────────────────────── */
+.show-notes-row {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 0;
+}
+
+.show-notes-btn {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-radius: var(--radius-sm);
+  padding: 8px 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background 0.15s, border-color 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.show-notes-btn:hover {
+  background: rgba(255,255,255,0.35);
+  border-color: rgba(255,255,255,0.6);
+}
+.show-notes-btn:active,
+.show-notes-btn.active {
+  background: rgba(255,255,255,0.5);
+  border-color: #fff;
+}
+
+/* ─────────────────────────────────────────────
    Keyboard Section
 ───────────────────────────────────────────── */
 .keyboard-section {
@@ -379,6 +413,29 @@ html, body {
   height: 18px;
   accent-color: var(--accent);
   cursor: pointer;
+}
+
+/* ─────────────────────────────────────────────
+   Reference Staff Overlay
+───────────────────────────────────────────── */
+.reference-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+}
+
+.reference-card {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  padding: 20px;
+  width: min(95vw, 900px);
+  pointer-events: auto;
+  animation: modal-in 0.15s ease-out;
 }
 
 /* ─────────────────────────────────────────────

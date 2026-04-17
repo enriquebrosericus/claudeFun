@@ -222,7 +222,86 @@
     return svg;
   }
 
+  // ── Reference staff (large, labeled grand staff shown in overlay) ───────────
+  function renderReferenceStaff() {
+    const W = 900;
+    const H = 300;
+    const LG = 20;       // line gap (bigger than game staff)
+    const HS = LG / 2;   // half step = 10
+    const LEFT = 80;
+    const RIGHT = 860;
+    const T_TOP = 50;    // treble top line (F5, pos 10)
+    // Middle C (pos 0) is 2 steps below treble bottom line (pos 2)
+    const MID_C_Y = T_TOP + 4 * LG + 2 * HS; // = 150
+    // Bass top line (A3, pos -2) is 2 steps below middle C
+    const B_TOP = MID_C_Y + 2 * HS; // = 170
+
+    function rY(pos) { return MID_C_Y - pos * HS; }
+
+    let svg = '';
+
+    // Staff lines
+    for (let i = 0; i < 5; i++) {
+      const ty = T_TOP + i * LG;
+      const by = B_TOP + i * LG;
+      svg += `<line x1="${LEFT}" y1="${ty}" x2="${RIGHT}" y2="${ty}" stroke="#1a1a2e" stroke-width="1.8"/>`;
+      svg += `<line x1="${LEFT}" y1="${by}" x2="${RIGHT}" y2="${by}" stroke="#1a1a2e" stroke-width="1.8"/>`;
+    }
+
+    // Barline
+    svg += `<line x1="${LEFT}" y1="${T_TOP}" x2="${LEFT}" y2="${B_TOP + 4 * LG}" stroke="#1a1a2e" stroke-width="2.5"/>`;
+
+    // Clefs
+    const trebleClefY = T_TOP + 3 * LG;
+    svg += `<text x="${LEFT + 8}" y="${trebleClefY}" font-family="Bravura" font-size="52" fill="#1a1a2e" text-anchor="start">&#xE050;</text>`;
+    const bassClefY = B_TOP + LG;
+    svg += `<text x="${LEFT + 8}" y="${bassClefY}" font-family="Bravura" font-size="52" fill="#1a1a2e" text-anchor="start">&#xE062;</text>`;
+
+    // All notes ascending (low to high, left to right)
+    const allNotes = [
+      { name: 'G2', pos: -10 }, { name: 'A2', pos: -9 },
+      { name: 'B2', pos: -8 }, { name: 'C3', pos: -7 },
+      { name: 'D3', pos: -6 }, { name: 'E3', pos: -5 },
+      { name: 'F3', pos: -4 }, { name: 'G3', pos: -3 },
+      { name: 'A3', pos: -2 },
+      { name: 'B3', pos: -1 }, { name: 'C4', pos: 0 }, { name: 'D4', pos: 1 },
+      { name: 'E4', pos: 2 }, { name: 'F4', pos: 3 },
+      { name: 'G4', pos: 4 }, { name: 'A4', pos: 5 },
+      { name: 'B4', pos: 6 }, { name: 'C5', pos: 7 },
+      { name: 'D5', pos: 8 }, { name: 'E5', pos: 9 },
+      { name: 'F5', pos: 10 },
+    ];
+
+    const noteAreaLeft = LEFT + 60;
+    const noteAreaRight = RIGHT - 20;
+    const total = allNotes.length;
+
+    for (let i = 0; i < total; i++) {
+      const n = allNotes[i];
+      const y = rY(n.pos);
+      const x = noteAreaLeft + (i + 0.5) * (noteAreaRight - noteAreaLeft) / total;
+
+      // Ledger line for middle C
+      const lx1 = x - 12;
+      const lx2 = x + 12;
+      if (n.pos === 0) {
+        svg += `<line x1="${lx1}" y1="${y}" x2="${lx2}" y2="${y}" stroke="#1a1a2e" stroke-width="1.6"/>`;
+      }
+
+      // Note head
+      svg += `<ellipse cx="${x}" cy="${y}" rx="9" ry="6.5" fill="#1a1a2e" transform="rotate(-15,${x},${y})"/>`;
+
+      // Label — above for treble/middle notes, below for bass notes
+      const labelY = n.pos >= 0 ? y - 14 : y + 18;
+      svg += `<text x="${x}" y="${labelY}"
+        font-family="'Segoe UI', system-ui, sans-serif" font-size="13"
+        fill="#2563eb" font-weight="800" text-anchor="middle">${n.name}</text>`;
+    }
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;">${svg}</svg>`;
+  }
+
   // Expose
-  window.Staff = { renderStaff };
+  window.Staff = { renderStaff, renderReferenceStaff };
 
 })();
