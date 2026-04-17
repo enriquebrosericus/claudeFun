@@ -63,9 +63,9 @@
     _onKeyClick = clickCallback;
     container.innerHTML = '';
 
-    // Keyboard height: taller on desktop for playability
+    // Keyboard height: fill remaining viewport space, with min/max bounds
     const isMobile = window.innerWidth < 600;
-    const keyHeight = isMobile ? 100 : 140;
+    const keyHeight = isMobile ? 120 : 180;
     container.style.height = keyHeight + 'px';
 
     const whiteWidthPct = 100 / TOTAL_WHITE;          // % width per white key
