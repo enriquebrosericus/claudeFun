@@ -20,7 +20,9 @@ COPY Bravura.woff2 /usr/share/nginx/html/
 # Custom nginx config: single-page app with proper MIME types and caching
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+RUN apk add --no-cache openssl
+
+EXPOSE 443
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -qO- http://localhost/ || exit 1
+  CMD wget --no-check-certificate -qO- https://localhost/ || exit 1

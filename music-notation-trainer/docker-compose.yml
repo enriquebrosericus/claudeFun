@@ -4,14 +4,15 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: notation-trainer
+    command: ["/bin/sh", "-c", "mkdir -p /etc/nginx/ssl && openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/key.pem -out /etc/nginx/ssl/cert.pem -subj '/CN=localhost' && nginx -g 'daemon off;'"]
     ports:
-      - "8080:80"
+      - "8443:443"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      test: ["CMD", "wget", "--no-check-certificate", "-qO-", "https://localhost/"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 10s
 
-# Access the app at http://localhost:8080
+# Access the app at https://localhost:8443
