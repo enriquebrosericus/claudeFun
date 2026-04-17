@@ -219,6 +219,7 @@ html, body {
 ───────────────────────────────────────────── */
 .keyboard-section {
   flex-shrink: 0;
+  margin-top: 20px;
   padding: 6px 0 0;
   width: 100%;
 }
