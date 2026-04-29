@@ -161,13 +161,31 @@
     }
   }
 
+  // ── Find the staff position of the wrong note ──────────────────────────────
+  // Picks the catalog entry with the same note name and same clef as the correct
+  // note, choosing the one closest in staffPos when multiple octaves exist.
+  function findWrongNoteForStaff(clickedKey, correctNote) {
+    if (!clickedKey) return null;
+    const candidates = Theory.NOTE_CATALOG.filter(
+      n => n.name === clickedKey.name && n.clef === correctNote.clef
+    );
+    if (candidates.length === 0) return null;
+    return candidates.reduce((best, n) =>
+      Math.abs(n.staffPos - correctNote.staffPos) < Math.abs(best.staffPos - correctNote.staffPos)
+        ? n : best
+    );
+  }
+
   // ── Handle piano key click ─────────────────────────────────────────────────
   function handleKeyClick(clickedMidi) {
     if (answered || !currentNote) return;
     answered = true;
 
-    const correctMidi = currentNote.midiNote;
-    const isCorrect   = clickedMidi === correctMidi;
+    const correctMidi        = currentNote.midiNote;
+    // Match by pitch class so any octave of the correct note is accepted
+    const isCorrect          = (clickedMidi % 12) === (correctMidi % 12);
+    // MIDI of the correct note's key on the single-octave keyboard
+    const keyboardCorrectMidi = Keyboard.toKeyboardMidi(correctMidi);
 
     if (isCorrect) {
       score++;
@@ -177,16 +195,19 @@
       playTone(correctMidi, true);
     } else {
       streak = 0;
-      // Find the note name for what was clicked
-      const clickedKey = Keyboard.ALL_KEYS.find(k => k.midi === clickedMidi);
-      const clickedName = clickedKey ? clickedKey.name + clickedKey.octave : '?';
+      const clickedKey  = Keyboard.ALL_KEYS.find(k => k.midi === clickedMidi);
+      const clickedName = clickedKey ? clickedKey.name : '?';
       setFeedback(
         'incorrect',
         `Not quite. That was ${clickedName} — the note was ${currentNote.name}${currentNote.octave}.`
       );
-      Keyboard.highlightKey(clickedMidi,  'incorrect');
-      Keyboard.highlightKey(correctMidi,  'correct');   // show the right key
+      Keyboard.highlightKey(clickedMidi,        'incorrect');
+      Keyboard.highlightKey(keyboardCorrectMidi, 'correct');
       playTone(clickedMidi, false);
+
+      // Show where the wrong note falls on the staff (green)
+      const wrongNoteForStaff = findWrongNoteForStaff(clickedKey, currentNote);
+      staffContainer.innerHTML = Staff.renderStaff(currentNote, wrongNoteForStaff);
     }
 
     updateScoreDisplay();

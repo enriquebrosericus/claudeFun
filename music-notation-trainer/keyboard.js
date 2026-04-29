@@ -1,11 +1,15 @@
 /**
  * keyboard.js
- * Builds and manages the interactive piano keyboard (C3–C6, MIDI 48–84).
+ * Builds and manages the interactive piano keyboard (C2–C6, MIDI 36–84).
  *
  * Layout:
- *   22 white keys, 15 black keys over 3 octaves + C6.
+ *   36 white keys, 25 black keys over 5 octaves (C2–C6).
  *   All dimensions are expressed as percentages of total keyboard width
  *   so the layout is fully fluid and responsive.
+ *
+ * Matching is still by pitch class (note name), not exact MIDI, so clicking
+ * any C is accepted whenever the answer is C. The full keyboard provides
+ * visual context for where notes sit across octaves.
  *
  * Black key centering:
  *   Each black key has a "fractional white-key index" (blackFrac) representing
@@ -19,9 +23,9 @@
 (function () {
 
   // ── Constants ──────────────────────────────────────────────────────────────
-  const MIDI_START = 48;  // C3
-  const MIDI_END   = 84;  // C6
-  const TOTAL_WHITE = 22; // 3 octaves × 7 + 1 (C6)
+  const MIDI_START  = 36;  // C2
+  const MIDI_END    = 84;  // C6
+  const TOTAL_WHITE = 29;  // 4 octaves × 7 + 1 (C6)
 
   // Per-semitone lookup tables (index 0–11 = C through B)
   const SEMITONE_NAMES     = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
@@ -35,9 +39,9 @@
   const ALL_KEYS = [];
 
   for (let midi = MIDI_START; midi <= MIDI_END; midi++) {
-    const semitone = (midi - MIDI_START) % 12;
-    const octaveIdx = Math.floor((midi - MIDI_START) / 12); // 0, 1, 2 for C3,C4,C5
-    const octave    = octaveIdx + 3;
+    const semitone  = (midi - MIDI_START) % 12;
+    const octaveIdx = Math.floor((midi - MIDI_START) / 12); // 0–4 for C2–C6
+    const octave    = octaveIdx + 2;
     const name      = SEMITONE_NAMES[semitone];
     const isBlack   = !!SEMITONE_IS_BLACK[semitone];
 
@@ -45,7 +49,6 @@
       const whiteIndex = octaveIdx * 7 + SEMITONE_WHITE_IDX[semitone];
       ALL_KEYS.push({ midi, name, octave, isBlack: false, whiteIndex });
     } else {
-      // blackFrac: absolute fractional white-key position from keyboard left
       const blackFrac = octaveIdx * 7 + SEMITONE_BLACK_FRAC[semitone];
       ALL_KEYS.push({ midi, name, octave, isBlack: true, blackFrac });
     }
@@ -80,11 +83,11 @@
       el.style.top    = '0';
       el.style.bottom = '0';
 
-      // C-note labels to mark octave boundaries
+      // Label C keys with octave number to mark octave boundaries
       if (key.name === 'C') {
         const label = document.createElement('span');
         label.className = 'key-label';
-        label.textContent = key.name + key.octave;
+        label.textContent = 'C' + key.octave;
         label.setAttribute('aria-hidden', 'true');
         el.appendChild(label);
       }
@@ -115,7 +118,7 @@
     el.dataset.midi = key.midi;
     el.style.position = 'absolute';
     el.setAttribute('role', 'button');
-    el.setAttribute('aria-label', `${key.name}${key.octave}`);
+    el.setAttribute('aria-label', key.name + key.octave);
     el.setAttribute('tabindex', '0');
 
     el.addEventListener('click',   () => _onKeyClick(key.midi));
@@ -153,6 +156,12 @@
   }
 
   // ── Public API ─────────────────────────────────────────────────────────────
-  window.Keyboard = { buildKeyboard, clearHighlights, highlightKey, ALL_KEYS, MIDI_START, MIDI_END };
+  // toKeyboardMidi: the keyboard now spans the full catalog (C2–C6) so every
+  // catalog note maps directly to its own key.
+  function toKeyboardMidi(midi) {
+    return midi;
+  }
+
+  window.Keyboard = { buildKeyboard, clearHighlights, highlightKey, toKeyboardMidi, ALL_KEYS, MIDI_START, MIDI_END };
 
 })();

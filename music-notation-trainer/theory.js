@@ -1,7 +1,7 @@
 /**
  * theory.js
  * Music theory data for the notation trainer.
- * Covers C3–C6 (grand staff range), with correct ledger-line positioning.
+ * Covers C2–C6 (grand staff range), with correct ledger-line positioning.
  *
  * Staff position system:
  *   Each "step" = half a staff space.
@@ -29,7 +29,14 @@
  *   Middle C (C4) goes on treble with ledger line below.
  */
 const NOTE_CATALOG = [
-  // ── Bass Clef notes (C3–B3) ──
+  // ── Bass Clef notes (C2–B3) ──
+  { id: 'C2', name: 'C', octave: 2, clef: 'bass',   staffPos: -14, midiNote: 36 },
+  { id: 'D2', name: 'D', octave: 2, clef: 'bass',   staffPos: -13, midiNote: 38 },
+  { id: 'E2', name: 'E', octave: 2, clef: 'bass',   staffPos: -12, midiNote: 40 },
+  { id: 'F2', name: 'F', octave: 2, clef: 'bass',   staffPos: -11, midiNote: 41 },
+  { id: 'G2', name: 'G', octave: 2, clef: 'bass',   staffPos: -10, midiNote: 43 },
+  { id: 'A2', name: 'A', octave: 2, clef: 'bass',   staffPos: -9,  midiNote: 45 },
+  { id: 'B2', name: 'B', octave: 2, clef: 'bass',   staffPos: -8,  midiNote: 47 },
   { id: 'C3', name: 'C', octave: 3, clef: 'bass',   staffPos: -7,  midiNote: 48 },
   { id: 'D3', name: 'D', octave: 3, clef: 'bass',   staffPos: -6,  midiNote: 50 },
   { id: 'E3', name: 'E', octave: 3, clef: 'bass',   staffPos: -5,  midiNote: 52 },
@@ -60,9 +67,9 @@ const NOTE_CATALOG = [
 
 /** Ranges the user can select in settings */
 const NOTE_RANGES = {
-  full:   NOTE_CATALOG,                                              // C3–C6
+  full:   NOTE_CATALOG,                                              // C2–C6
   treble: NOTE_CATALOG.filter(n => n.staffPos >= 0),               // C4–C6
-  bass:   NOTE_CATALOG.filter(n => n.staffPos <= 0),               // C3–C4 (middle C included)
+  bass:   NOTE_CATALOG.filter(n => n.staffPos <= 0),               // C2–C4 (middle C included)
 };
 
 /**

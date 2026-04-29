@@ -433,7 +433,7 @@ html, body {
   border-radius: var(--radius);
   box-shadow: 0 20px 60px rgba(0,0,0,0.35);
   padding: 20px;
-  width: min(95vw, 900px);
+  width: min(95vw, 1200px);
   pointer-events: auto;
   animation: modal-in 0.15s ease-out;
 }

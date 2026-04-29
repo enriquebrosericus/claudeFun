@@ -75,34 +75,36 @@
   //   staffPos 14 (C6): ledger at y=28 AND y=16
   //   Below treble but above bass (staffPos -1, 1): NO ledger; they float between staves
   //   C3 (staffPos -7): sits between D3(-6=bass line) and B2(-8=bass line) — no ledger needed
-  function ledgerLines(staffPos) {
+  function ledgerLines(staffPos, xPos = NOTE_X, color = '#1a1a2e') {
     const lines = [];
-    const lx1 = NOTE_X - NOTE_RX - 5;
-    const lx2 = NOTE_X + NOTE_RX + 5;
+    const lx1 = xPos - NOTE_RX - 5;
+    const lx2 = xPos + NOTE_RX + 5;
 
     if (staffPos === 0) {
-      // Middle C ledger line
       lines.push(posToY(0));
     }
 
-    // Above treble top (F5 = staffPos 10, y=40)
-    // A5 = staffPos 12, C6 = staffPos 14
     if (staffPos >= 12) {
       for (let p = 12; p <= staffPos; p += 2) {
         lines.push(posToY(p));
       }
     }
 
-    // Below bass bottom (G2 = staffPos -10, y=160) — not in our range so skipped
+    // Below bass bottom (G2 = pos -10): E2(-12) needs 1 ledger, C2(-14) needs 2
+    if (staffPos <= -12) {
+      for (let p = -12; p >= staffPos; p -= 2) {
+        lines.push(posToY(p));
+      }
+    }
 
     return lines.map(y =>
       `<line x1="${lx1}" y1="${y}" x2="${lx2}" y2="${y}"
-             stroke="#1a1a2e" stroke-width="1.6"/>`
+             stroke="${color}" stroke-width="1.6"/>`
     ).join('');
   }
 
   // ── Note head + stem ───────────────────────────────────────────────────────
-  function noteShape(staffPos) {
+  function noteShape(staffPos, xPos = NOTE_X, color = '#1a1a2e') {
     const y = posToY(staffPos);
 
     // Stem direction:
@@ -111,22 +113,21 @@
     //   Simple rule for grand staff: stem up when staffPos < 6, stem down otherwise.
     const stemUp = staffPos < 6;
 
-    const stemX  = stemUp ? NOTE_X + NOTE_RX - 1.5 : NOTE_X - NOTE_RX + 1.5;
+    const stemX  = stemUp ? xPos + NOTE_RX - 1.5 : xPos - NOTE_RX + 1.5;
     const stemY1 = y + (stemUp ? -NOTE_RY + 1 : NOTE_RY - 1);
     const stemY2 = stemUp ? y - STEM_LEN : y + STEM_LEN;
 
-    // Filled note head, rotated slightly (standard engraving style)
     return `
       <g class="note" role="presentation">
         <ellipse
-          cx="${NOTE_X}" cy="${y}"
+          cx="${xPos}" cy="${y}"
           rx="${NOTE_RX}" ry="${NOTE_RY}"
-          fill="#1a1a2e"
-          transform="rotate(-15,${NOTE_X},${y})"/>
+          fill="${color}"
+          transform="rotate(-15,${xPos},${y})"/>
         <line
           x1="${stemX}" y1="${stemY1}"
           x2="${stemX}" y2="${stemY2}"
-          stroke="#1a1a2e" stroke-width="1.8" stroke-linecap="round"/>
+          stroke="${color}" stroke-width="1.8" stroke-linecap="round"/>
       </g>`;
   }
 
@@ -186,8 +187,17 @@
   }
 
   // ── Main render ────────────────────────────────────────────────────────────
-  function renderStaff(note) {
+  const WRONG_NOTE_X  = 510;
+  const WRONG_NOTE_COLOR = '#16a34a';
+
+  function renderStaff(note, wrongNote = null) {
     const { staffPos, name, octave } = note;
+
+    const wrongNoteSvg = wrongNote ? `
+  <!-- Wrong note (green) -->
+  ${ledgerLines(wrongNote.staffPos, WRONG_NOTE_X, WRONG_NOTE_COLOR)}
+  ${noteShape(wrongNote.staffPos, WRONG_NOTE_X, WRONG_NOTE_COLOR)}
+` : '';
 
     const svg = `
 <svg id="grand-staff"
@@ -211,12 +221,13 @@
   <!-- Bass clef -->
   ${bassClef()}
 
-  <!-- Ledger lines (if needed) -->
+  <!-- Ledger lines for correct note -->
   ${ledgerLines(staffPos)}
 
-  <!-- The note -->
+  <!-- The correct note -->
   ${noteShape(staffPos)}
 
+  ${wrongNoteSvg}
 </svg>`;
 
     return svg;
@@ -224,17 +235,16 @@
 
   // ── Reference staff (large, labeled grand staff shown in overlay) ───────────
   function renderReferenceStaff() {
-    const W = 900;
-    const H = 300;
+    const W = 1200;
+    const H = 400;
     const LG = 20;       // line gap (bigger than game staff)
     const HS = LG / 2;   // half step = 10
     const LEFT = 80;
-    const RIGHT = 860;
-    const T_TOP = 50;    // treble top line (F5, pos 10)
-    // Middle C (pos 0) is 2 steps below treble bottom line (pos 2)
-    const MID_C_Y = T_TOP + 4 * LG + 2 * HS; // = 150
-    // Bass top line (A3, pos -2) is 2 steps below middle C
-    const B_TOP = MID_C_Y + 2 * HS; // = 170
+    const RIGHT = 1160;
+    // Shift T_TOP down so C6 (4 steps above treble top) has label room
+    const T_TOP = 100;   // treble top line (F5, pos 10)
+    const MID_C_Y = T_TOP + 4 * LG + 2 * HS; // = 200
+    const B_TOP = MID_C_Y + 2 * HS;           // = 220
 
     function rY(pos) { return MID_C_Y - pos * HS; }
 
@@ -252,24 +262,21 @@
     svg += `<line x1="${LEFT}" y1="${T_TOP}" x2="${LEFT}" y2="${B_TOP + 4 * LG}" stroke="#1a1a2e" stroke-width="2.5"/>`;
 
     // Clefs
-    const trebleClefY = T_TOP + 3 * LG;
-    svg += `<text x="${LEFT + 8}" y="${trebleClefY}" font-family="Bravura" font-size="52" fill="#1a1a2e" text-anchor="start">&#xE050;</text>`;
-    const bassClefY = B_TOP + LG;
-    svg += `<text x="${LEFT + 8}" y="${bassClefY}" font-family="Bravura" font-size="52" fill="#1a1a2e" text-anchor="start">&#xE062;</text>`;
+    svg += `<text x="${LEFT + 8}" y="${T_TOP + 3 * LG}" font-family="Bravura" font-size="52" fill="#1a1a2e" text-anchor="start">&#xE050;</text>`;
+    svg += `<text x="${LEFT + 8}" y="${B_TOP + LG}"      font-family="Bravura" font-size="52" fill="#1a1a2e" text-anchor="start">&#xE062;</text>`;
 
-    // All notes ascending (low to high, left to right)
+    // All testable notes: C2 (pos -14) through C6 (pos 14)
     const allNotes = [
-      { name: 'G2', pos: -10 }, { name: 'A2', pos: -9 },
-      { name: 'B2', pos: -8 }, { name: 'C3', pos: -7 },
-      { name: 'D3', pos: -6 }, { name: 'E3', pos: -5 },
-      { name: 'F3', pos: -4 }, { name: 'G3', pos: -3 },
-      { name: 'A3', pos: -2 },
-      { name: 'B3', pos: -1 }, { name: 'C4', pos: 0 }, { name: 'D4', pos: 1 },
-      { name: 'E4', pos: 2 }, { name: 'F4', pos: 3 },
-      { name: 'G4', pos: 4 }, { name: 'A4', pos: 5 },
-      { name: 'B4', pos: 6 }, { name: 'C5', pos: 7 },
-      { name: 'D5', pos: 8 }, { name: 'E5', pos: 9 },
-      { name: 'F5', pos: 10 },
+      { name: 'C2', pos: -14 }, { name: 'D2', pos: -13 }, { name: 'E2', pos: -12 },
+      { name: 'F2', pos: -11 }, { name: 'G2', pos: -10 }, { name: 'A2', pos: -9 }, { name: 'B2', pos: -8 },
+      { name: 'C3', pos: -7 }, { name: 'D3', pos: -6 }, { name: 'E3', pos: -5 },
+      { name: 'F3', pos: -4 }, { name: 'G3', pos: -3 }, { name: 'A3', pos: -2 },
+      { name: 'B3', pos: -1 }, { name: 'C4', pos:  0 }, { name: 'D4', pos:  1 },
+      { name: 'E4', pos:  2 }, { name: 'F4', pos:  3 }, { name: 'G4', pos:  4 },
+      { name: 'A4', pos:  5 }, { name: 'B4', pos:  6 }, { name: 'C5', pos:  7 },
+      { name: 'D5', pos:  8 }, { name: 'E5', pos:  9 }, { name: 'F5', pos: 10 },
+      { name: 'G5', pos: 11 }, { name: 'A5', pos: 12 }, { name: 'B5', pos: 13 },
+      { name: 'C6', pos: 14 },
     ];
 
     const noteAreaLeft = LEFT + 60;
@@ -281,11 +288,28 @@
       const y = rY(n.pos);
       const x = noteAreaLeft + (i + 0.5) * (noteAreaRight - noteAreaLeft) / total;
 
-      // Ledger line for middle C
       const lx1 = x - 12;
       const lx2 = x + 12;
+
+      // Middle C ledger line
       if (n.pos === 0) {
         svg += `<line x1="${lx1}" y1="${y}" x2="${lx2}" y2="${y}" stroke="#1a1a2e" stroke-width="1.6"/>`;
+      }
+
+      // Ledger lines above treble staff for A5 (pos 12) and C6 (pos 14)
+      if (n.pos >= 12) {
+        for (let p = 12; p <= n.pos; p += 2) {
+          const ly = rY(p);
+          svg += `<line x1="${lx1}" y1="${ly}" x2="${lx2}" y2="${ly}" stroke="#1a1a2e" stroke-width="1.6"/>`;
+        }
+      }
+
+      // Ledger lines below bass staff for E2 (pos -12) and C2 (pos -14)
+      if (n.pos <= -12) {
+        for (let p = -12; p >= n.pos; p -= 2) {
+          const ly = rY(p);
+          svg += `<line x1="${lx1}" y1="${ly}" x2="${lx2}" y2="${ly}" stroke="#1a1a2e" stroke-width="1.6"/>`;
+        }
       }
 
       // Note head
