@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit -m ':*)",
+      "WebFetch(domain:bladeacer.gitlab.io)",
+      "Bash(curl -s 'https://bladeacer.gitlab.io/portfolio/posts/vim/')",
+      "Bash(curl -s 'https://bladeacer.gitlab.io/portfolio/_astro/endeavour.CFjKpZ6k.css')",
+      "Bash(curl -s \"https://whackbat.techbrose.com/api/teams/splits?season=2026&team=SEA\")",
+      "Bash(curl -s \"https://whackbat.techbrose.com/api/recap/games?season=2026&team=SEA\")"
+    ]
+  }
+}

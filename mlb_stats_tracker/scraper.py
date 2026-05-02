@@ -419,16 +419,24 @@ def upsert_game_recap(cur, gamepk: int, game_entry: dict, box: dict, ls: dict,
     away_id   = teams_sched.get("away", {}).get("team", {}).get("id")
     home_abbr = abbr_map.get(home_id, "UNK")
     away_abbr = abbr_map.get(away_id, "UNK")
+    is_sea_game = (home_id == TEAM_ID or away_id == TEAM_ID)
     sea_is_home = (home_id == TEAM_ID)
-    opponent  = abbr_map.get(away_id if sea_is_home else home_id, "UNK")
 
     ls_totals  = ls.get("teams", {})
     home_score = ls_totals.get("home", {}).get("runs")
     away_score = ls_totals.get("away", {}).get("runs")
-    sea_score  = home_score if sea_is_home else away_score
-    opp_score  = away_score if sea_is_home else home_score
-    result = ("W" if sea_score > opp_score else "L") \
-             if (sea_score is not None and opp_score is not None) else None
+
+    if is_sea_game:
+        opponent  = abbr_map.get(away_id if sea_is_home else home_id, "UNK")
+        sea_score = home_score if sea_is_home else away_score
+        opp_score = away_score if sea_is_home else home_score
+        result = ("W" if sea_score > opp_score else "L") \
+                 if (sea_score is not None and opp_score is not None) else None
+    else:
+        opponent  = None
+        sea_score = None
+        opp_score = None
+        result    = None
 
     game_date    = datetime.date.fromisoformat(game_entry.get("gameDate", "")[:10])
     doubleheader = game_entry.get("doubleHeader", "N")
@@ -503,7 +511,7 @@ def upsert_game_recap(cur, gamepk: int, game_entry: dict, box: dict, ls: dict,
 
 def scrape_game_recap(session: requests.Session, conn) -> None:
     today = datetime.date.today().isoformat()
-    data  = api_get(session, "/schedule", teamId=TEAM_ID, date=today,
+    data  = api_get(session, "/schedule", date=today,
                     sportId=1, hydrate="decisions")
     dates = data.get("dates", [])
     if not dates:
@@ -518,10 +526,10 @@ def scrape_game_recap(session: requests.Session, conn) -> None:
 
         gamepk = game_entry.get("gamePk")
 
-        # Skip if we already have a completed result for this game
-        cur.execute("SELECT result FROM games WHERE gamepk = %s", (gamepk,))
+        # Skip if we already have this game stored as Final
+        cur.execute("SELECT status FROM games WHERE gamepk = %s", (gamepk,))
         row = cur.fetchone()
-        if row and row[0] is not None:
+        if row and row[0] == 'Final':
             log.debug("Game recap already stored for gamePk=%s", gamepk)
             continue
 

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#6d28d9">
+  <title>Buzzword Bingo</title>
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="title-block">
+        <h1 class="title">Buzzword Bingo</h1>
+        <div class="subtitle" id="dateLabel">—</div>
+      </div>
+      <div class="actions">
+        <button id="resetBtn" class="btn btn-ghost" title="Reset today's marks">Reset</button>
+        <button id="newCardBtn" class="btn btn-ghost" title="Reshuffle a new card">New Card</button>
+      </div>
+    </header>
+
+    <main class="board-wrap">
+      <div id="board" class="board" role="grid" aria-label="Bingo card"></div>
+      <div class="status">
+        <span id="markedCount">0</span> marked
+        <span class="dot">·</span>
+        <span id="bingoCount">0</span> bingo<span id="bingoPlural"></span>
+      </div>
+    </main>
+
+    <div id="celebration" class="celebration" aria-hidden="true">
+      <div class="celebration-card">
+        <div class="celebration-title">BINGO!</div>
+        <div class="celebration-sub">You called it.</div>
+        <button id="celebrationClose" class="btn btn-primary">Keep playing</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="phrases.js?v=1"></script>
+  <script src="app.js?v=1"></script>
+</body>
+</html>

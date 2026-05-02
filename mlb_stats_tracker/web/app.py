@@ -447,7 +447,6 @@ def api_recap_games():
                    home_score, away_score
             FROM games
             WHERE season = %s AND status = 'Final' AND game_type = 'R'
-              AND result IS NOT NULL
               AND (home_team = %s OR away_team = %s)
             ORDER BY date DESC, gamepk DESC
         """, (season, team, team))
@@ -457,7 +456,6 @@ def api_recap_games():
                    home_score, away_score
             FROM games
             WHERE season = %s AND status = 'Final' AND game_type = 'R'
-              AND result IS NOT NULL
             ORDER BY date DESC, gamepk DESC
         """, (season,))
     out = []

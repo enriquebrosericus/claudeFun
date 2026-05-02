@@ -1,0 +1,19 @@
+services:
+  bingo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: buzzword-bingo
+    command: ["/bin/sh", "-c", "mkdir -p /etc/nginx/ssl && openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/key.pem -out /etc/nginx/ssl/cert.pem -subj '/CN=localhost' && nginx -g 'daemon off;'"]
+    ports:
+      - "8878:80"
+      - "8444:443"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-check-certificate", "-qO-", "https://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+# Access the app at https://localhost:8444

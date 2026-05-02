@@ -79,7 +79,7 @@ def build_team_abbr_map() -> dict:
 # ── Schedule ──────────────────────────────────────────────────────────────────
 
 def fetch_schedule(season: int) -> list:
-    data = api_get("/schedule", teamId=TEAM_ID, season=season, sportId=1,
+    data = api_get("/schedule", season=season, sportId=1,
                    gameType="R", hydrate="decisions")
     games = []
     for date_entry in data.get("dates", []):
@@ -203,16 +203,24 @@ def upsert_game(cur, gamepk, game_entry, box, ls, team_abbr_map, game_number):
     home_abbr   = team_abbr_map.get(home_id, "UNK")
     away_abbr   = team_abbr_map.get(away_id, "UNK")
 
+    is_sea_game = (home_id == TEAM_ID or away_id == TEAM_ID)
     sea_is_home = (home_id == TEAM_ID)
-    opp_id      = away_id if sea_is_home else home_id
-    opponent    = team_abbr_map.get(opp_id, "UNK")
 
     ls_totals   = ls.get("teams", {})
     home_score  = ls_totals.get("home", {}).get("runs")
     away_score  = ls_totals.get("away", {}).get("runs")
-    sea_score   = home_score if sea_is_home else away_score
-    opp_score   = away_score if sea_is_home else home_score
-    result      = ("W" if sea_score > opp_score else "L") if (sea_score is not None and opp_score is not None) else None
+
+    if is_sea_game:
+        opp_id    = away_id if sea_is_home else home_id
+        opponent  = team_abbr_map.get(opp_id, "UNK")
+        sea_score = home_score if sea_is_home else away_score
+        opp_score = away_score if sea_is_home else home_score
+        result    = ("W" if sea_score > opp_score else "L") if (sea_score is not None and opp_score is not None) else None
+    else:
+        opponent  = None
+        sea_score = None
+        opp_score = None
+        result    = None
 
     decisions       = box.get("decisions", {})
     winning_pitcher = decisions.get("winner", {}).get("fullName")
@@ -411,7 +419,7 @@ def main():
     team_abbr_map = build_team_abbr_map()
     time.sleep(0.3)
 
-    print(f"Fetching {SEASON} schedule for SEA...", file=sys.stderr)
+    print(f"Fetching {SEASON} schedule (all teams)...", file=sys.stderr)
     all_games = fetch_schedule(SEASON)
     print(f"  {len(all_games)} total games found", file=sys.stderr)
 
@@ -434,6 +442,7 @@ def main():
         away_id   = teams.get("away", {}).get("team", {}).get("id")
         home_abbr = team_abbr_map.get(home_id, "UNK")
         away_abbr = team_abbr_map.get(away_id, "UNK")
+        is_sea_game = (home_id == TEAM_ID or away_id == TEAM_ID)
         opp_abbr  = away_abbr if home_id == TEAM_ID else home_abbr
 
         print(f"  G{game_number:03d} gamePk={gamepk} "
@@ -461,8 +470,8 @@ def main():
             conn.commit()
             processed += 1
 
-            # AI summary — only if key present and no existing summary
-            if ANTHROPIC_API_KEY and not SKIP_SUMMARIES:
+            # AI summary — only for SEA games, if key present and no existing summary
+            if is_sea_game and ANTHROPIC_API_KEY and not SKIP_SUMMARIES:
                 cur.execute("SELECT 1 FROM game_summaries WHERE gamepk = %s", (gamepk,))
                 if not cur.fetchone():
                     try:
