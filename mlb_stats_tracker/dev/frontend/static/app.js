@@ -272,7 +272,7 @@ function wireRows(panel, onOpen) {
   });
 }
 
-const NAV = [["teams", "Teams"], ["players", "Players"], ["divisions", "Division race"], ["recap", "Game recap"], ["challenges", "Challenges"]];
+const NAV = [["teams", "The Club"], ["players", "Players"], ["divisions", "Division race"], ["recap", "Game recap"], ["challenges", "Challenges"]];
 const syncURL = () => history.replaceState(null, "", `?view=${state.view}&season=${state.season}&team=${state.team}&division=${encodeURIComponent(state.division)}`);
 
 function renderNav() {
