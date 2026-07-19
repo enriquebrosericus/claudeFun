@@ -145,6 +145,10 @@ main { padding: 1.25rem; max-width: 1180px; margin: 0 auto; }
   letter-spacing: 0.08em; border-bottom: 1px solid var(--ink);
 }
 .ledger-table td:first-child, .ledger-table th:first-child { text-align: left; }
+.ledger-table th.sortable { cursor: pointer; user-select: none; }
+.ledger-table th.sortable:hover { color: var(--ink); }
+.ledger-table th.sorted { color: var(--field); }
+.ledger-table th.sortable:focus-visible { outline: 3px solid var(--field); outline-offset: -3px; }
 .ledger-table tbody tr:nth-child(even) { background: var(--paper-2); }
 .ledger-table tr.rowlink { cursor: pointer; }
 .ledger-table tr.rowlink:hover td { background: var(--field); color: var(--paper); }

@@ -151,24 +151,27 @@ views.players = async () => {
     getJSON(`/api/teams/batting_leaders?season=${state.season}&team=${state.team}`),
     getJSON(`/api/teams/pitching_leaders?season=${state.season}&team=${state.team}`),
   ]);
-  const batHead = ["Batter", "POS", "AVG", "OBP", "SLG", "OPS", "HR", "RBI", "SB", "G"];
-  const batRows = bat.map((p) => [p.player, p.position, pct(p.avg), pct(p.obp), pct(p.slg), pct(p.ops), p.home_runs, p.rbi, p.stolen_bases, p.games_played]);
-  const pitHead = ["Pitcher", "POS", "ERA", "WHIP", "FIP", "W", "L", "SV", "K", "IP"];
-  const pitRows = pit.map((p) => [p.player, p.position, dp(p.era, 2), dp(p.whip, 2), dp(p.fip, 2), p.wins, p.losses, p.saves, p.strikeouts, p.innings_pitched]);
+  const strCol = (label, key) => ({ label, get: (p) => p[key], val: (p) => p[key] || "" });
+  const numCol = (label, key, fmt) => ({ label, num: true, get: (p) => fmt(p[key]), val: (p) => (p[key] == null || p[key] === "" ? null : Number(p[key])) });
+  const batCols = [strCol("Batter", "player"), strCol("POS", "position"),
+    numCol("AVG", "avg", pct), numCol("OBP", "obp", pct), numCol("SLG", "slg", pct), numCol("OPS", "ops", pct),
+    numCol("HR", "home_runs", (v) => v), numCol("RBI", "rbi", (v) => v), numCol("SB", "stolen_bases", (v) => v), numCol("G", "games_played", (v) => v)];
+  const pitCols = [strCol("Pitcher", "player"), strCol("POS", "position"),
+    numCol("ERA", "era", (v) => dp(v, 2)), numCol("WHIP", "whip", (v) => dp(v, 2)), numCol("FIP", "fip", (v) => dp(v, 2)),
+    numCol("W", "wins", (v) => v), numCol("L", "losses", (v) => v), numCol("SV", "saves", (v) => v), numCol("K", "strikeouts", (v) => v), numCol("IP", "innings_pitched", (v) => v)];
   $("view").innerHTML = `<section class="dispatches">
-    ${panelHTML("Lineup", `Batting &mdash; ${state.team}`, tableHTML(batHead, batRows, { rowlink: true }), { feature: true })}
-    ${panelHTML("Staff", `Pitching &mdash; ${state.team}`, tableHTML(pitHead, pitRows, { rowlink: true }), { feature: true })}
+    ${panelHTML("Lineup", `Batting &mdash; ${state.team}`, `<div id="battbl"></div>`, { feature: true })}
+    ${panelHTML("Staff", `Pitching &mdash; ${state.team}`, `<div id="pittbl"></div>`, { feature: true })}
   </section>`;
-  const panels = $("view").querySelectorAll(".panel");
-  wireRows(panels[0], async (i, from) => {
-    const p = bat[i], tr = await getJSON(`/api/players/batter_trend?season=${state.season}&player_id=${p.player_id}`);
+  sortableTable($("battbl"), batCols, bat, async (p, from) => {
+    const tr = await getJSON(`/api/players/batter_trend?season=${state.season}&player_id=${p.player_id}`);
     openModal(`${p.player} — batting trend`,
       (el) => line(el, tr.map((r) => mmdd(r.date)), [series("OPS", tr.map((r) => r.ops), C.field), series("AVG", tr.map((r) => r.avg), C.clay)]),
       ["Date", "AVG", "OBP", "SLG", "OPS", "HR", "RBI"],
       [...tr].reverse().map((r) => [r.date, pct(r.avg), pct(r.obp), pct(r.slg), pct(r.ops), r.home_runs, r.rbi]), from);
   });
-  wireRows(panels[1], async (i, from) => {
-    const p = pit[i], tr = await getJSON(`/api/players/pitcher_trend?season=${state.season}&player_id=${p.player_id}`);
+  sortableTable($("pittbl"), pitCols, pit, async (p, from) => {
+    const tr = await getJSON(`/api/players/pitcher_trend?season=${state.season}&player_id=${p.player_id}`);
     openModal(`${p.player} — pitching trend`,
       (el) => line(el, tr.map((r) => mmdd(r.date)), [series("ERA", tr.map((r) => r.era), C.clay), series("WHIP", tr.map((r) => r.whip), C.field)]),
       ["Date", "ERA", "WHIP", "FIP", "K", "IP"],
@@ -264,12 +267,34 @@ function wirePanels(onOpen) {
     card.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
   });
 }
-function wireRows(panel, onOpen) {
-  panel.querySelectorAll("tr.rowlink").forEach((tr) => {
-    const open = () => onOpen(+tr.dataset.i, tr);
-    tr.addEventListener("click", open);
-    tr.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
-  });
+// Sortable ledger table. columns: {label, get(row), val(row), num?}. Clicking a
+// header sorts by that column (numbers desc-first, text asc-first); re-click flips.
+function sortableTable(mount, columns, data, onRow) {
+  let si = null, dir = 1;
+  const cmp = (c) => (a, b) => {
+    const va = c.val(a), vb = c.val(b);
+    if (va == null) return 1;            // nulls always sink
+    if (vb == null) return -1;
+    return (typeof va === "string" ? va.localeCompare(vb) : va - vb) * dir;
+  };
+  function draw() {
+    const head = columns.map((c, i) =>
+      `<th class="sortable${si === i ? " sorted" : ""}" data-c="${i}" tabindex="0" role="button">${c.label}${si === i ? (dir > 0 ? " ↑" : " ↓") : ""}</th>`).join("");
+    const rows = data.map((r, i) =>
+      `<tr data-i="${i}"${onRow ? ' class="rowlink" tabindex="0"' : ""}>${columns.map((c) => `<td>${c.get(r) ?? "—"}</td>`).join("")}</tr>`).join("");
+    mount.innerHTML = `<div class="table-wrap"><table class="ledger-table"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
+    mount.querySelectorAll("th.sortable").forEach((th) => {
+      const sort = () => { const c = +th.dataset.c; if (si === c) dir = -dir; else { si = c; dir = columns[c].num ? -1 : 1; } data.sort(cmp(columns[c])); draw(); };
+      th.onclick = sort;
+      th.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); sort(); } };
+    });
+    if (onRow) mount.querySelectorAll("tr.rowlink").forEach((tr) => {
+      const open = () => onRow(data[+tr.dataset.i], tr);
+      tr.onclick = open;
+      tr.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } };
+    });
+  }
+  draw();
 }
 
 const NAV = [["teams", "The Club"], ["players", "Players"], ["divisions", "Division race"], ["recap", "Game recap"], ["challenges", "Challenges"]];
