@@ -34,6 +34,18 @@ DB_PASS = os.getenv("DB_PASS", "mlbpass")
 GAME_TYPE         = os.getenv("GAME_TYPE", "R")
 PITCHER_POSITIONS = {"P", "SP", "RP", "CP"}
 
+# MLB division ids are stable. Hardcoded so we never need the `/divisions`
+# or `hydrate=` calls, which the MLB CDN/WAF 406s from datacenter egress IPs
+# on cache-miss. See get_team_abbr_map() for the same reason.
+DIVISION_NAMES = {
+    200: "AL West",
+    201: "AL East",
+    202: "AL Central",
+    203: "NL West",
+    204: "NL East",
+    205: "NL Central",
+}
+
 
 # ── Database ──────────────────────────────────────────────────────────────────
 def get_db():
@@ -106,17 +118,22 @@ def thirds_to_ip(thirds: int) -> float:
 # ── Standings ─────────────────────────────────────────────────────────────────
 def scrape_standings(session: requests.Session, conn, today: datetime.date) -> None:
     cur = conn.cursor()
+    # The standings endpoint is requested without `hydrate`: the hydrated
+    # variant is a CDN cache-miss that the MLB WAF 406s from datacenter egress
+    # IPs. The un-hydrated response omits team.abbreviation, so we fill it from
+    # the cache-friendly /teams endpoint and map divisions via DIVISION_NAMES.
+    abbrs = get_team_abbr_map(session)
 
     for league_id in (103, 104):  # AL, NL
         data = api_get(session, "/standings", leagueId=league_id, season=SEASON,
-                       standingsTypes="regularSeason", hydrate="team(division)")
+                       standingsTypes="regularSeason")
 
         for division in data.get("records", []):
+            div_name = DIVISION_NAMES.get(division.get("division", {}).get("id"), "")
             for rec in division.get("teamRecords", []):
                 team      = rec.get("team", {})
                 team_id   = team.get("id")
-                team_abbr = team.get("abbreviation", "UNK")
-                div_name  = team.get("division", {}).get("nameShort", "")
+                team_abbr = abbrs.get(team_id, "UNK")
                 wins      = rec.get("wins", 0)
                 losses    = rec.get("losses", 0)
                 gb_raw    = rec.get("gamesBack", "0")
@@ -174,15 +191,7 @@ def scrape_standings(session: requests.Session, conn, today: datetime.date) -> N
 # ── Player Stats ──────────────────────────────────────────────────────────────
 def get_all_teams(session: requests.Session) -> list[dict]:
     """Return list of {id, abbr} for all 30 MLB teams."""
-    teams = []
-    for league_id in (103, 104):
-        data = api_get(session, "/standings", leagueId=league_id, season=SEASON,
-                       standingsTypes="regularSeason", hydrate="team")
-        for div in data.get("records", []):
-            for rec in div.get("teamRecords", []):
-                t = rec.get("team", {})
-                teams.append({"id": t.get("id"), "abbr": t.get("abbreviation", "UNK")})
-    return teams
+    return [{"id": tid, "abbr": abbr} for tid, abbr in get_team_abbr_map(session).items()]
 
 
 def get_roster(session: requests.Session, team_id: int = TEAM_ID) -> list:
@@ -511,8 +520,7 @@ def upsert_game_recap(cur, gamepk: int, game_entry: dict, box: dict, ls: dict,
 
 def scrape_game_recap(session: requests.Session, conn) -> None:
     today = datetime.date.today().isoformat()
-    data  = api_get(session, "/schedule", date=today,
-                    sportId=1, hydrate="decisions")
+    data  = api_get(session, "/schedule", date=today, sportId=1)
     dates = data.get("dates", [])
     if not dates:
         return
@@ -548,8 +556,16 @@ def scrape_game_recap(session: requests.Session, conn) -> None:
             ls_resp.raise_for_status()
             ls = ls_resp.json()
 
+            # Decisions (W/L/save) come from the v1.1 live feed. The schedule
+            # `hydrate=decisions` variant is a CDN cache-miss that the MLB WAF
+            # 406s from datacenter egress IPs; per-game endpoints are fine.
+            feed_url  = f"{MLB_API.replace('/api/v1', '/api/v1.1')}/game/{gamepk}/feed/live"
+            feed_resp = session.get(feed_url, timeout=20)
+            feed_resp.raise_for_status()
+            decisions = feed_resp.json().get("liveData", {}).get("decisions", {})
+
             upsert_game_recap(cur, gamepk, game_entry, box, ls, abbr_map,
-                              game_entry.get("decisions", {}), game_number)
+                              decisions, game_number)
             conn.commit()
             log.info("Game recap stored: gamePk=%s G%03d", gamepk, game_number)
         except Exception as e:
