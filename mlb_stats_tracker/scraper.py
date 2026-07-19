@@ -75,15 +75,25 @@ def make_session() -> requests.Session:
 
 
 def api_get(session: requests.Session, path: str, **params) -> dict:
+    resp = None
     for attempt in range(4):
-        resp = session.get(f"{MLB_API}{path}", params=params, timeout=15)
+        wait = 2 ** attempt * 5  # 5, 10, 20, 40s
+        try:
+            resp = session.get(f"{MLB_API}{path}", params=params, timeout=15)
+        except requests.exceptions.RequestException as e:
+            # Connection/timeout errors — e.g. the WARP proxy not yet routing at
+            # startup. Retry with backoff instead of failing the whole cycle.
+            log.warning("MLB API connection error (attempt %d) — retrying in %ds: %s", attempt + 1, wait, e)
+            time.sleep(wait)
+            continue
         if resp.status_code == 429 or resp.status_code >= 500:
-            wait = 2 ** attempt * 5  # 5, 10, 20, 40s
             log.warning("MLB API %s (attempt %d) — retrying in %ds", resp.status_code, attempt + 1, wait)
             time.sleep(wait)
             continue
         resp.raise_for_status()
         return resp.json()
+    if resp is None:
+        raise RuntimeError(f"MLB API unreachable after retries: {path}")
     resp.raise_for_status()
     return resp.json()
 
