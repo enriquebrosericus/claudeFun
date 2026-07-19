@@ -198,12 +198,7 @@ def scrape_standings(session: requests.Session, conn, today: datetime.date) -> N
     cur.close()
 
 
-# ── Player Stats ──────────────────────────────────────────────────────────────
-def get_all_teams(session: requests.Session) -> list[dict]:
-    """Return list of {id, abbr} for all 30 MLB teams."""
-    return [{"id": tid, "abbr": abbr} for tid, abbr in get_team_abbr_map(session).items()]
-
-
+# ── Player Stats (tracked team only) ──────────────────────────────────────────
 def get_roster(session: requests.Session, team_id: int = TEAM_ID) -> list:
     data = api_get(session, f"/teams/{team_id}/roster",
                    rosterType="active", season=SEASON)
@@ -303,49 +298,43 @@ def upsert_pitcher(cur, today, player_id, name, pos, stat, team_abbr=TEAM_ABBR) 
 
 
 def scrape_players(session: requests.Session, conn, today: datetime.date) -> None:
-    teams = get_all_teams(session)
-    log.info("Scraping player stats for %d teams", len(teams))
+    # Tracked team only — keeps MLB API load ~30x lower than scraping all clubs.
+    log.info("Scraping player stats for %s", TEAM_ABBR)
     cur = conn.cursor()
-    total = 0
+    try:
+        roster = get_roster(session, TEAM_ID)
+    except Exception as e:
+        log.warning("Roster failed for %s: %s", TEAM_ABBR, e)
+        cur.close()
+        return
 
-    for tm in teams:
-        team_id, team_abbr = tm["id"], tm["abbr"]
+    count = 0
+    for entry in roster:
+        person     = entry.get("person", {})
+        pid        = person.get("id")
+        name       = person.get("fullName", "Unknown")
+        pos        = entry.get("position", {})
+        pos_code   = pos.get("code", "")
+        is_pitcher = pos.get("type") == "Pitcher"
+
         try:
-            roster = get_roster(session, team_id)
+            if is_pitcher:
+                stat = get_pitching_stats(session, pid)
+                if stat:
+                    upsert_pitcher(cur, today, pid, name, pos_code, stat, TEAM_ABBR)
+                    count += 1
+            else:
+                stat = get_hitting_stats(session, pid)
+                if stat:
+                    upsert_batter(cur, today, pid, name, pos_code, stat, TEAM_ABBR)
+                    count += 1
+            time.sleep(0.25)
         except Exception as e:
-            log.warning("Roster failed for %s: %s", team_abbr, e)
-            continue
+            log.warning("Stats failed for %s: %s", name, e)
 
-        count = 0
-        for entry in roster:
-            person    = entry.get("person", {})
-            pid       = person.get("id")
-            name      = person.get("fullName", "Unknown")
-            pos       = entry.get("position", {})
-            pos_code  = pos.get("code", "")
-            is_pitcher = pos.get("type") == "Pitcher"
-
-            try:
-                if is_pitcher:
-                    stat = get_pitching_stats(session, pid)
-                    if stat:
-                        upsert_pitcher(cur, today, pid, name, pos_code, stat, team_abbr)
-                        count += 1
-                else:
-                    stat = get_hitting_stats(session, pid)
-                    if stat:
-                        upsert_batter(cur, today, pid, name, pos_code, stat, team_abbr)
-                        count += 1
-                time.sleep(0.25)
-            except Exception as e:
-                log.warning("Stats failed for %s (%s): %s", name, team_abbr, e)
-
-        conn.commit()
-        total += count
-        log.info("  %s: %d/%d players", team_abbr, count, len(roster))
-
+    conn.commit()
     cur.close()
-    log.info("Players total: %d updated across %d teams", total, len(teams))
+    log.info("Players: %d/%d updated for %s", count, len(roster), TEAM_ABBR)
 
 
 # ── Game Recap ────────────────────────────────────────────────────────────────
@@ -535,7 +524,7 @@ def upsert_game_recap(cur, gamepk: int, game_entry: dict, box: dict, ls: dict,
 
 def scrape_game_recap(session: requests.Session, conn) -> None:
     today = datetime.date.today().isoformat()
-    data  = api_get(session, "/schedule", date=today, sportId=1)
+    data  = api_get(session, "/schedule", date=today, sportId=1, teamId=TEAM_ID)
     dates = data.get("dates", [])
     if not dates:
         return
