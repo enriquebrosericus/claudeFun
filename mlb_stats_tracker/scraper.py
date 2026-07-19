@@ -451,7 +451,10 @@ def upsert_game_recap(cur, gamepk: int, game_entry: dict, box: dict, ls: dict,
         opp_score = None
         result    = None
 
-    game_date    = datetime.date.fromisoformat(game_entry.get("gameDate", "")[:10])
+    # officialDate is the timezone-correct game date; gameDate is a UTC timestamp
+    # that rolls a night game to the next day.
+    game_date    = datetime.date.fromisoformat(
+        game_entry.get("officialDate") or game_entry.get("gameDate", "")[:10])
     doubleheader = game_entry.get("doubleHeader", "N")
     status       = game_entry.get("status", {}).get("abstractGameState", "Unknown")
 
@@ -463,6 +466,7 @@ def upsert_game_recap(cur, gamepk: int, game_entry: dict, box: dict, ls: dict,
              winning_pitcher, losing_pitcher, save_pitcher, status)
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         ON CONFLICT (gamepk) DO UPDATE SET
+            date=EXCLUDED.date,
             home_score=EXCLUDED.home_score, away_score=EXCLUDED.away_score,
             sea_score=EXCLUDED.sea_score, opp_score=EXCLUDED.opp_score,
             result=EXCLUDED.result, winning_pitcher=EXCLUDED.winning_pitcher,

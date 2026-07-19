@@ -228,7 +228,9 @@ def upsert_game(cur, gamepk, game_entry, box, ls, team_abbr_map, game_number):
     save_pitcher    = decisions.get("save",   {}).get("fullName")
 
     venue        = game_entry.get("venue", {}).get("name")
-    game_date    = datetime.date.fromisoformat(game_entry.get("gameDate", "2025-01-01")[:10])
+    # officialDate is timezone-correct; gameDate is UTC (rolls night games a day forward)
+    game_date    = datetime.date.fromisoformat(
+        game_entry.get("officialDate") or game_entry.get("gameDate", "2025-01-01")[:10])
     doubleheader = game_entry.get("doubleHeader", "N")
     game_type    = game_entry.get("gameType", "R")
     status       = game_entry.get("status", {}).get("abstractGameState", "Unknown")
@@ -241,6 +243,7 @@ def upsert_game(cur, gamepk, game_entry, box, ls, team_abbr_map, game_number):
              winning_pitcher, losing_pitcher, save_pitcher, status)
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         ON CONFLICT (gamepk) DO UPDATE SET
+            date=EXCLUDED.date,
             game_number=EXCLUDED.game_number, home_score=EXCLUDED.home_score,
             away_score=EXCLUDED.away_score, sea_score=EXCLUDED.sea_score,
             opp_score=EXCLUDED.opp_score, result=EXCLUDED.result,
