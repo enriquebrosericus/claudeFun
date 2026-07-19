@@ -24,6 +24,24 @@ services:
       timeout: 5s
       retries: 5
 
+  # ── Cloudflare WARP egress proxy ───────────────────────────────────────────
+  # MLB's origin returns 406 for any CDN cache-miss coming from this host's
+  # datacenter IP. WARP gives a clean Cloudflare egress IP; the scraper routes
+  # its outbound HTTP through it (see *_PROXY on the scraper service). The image
+  # ships its own healthcheck, so the scraper can wait for it to be healthy.
+  warp:
+    image: caomingjun/warp
+    container_name: mlb_warp
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    volumes:
+      - mlb_warp_data:/var/lib/cloudflare-warp
+    networks:
+      - monitoring
+
   # ── MLB Stats Scraper ──────────────────────────────────────────────────────
   scraper:
     build: .
@@ -39,10 +57,17 @@ services:
       DB_NAME: ${POSTGRES_DB}
       DB_USER: ${POSTGRES_USER}
       DB_PASS: ${POSTGRES_PASSWORD}
+      # Route MLB API traffic through the WARP proxy (socks5h = resolve DNS at
+      # the proxy). NO_PROXY keeps DB/local traffic off the proxy.
+      HTTP_PROXY: socks5h://warp:1080
+      HTTPS_PROXY: socks5h://warp:1080
+      NO_PROXY: postgres,localhost,127.0.0.1
     networks:
       - monitoring
     depends_on:
       postgres:
+        condition: service_healthy
+      warp:
         condition: service_healthy
 
   # ── Custom Web Dashboard ──────────────────────────────────────────────────
@@ -115,3 +140,4 @@ networks:
 volumes:
   mlb_postgres_data:
   mlb_grafana_data:
+  mlb_warp_data:

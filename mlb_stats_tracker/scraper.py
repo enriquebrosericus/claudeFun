@@ -200,24 +200,29 @@ def get_roster(session: requests.Session, team_id: int = TEAM_ID) -> list:
     return data.get("roster", [])
 
 
-def get_hitting_stats(session, person_id) -> Optional[dict]:
-    data = api_get(session, f"/people/{person_id}/stats",
-                   stats="season", season=SEASON, group="hitting", sportId=1)
+def _season_stat(data: dict) -> Optional[dict]:
+    # sportId is intentionally omitted from the /people/{id}/stats request: that
+    # query shape is a CDN cache-miss the MLB WAF 406s from datacenter IPs. We
+    # scope to MLB here instead by filtering splits to sport id 1.
     stats = data.get("stats") or []
     if not stats:
         return None
     splits = stats[0].get("splits", [])
-    return splits[0].get("stat") if splits else None
+    mlb = [s for s in splits if s.get("sport", {}).get("id") == 1]
+    chosen = mlb or splits
+    return chosen[0].get("stat") if chosen else None
+
+
+def get_hitting_stats(session, person_id) -> Optional[dict]:
+    data = api_get(session, f"/people/{person_id}/stats",
+                   stats="season", season=SEASON, group="hitting")
+    return _season_stat(data)
 
 
 def get_pitching_stats(session, person_id) -> Optional[dict]:
     data = api_get(session, f"/people/{person_id}/stats",
-                   stats="season", season=SEASON, group="pitching", sportId=1)
-    stats = data.get("stats") or []
-    if not stats:
-        return None
-    splits = stats[0].get("splits", [])
-    return splits[0].get("stat") if splits else None
+                   stats="season", season=SEASON, group="pitching")
+    return _season_stat(data)
 
 
 def upsert_batter(cur, today, player_id, name, pos, stat, team_abbr=TEAM_ABBR) -> None:
