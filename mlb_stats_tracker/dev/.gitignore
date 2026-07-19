@@ -1,0 +1,3 @@
+# DB snapshots contain prod data — don't commit
+*.sql
+docker-compose.yml

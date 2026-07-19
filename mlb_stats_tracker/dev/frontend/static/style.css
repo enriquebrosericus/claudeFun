@@ -1,0 +1,292 @@
+/* ── The Ballpark Almanac ──────────────────────────────────────────────
+   Box-score broadsheet: ink on newsprint, hairline rules, ledger figures,
+   one field-green accent. No glass, no glow. Mobile-first. */
+:root {
+  --paper:   #e9e7d8;   /* nautical chart buff */
+  --paper-2: #e0ddca;   /* zebra / inset */
+  --ink:     #16283f;   /* deep navy */
+  --ink-soft:#4c5b64;   /* slate */
+  --rule:    #b7bda8;   /* hairline */
+  --field:   #0f6b62;   /* sea green (primary accent) */
+  --clay:    #b23a2e;   /* signal-flag red (deficits / losses) */
+  --brass:   #b0862f;   /* weathered brass (sparing) */
+  --serif:  "Libre Caslon Display", Georgia, "Times New Roman", serif;
+  --sans:   "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono:   "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Masthead ───────────────────────────────────────────── */
+.masthead {
+  padding: 1.25rem 1.25rem 0.9rem;
+  border-bottom: 3px double var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.brand { display: flex; align-items: center; gap: 0.95rem; }
+.compass { width: 46px; height: 46px; color: var(--ink); flex: none; }
+@media (max-width: 480px) { .compass { width: 38px; height: 38px; } }
+.nameplate h1 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(2.1rem, 7vw, 3.6rem);
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.edition {
+  margin: 0.5rem 0 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.controls { display: flex; flex-wrap: wrap; gap: 1rem; }
+.controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+select {
+  min-height: 44px;              /* tap target */
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 0;             /* squared, editorial */
+  padding: 0.4rem 2rem 0.4rem 0.7rem;
+  font-family: var(--mono);
+  font-size: 1rem;
+  cursor: pointer;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%),
+                    linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+  background-position: right 0.85rem center, right 0.6rem center;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+@media (min-width: 720px) {
+  .masthead { flex-direction: row; align-items: flex-end; justify-content: space-between; }
+  .controls { padding-bottom: 0.2rem; }
+}
+
+/* ── Section nav ────────────────────────────────────────── */
+.sections {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid var(--ink);
+  overflow-x: auto;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+.navlink {
+  flex: none;
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  padding: 0.6rem 0.9rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.navlink:hover { color: var(--ink); }
+.navlink.on { color: var(--ink); border-bottom-color: var(--field); }
+
+main { padding: 1.25rem; max-width: 1180px; margin: 0 auto; }
+
+.subpick { margin-bottom: 1.25rem; }
+.subpick label {
+  display: inline-flex; flex-direction: column; gap: 0.3rem;
+  font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-soft);
+}
+.empty { font-family: var(--mono); color: var(--ink-soft); padding: 2rem 0; }
+.err { color: var(--clay); white-space: pre-wrap; padding: 1rem 0; }
+
+/* ── Ledger tables (leaders, standings, box scores) ─────── */
+.table-wrap { overflow-x: auto; }
+.ledger-table {
+  width: 100%; border-collapse: collapse;
+  font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 0.82rem;
+}
+.ledger-table th, .ledger-table td {
+  padding: 0.4rem 0.7rem; text-align: right; white-space: nowrap;
+  border-bottom: 1px solid var(--rule);
+}
+.ledger-table th {
+  color: var(--ink-soft); text-transform: uppercase; font-size: 0.62rem;
+  letter-spacing: 0.08em; border-bottom: 1px solid var(--ink);
+}
+.ledger-table td:first-child, .ledger-table th:first-child { text-align: left; }
+.ledger-table tbody tr:nth-child(even) { background: var(--paper-2); }
+.ledger-table tr.rowlink { cursor: pointer; }
+.ledger-table tr.rowlink:hover td { background: var(--field); color: var(--paper); }
+.ledger-table tr.rowlink:focus-visible { outline: 3px solid var(--field); outline-offset: -3px; }
+
+/* ── Standing ledger (real club line) ───────────────────── */
+.standing {
+  display: flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--ink);
+  margin-bottom: 1.75rem;
+}
+.stat {
+  flex: 1 1 auto;
+  min-width: 84px;
+  padding: 0.7rem 0.9rem;
+  border-right: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.stat:last-child { border-right: none; }
+.stat-label {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.stat-value {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.6rem;
+  font-weight: 500;
+  line-height: 1.15;
+}
+.stat-value.neg { color: var(--clay); }
+
+/* ── Dispatches (chart panels) ──────────────────────────── */
+.dispatches { display: grid; gap: 1.25rem; }
+.panel-row { display: grid; gap: 1.25rem; }
+.panel, .panel-row { min-width: 0; }   /* let grid tracks shrink below canvas intrinsic width */
+canvas { max-width: 100%; }
+@media (min-width: 900px) { .panel-row { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 760px) { .panel-row--2 { grid-template-columns: repeat(2, 1fr); } }
+
+.panel {
+  margin: 0;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  padding: 1rem 1.1rem 1.2rem;
+}
+.panel[data-panel] { cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; }
+.panel[data-panel]:hover { box-shadow: 6px 6px 0 var(--ink); transform: translate(-2px, -2px); }
+.panel[data-panel]:hover .expand { opacity: 1; }
+.panel:focus-visible { outline: 3px solid var(--field); outline-offset: 2px; }
+
+.panel figcaption {
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  line-height: 1.1;
+  padding-bottom: 0.7rem;
+  margin-bottom: 0.9rem;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--field);
+  flex: none;
+}
+.panel figcaption .expand {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  opacity: 0;
+  transition: opacity .15s;
+}
+.canvas-wrap { position: relative; height: 230px; }
+.panel--feature .canvas-wrap { height: 300px; }
+
+/* ── Drill-down modal (no blur — solid paper) ───────────── */
+.modal {
+  position: fixed; inset: 0;
+  background: rgba(23, 21, 15, 0.6);
+  display: none; align-items: center; justify-content: center;
+  padding: 1.25rem; z-index: 50;
+}
+.modal.open { display: flex; }
+.modal-box {
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  box-shadow: 10px 10px 0 var(--ink);
+  width: min(960px, 100%);
+  max-height: 90vh;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 0.9rem 1.2rem;
+  border-bottom: 3px double var(--ink);
+}
+.modal-head h2 { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 1.4rem; }
+.modal-head button {
+  min-height: 44px;
+  background: var(--paper); color: var(--ink);
+  border: 1px solid var(--ink); border-radius: 0;
+  padding: 0.3rem 0.8rem;
+  font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;
+  cursor: pointer; flex: none;
+}
+.modal-head button:hover { background: var(--ink); color: var(--paper); }
+.modal-canvas-wrap { position: relative; height: 320px; padding: 1.2rem 1.2rem 0; flex-shrink: 0; }
+.modal-table-wrap { overflow: auto; padding: 1.2rem; }
+#modalTable {
+  width: 100%; border-collapse: collapse;
+  font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 0.85rem;
+}
+#modalTable th, #modalTable td { padding: 0.4rem 0.75rem; text-align: right; }
+#modalTable th {
+  position: sticky; top: 0; background: var(--paper);
+  border-bottom: 1px solid var(--ink);
+  font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft);
+}
+#modalTable tbody tr:nth-child(even) { background: var(--paper-2); }
+#modalTable td:first-child, #modalTable th:first-child { text-align: left; }
+
+:focus-visible { outline: 3px solid var(--field); outline-offset: 2px; }
+
+/* ── Motion: one restrained load reveal ─────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  .standing, .panel { animation: rise .5s ease both; }
+  .panel-row .panel:nth-child(2) { animation-delay: .06s; }
+  .panel-row .panel:nth-child(3) { animation-delay: .12s; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

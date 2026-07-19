@@ -70,11 +70,13 @@ services:
       warp:
         condition: service_healthy
 
-  # ── Custom Web Dashboard ──────────────────────────────────────────────────
+  # ── Web frontend — "The Mariner's Almanac" (dev/frontend) ──────────────────
+  # Repointed from the old Dockerfile.web dashboard; nginx still proxies web:8080
+  # and haproxy still routes whackbat.techbrose.com → nginx, so neither changes.
   web:
     build:
       context: .
-      dockerfile: Dockerfile.web
+      dockerfile: Dockerfile.almanac
     container_name: mlb_web
     restart: unless-stopped
     environment:

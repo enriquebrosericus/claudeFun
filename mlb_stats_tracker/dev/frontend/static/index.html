@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Ballpark Almanac</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Inter+Tight:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="brand">
+      <svg class="compass" viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="1.4" />
+        <circle cx="24" cy="24" r="14.5" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.45" />
+        <path d="M24 3 L27.5 24 L24 45 L20.5 24 Z" fill="currentColor" />
+        <path d="M3 24 L24 20.5 L45 24 L24 27.5 Z" fill="currentColor" opacity="0.5" />
+        <circle cx="24" cy="24" r="1.8" fill="currentColor" />
+      </svg>
+      <div class="nameplate">
+        <h1>The Mariner&rsquo;s Almanac</h1>
+        <p class="edition" id="edition">Loading edition…</p>
+      </div>
+    </div>
+    <form class="controls" id="controls">
+      <label>Season<select id="season"></select></label>
+    </form>
+  </header>
+
+  <nav class="sections" id="nav" aria-label="Sections"></nav>
+
+  <main id="view" aria-live="polite"><!-- active section renders here --></main>
+
+  <!-- Drill-down: enlarged chart + full ruled ledger -->
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <h2 id="modalTitle"></h2>
+        <button id="modalClose" type="button" aria-label="Close">Close ✕</button>
+      </div>
+      <div class="modal-canvas-wrap"><canvas id="modalCanvas"></canvas></div>
+      <div class="modal-table-wrap"><table id="modalTable"></table></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
